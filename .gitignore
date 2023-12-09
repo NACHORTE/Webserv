@@ -1,0 +1,27 @@
+# Ignore everything
+*
+
+# Don't ignore directories
+!*/
+
+# Ignore all files in directories
+**/*
+
+# Don't ignore directories in directories
+!**/*/
+
+# Don't ignore these files
+!lib/**/*
+!maps/**/*
+!textures/**/*
+!src/**/*
+!include/**/*
+!Makefile
+!subject.pdf
+!.gitignore
+
+#ignore all object files and libraries
+**/*.o
+*.o
+**/*.a
+*.a
