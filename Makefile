@@ -51,12 +51,4 @@ fclean: clean
 
 re: fclean all
 
-commit:
-	git status -s
-	@$(eval date=$(shell date +"%Y-%m-%d-%H:%M"))
-	@$(eval curr_branch=$(shell git branch | grep "\*" | cut -d ' ' -f2 ))
-	@$(eval MSG=$(shell read -p "Commit message: " MSG; echo $$MSG))
-	@git commit -m "[$(curr_branch)]<$(date)> $(MSG)"; true
-	@git push origin $(curr_branch)
-
 .PHONY: clean fclean all re $(LIB_PATH) commit
