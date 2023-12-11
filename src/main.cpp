@@ -33,6 +33,7 @@ int main()
 {
 	struct sockaddr_in servaddr, client;
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	const char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 29\n\nLogi eres un muerto de hambre";
 	if (sockfd == -1)
 	{
 		std::cout << "[SERVER] Error creating socket\n";
@@ -76,8 +77,8 @@ int main()
 			std::cout << "[SERVER] Error reading from socket\n";
 			return 1;
 		}
-		std::cout << "[" << this_time << "] Message from client: " << buff;
-		n = write(connfd, "Recibido colega!", strlen("Recibido colega!"));
+		std::cout << buff;
+		n = write(connfd, hello, strlen(hello));
 		if (n < 0)
 		{
 			std::cout << "[SERVER] Error writing to socket\n";
