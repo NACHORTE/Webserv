@@ -6,6 +6,7 @@
 #include <poll.h>
 #include <sys/time.h>
 #include <stdio.h>
+#include <string.h>
 
 #define BUFF_SIZE 255
 #define SERV_HOST_ADDR "127.0.0.1"
@@ -68,6 +69,21 @@ int main()
 			return 1;
 		}
 		std::cout << "new_client!\n";
+		char buff[BUFF_SIZE];
+		int n = read(connfd, buff, BUFF_SIZE);
+		if (n < 0)
+		{
+			std::cout << "[SERVER] Error reading from socket\n";
+			return 1;
+		}
+		std::cout << "[" << this_time << "] Message from client: " << buff;
+		n = write(connfd, "Recibido colega!", strlen("Recibido colega!"));
+		if (n < 0)
+		{
+			std::cout << "[SERVER] Error writing to socket\n";
+			return 1;
+		}
+		memset(buff, 0, BUFF_SIZE);
 		close(connfd);
 	}
 	return 0;
