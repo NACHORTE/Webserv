@@ -7,8 +7,11 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
+#include "response.hpp"
+#include <fstream>
+#include <sstream>
 
-#define BUFF_SIZE 255
+#define BUFF_SIZE 10000
 #define SERV_HOST_ADDR "127.0.0.1"
 #define SERV_PORT 8080
 #define BACKLOG 5
@@ -29,11 +32,39 @@ unsigned long millis()
 	return this_time - first_time;
 }
 
+std::string readImageFile(const std::string& filePath) {
+    std::ifstream imageFile(filePath, std::ios::binary);
+
+    if (!imageFile) {
+        std::cerr << "Error opening image file: " << filePath << std::endl;
+        return "";
+    }
+
+    std::ostringstream imageContent;
+    imageContent << imageFile.rdbuf();
+    return imageContent.str();
+}
+
+std::string readHtmlFile(const std::string& filePath) {
+    std::ifstream htmlFile(filePath);
+
+    if (!htmlFile) {
+        std::cerr << "Error opening HTML file: " << filePath << std::endl;
+        return "";
+    }
+
+    std::ostringstream htmlContent;
+    htmlContent << htmlFile.rdbuf();
+    return htmlContent.str();
+}
+
 int main()
 {
 	struct sockaddr_in servaddr, client;
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	const char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 29\n\nLogi eres un muerto de hambre";
+	const char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 29\n\nHello from server!";
+	HttpResponse response;
+
 	if (sockfd == -1)
 	{
 		std::cout << "[SERVER] Error creating socket\n";
@@ -78,12 +109,62 @@ int main()
 			return 1;
 		}
 		std::cout << buff;
-		n = write(connfd, hello, strlen(hello));
+		response.set_status(200);
+		response.set_content_type("text/plain");
+		response.set_body("Hello from server!");
+		response.set_content_len(response.get_length());
+
+		HttpResponse imageResponse;
+		imageResponse.set_status(200);
+		imageResponse.set_content_type("image/jpeg");
+		imageResponse.set_body(readImageFile("../imgs/goku.jpg"));
+		imageResponse.set_content_len(imageResponse.get_length());
+
+		HttpResponse htmlResponse;
+		htmlResponse.set_status(200);
+		htmlResponse.set_content_type("text/html");
+		htmlResponse.set_body(readHtmlFile("./index.html"));
+		htmlResponse.set_content_len(htmlResponse.get_length());
+
+		if (strncmp(buff, "GET / HTTP/1.1", strlen("GET / HTTP/1.1")) == 0)
+			n = write(connfd, htmlResponse.get_response().c_str(), htmlResponse.get_response().length());
+		else if (strncmp(buff, "GET /imgs/goku.jpg HTTP/1.1", strlen("GET /imgs/goku.jpg HTTP/1.1")) == 0)
+		{
+			std::cout << "\n\n" << imageResponse.get_response().c_str() << "\n\n";
+			n = write(connfd, imageResponse.get_response().c_str(), imageResponse.get_response().length());
+		}
+		else
+		{
+			std::cout << "Not found\n";
+			n = 1;
+		}
+			//n = write(connfd, response.get_response().c_str(), response.get_response().length());
+
 		if (n < 0)
 		{
 			std::cout << "[SERVER] Error writing to socket\n";
 			return 1;
 		}
+		/*n = write(connfd, htmlResponse.get_response().c_str(), htmlResponse.get_response().length());
+		if (n < 0)
+		{
+			std::cout << "[SERVER] Error writing to socket\n";
+			return 1;
+		}*/
+
+		/*n = write(connfd, imageResponse.get_response().c_str(), imageResponse.get_response().length());
+		if (n < 0)
+		{
+			std::cout << "[SERVER] Error writing to socket\n";
+			return 1;
+		}*/
+
+		/*n = write(connfd, response.get_response().c_str(), response.get_response().length());
+		if (n < 0)
+		{
+			std::cout << "[SERVER] Error writing to socket\n";
+			return 1;
+		}*/
 		memset(buff, 0, BUFF_SIZE);
 		close(connfd);
 	}
