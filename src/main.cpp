@@ -13,7 +13,7 @@
 
 #define BUFF_SIZE 10000
 #define SERV_HOST_ADDR "127.0.0.1"
-#define SERV_PORT 8080
+#define SERV_PORT 8081
 #define BACKLOG 5
 
 unsigned long millis()
@@ -62,7 +62,7 @@ int main()
 {
 	struct sockaddr_in servaddr, client;
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	const char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 29\n\nHello from server!";
+	//const char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 29\n\nHello from server!";
 	HttpResponse response;
 
 	if (sockfd == -1)
@@ -117,14 +117,20 @@ int main()
 		HttpResponse imageResponse;
 		imageResponse.set_status(200);
 		imageResponse.set_content_type("image/jpeg");
-		imageResponse.set_body(readImageFile("../imgs/goku.jpg"));
+		imageResponse.set_body(readImageFile("imgs/goku.jpg"));
 		imageResponse.set_content_len(imageResponse.get_length());
 
 		HttpResponse htmlResponse;
 		htmlResponse.set_status(200);
 		htmlResponse.set_content_type("text/html");
-		htmlResponse.set_body(readHtmlFile("./index.html"));
+		htmlResponse.set_body(readHtmlFile("src/index.html"));
 		htmlResponse.set_content_len(htmlResponse.get_length());
+
+		HttpResponse htmlError;
+		htmlError.set_status(404);
+		htmlError.set_content_type("text/html");
+		htmlError.set_body(readHtmlFile("src/error.html"));
+		htmlError.set_content_len(htmlError.get_length());
 
 		if (strncmp(buff, "GET / HTTP/1.1", strlen("GET / HTTP/1.1")) == 0)
 			n = write(connfd, htmlResponse.get_response().c_str(), htmlResponse.get_response().length());
@@ -135,6 +141,7 @@ int main()
 		}
 		else
 		{
+			n = write(connfd, htmlError.get_response().c_str(), htmlError.get_response().length());
 			std::cout << "Not found\n";
 			n = 1;
 		}

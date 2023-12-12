@@ -2,7 +2,7 @@ NAME := WebServ
 
 CC := c++
 RM := rm -f
-CFLAGS := -Wall -Wextra -Werror -std=c++98
+CFLAGS := -Wall -Wextra -Werror #-std=c++98
 
 # proyect directories
 SRC_DIR := src
@@ -15,7 +15,8 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 # Source files without SRC_DIR
-SRC := main.cpp
+SRC := response.cpp\
+	main.cpp
 
 # Setup obj and src files and obj folders
 SRC := $(addprefix $(SRC_DIR)/,$(SRC))
