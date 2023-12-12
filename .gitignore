@@ -19,6 +19,7 @@
 !subject.pdf
 !.gitignore
 !imgs/**/*
+!upload/**/*
 
 #ignore all object files and libraries
 **/*.o
