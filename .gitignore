@@ -16,7 +16,7 @@
 !Makefile
 !subject.pdf
 !.gitignore
-!img/**/*
+!imgs/**/*
 
 #ignore all object files and libraries
 **/*.o
