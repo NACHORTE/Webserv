@@ -11,8 +11,10 @@
 !**/*/
 
 # Don't ignore these files
-!src/**/*
-!include/**/*
+!src/**/*.cpp
+!src/**/*.hpp
+!html/**/*.html
+!include/**/*.hpp
 !Makefile
 !subject.pdf
 !.gitignore
