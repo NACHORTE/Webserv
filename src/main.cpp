@@ -123,13 +123,13 @@ int main()
 		HttpResponse htmlResponse;
 		htmlResponse.set_status(200);
 		htmlResponse.set_content_type("text/html");
-		htmlResponse.set_body(readHtmlFile("src/index.html"));
+		htmlResponse.set_body(readHtmlFile("html/index.html"));
 		htmlResponse.set_content_len(htmlResponse.get_length());
 
 		HttpResponse htmlError;
 		htmlError.set_status(404);
 		htmlError.set_content_type("text/html");
-		htmlError.set_body(readHtmlFile("src/error.html"));
+		htmlError.set_body(readHtmlFile("html/error.html"));
 		htmlError.set_content_len(htmlError.get_length());
 
 		if (strncmp(buff, "GET / HTTP/1.1", strlen("GET / HTTP/1.1")) == 0)
@@ -138,6 +138,10 @@ int main()
 		{
 			std::cout << "\n\n" << imageResponse.get_response().c_str() << "\n\n";
 			n = write(connfd, imageResponse.get_response().c_str(), imageResponse.get_response().length());
+		}
+		else if (strncmp(buff, "POST /upload HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
+		{
+			std::cout << "FILE RECIEVED\n";
 		}
 		else
 		{

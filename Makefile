@@ -15,8 +15,8 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 # Source files without SRC_DIR
-SRC := response.cpp\
-	main.cpp
+SRC := main.cpp\
+	class/response.cpp
 
 # Setup obj and src files and obj folders
 SRC := $(addprefix $(SRC_DIR)/,$(SRC))

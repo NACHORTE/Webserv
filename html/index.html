@@ -20,9 +20,11 @@
 <body>
     <h1>El Rodek que no trabaja</h1>
     <img src="../imgs/goku.jpg" alt="Sample Image">
-	<form action="/hola" method="post">
-		<input type="text" name="data1">
-		<input type="submit">
-	</form>
+    <form action="../upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*">
+        <input type="text" name="data1">
+        <input type="submit">
+    </form>
 </body>
 </html>
+
