@@ -24,5 +24,6 @@ HttpRequestHandler &HttpRequestHandler::operator=(const HttpRequestHandler &rhs)
 
 std::ostream &operator<<(std::ostream &os, const HttpRequestHandler &obj)
 {
+	(void)obj;
 	return (os);
 }
