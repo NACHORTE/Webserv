@@ -13,7 +13,7 @@
 
 #define BUFF_SIZE 10000
 #define SERV_HOST_ADDR "127.0.0.1"
-#define SERV_PORT 8081
+#define SERV_PORT 8080
 #define BACKLOG 5
 
 unsigned long millis()
@@ -111,7 +111,7 @@ int main()
 		std::cout << buff;
 		response.set_status(200);
 		response.set_content_type("text/plain");
-		response.set_body("Hello from server!");
+		response.set_body("Recieved!");
 		response.set_content_len(response.get_length());
 
 		HttpResponse imageResponse;
@@ -123,7 +123,7 @@ int main()
 		HttpResponse htmlResponse;
 		htmlResponse.set_status(200);
 		htmlResponse.set_content_type("text/html");
-		htmlResponse.set_body(readHtmlFile("html/index.html"));
+		htmlResponse.set_body(readHtmlFile("html/dropdown.html"));
 		htmlResponse.set_content_len(htmlResponse.get_length());
 
 		HttpResponse htmlUpload;
@@ -144,6 +144,10 @@ int main()
 		{
 			std::cout << "\n\n" << imageResponse.get_response().c_str() << "\n\n";
 			n = write(connfd, imageResponse.get_response().c_str(), imageResponse.get_response().length());
+		}
+		else if (strncmp(buff, "POST /dropdown HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
+		{
+			n = write(connfd, response.get_response().c_str(), response.get_response().length());
 		}
 		else if (strncmp(buff, "POST /upload HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
 		{
@@ -179,10 +183,16 @@ int main()
 					binaryData = body.substr(binaryDataStart + 4);
 				}
 				std::cout << "Binary data: " << binaryData << std::endl;
+				std::cout << "Hexadecimal representation of binary data:\n";
+				for (char c : binaryData) {
+					printf("%02X ", static_cast<unsigned char>(c));
+				}
+				std::cout << "\n";
 				std::ofstream outputFile("./upload/" + filename, std::ios::binary);
 				outputFile.write(binaryData.c_str(), binaryData.size());
 				outputFile.close();
 				n = write(connfd, htmlUpload.get_response().c_str(), htmlUpload.get_response().length());
+
 
 			} else {
 				std::cout << "Boundary not found\n";
