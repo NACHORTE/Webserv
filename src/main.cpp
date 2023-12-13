@@ -10,11 +10,11 @@
 #include "response.hpp"
 #include <fstream>
 #include <sstream>
+#include "defines.h"
 
-#define BUFF_SIZE 10000
-#define SERV_HOST_ADDR "127.0.0.1"
-#define SERV_PORT 8081
-#define BACKLOG 5
+#define RED "\033[1;31m"
+#define RESET "\033[0m"
+
 
 unsigned long millis()
 {
@@ -84,15 +84,10 @@ int main()
 		std::cout << "[SERVER] Error listen\n";
 		return 1;
 	}
-	unsigned long last_time = millis();
 	while(1)
 	{
-		unsigned long this_time = millis();
-		if (this_time - last_time > 1000)
-		{
-			std::cout << "[" << this_time << "] SERVER WAITING\n"; 
-			last_time = this_time;
-		}
+		std::cout << "[" << millis() << "] SERVER WAITING\n";
+
 		unsigned int len = sizeof(client);
 		int connfd = accept(sockfd, (struct sockaddr *)&client, &len);
 		if (connfd < 0)
@@ -108,7 +103,7 @@ int main()
 			std::cout << "[SERVER] Error reading from socket\n";
 			return 1;
 		}
-		std::cout << buff;
+		std::cout << buff << RED "$\n~~~~~~~~~~~~~~~\n" RESET;
 		response.set_status(200);
 		response.set_content_type("text/plain");
 		response.set_body("Hello from server!");
