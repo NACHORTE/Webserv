@@ -121,6 +121,12 @@ int main()
 		htmlResponse.set_body(readHtmlFile("html/index.html"));
 		htmlResponse.set_content_len(htmlResponse.get_length());
 
+		HttpResponse htmlUpload;
+		htmlUpload.set_status(200);
+		htmlUpload.set_content_type("text/html");
+		htmlUpload.set_body(readHtmlFile("html/upload.html"));
+		htmlUpload.set_content_len(htmlUpload.get_length());
+
 		HttpResponse htmlError;
 		htmlError.set_status(404);
 		htmlError.set_content_type("text/html");
@@ -136,6 +142,46 @@ int main()
 		}
 		else if (strncmp(buff, "POST /upload HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
 		{
+			std::string boundaryTag = "boundary=";
+			size_t boundaryPos = std::string(buff).find(boundaryTag);
+			std::string boundary = std::string(buff).substr(boundaryPos + boundaryTag.length());
+			size_t boundaryEndPos = std::string(buff).find("\r\n", boundaryPos);
+
+			if (boundaryPos != std::string::npos) {
+				std::string boundaryDelimiter = "--" + std::string(buff).substr(boundaryPos + boundaryTag.length(), boundaryEndPos - (boundaryPos + boundaryTag.length()));
+				std::cout << "\n\nBoundary MIO: " << boundaryDelimiter << "\n\n";
+				std::string body = std::string(buff).substr(std::string(buff).find(boundaryDelimiter) + boundaryDelimiter.length() + 2);
+				std::cout << "\n\nBody MIO: " << body << "\n\n";
+				std::string filename;
+				std::string contentType;
+				size_t filenameStart = body.find("filename=\"");
+				size_t filenameEnd = body.find("\"", filenameStart + 10);
+				if (filenameStart != std::string::npos && filenameEnd != std::string::npos) {
+					filename = body.substr(filenameStart + 10, filenameEnd - (filenameStart + 10));
+					std::cout << "Nombre del archivo: " << filename << std::endl;
+				}
+				// Buscar el tipo de contenido
+				size_t contentTypeStart = body.find("Content-Type: ");
+				size_t contentTypeEnd = body.find("\n", contentTypeStart);
+				if (contentTypeStart != std::string::npos && contentTypeEnd != std::string::npos) {
+					contentType = body.substr(contentTypeStart + 14, contentTypeEnd - (contentTypeStart + 14));
+					std::cout << "Tipo de contenido: " << contentType << std::endl;
+				}
+				size_t binaryDataStart = body.find("\r\n\r\n");
+				std::string binaryData;
+				if (binaryDataStart != std::string::npos) 
+				{
+					binaryData = body.substr(binaryDataStart + 4);
+				}
+				std::cout << "Binary data: " << binaryData << std::endl;
+				std::ofstream outputFile("./upload/" + filename, std::ios::binary);
+				outputFile.write(binaryData.c_str(), binaryData.size());
+				outputFile.close();
+				n = write(connfd, htmlUpload.get_response().c_str(), htmlUpload.get_response().length());
+
+			} else {
+				std::cout << "Boundary not found\n";
+			}
 			std::cout << "FILE RECIEVED\n";
 		}
 		else
