@@ -8,9 +8,7 @@ class HttpResponse {
 	~HttpResponse();
 
 	void set_status(int code);
-	void set_content_type(const std::string& content_type);
-	void set_content_len(int content_len);
-	void set_body(const std::string& body);
+	void set_body(const std::string& content_type, const std::string& body);
 	int get_length();
 	std::string get_response();
 	private:

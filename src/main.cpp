@@ -7,17 +7,15 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
-#include "response.hpp"
-#include <fstream>
+#include "HttpResponse.hpp"
 #include <sstream>
+#include <cstring>
+#include <fstream>
 
-#define BUFF_SIZE 10000
-#define SERV_HOST_ADDR "127.0.0.1"
-#define SERV_PORT 8080
-#define BACKLOG 5
 #include "defines.h"
 #include "colors.h"
 #include "HttpRequestHandler.hpp"
+#include "utils.hpp"
 
 unsigned long millis()
 {
@@ -33,32 +31,6 @@ unsigned long millis()
 	}
 	unsigned long this_time = tv.tv_sec *1000 + tv.tv_usec / 1000;
 	return this_time - first_time;
-}
-
-std::string readImageFile(const std::string& filePath) {
-    std::ifstream imageFile(filePath, std::ios::binary);
-
-    if (!imageFile) {
-        std::cerr << "Error opening image file: " << filePath << std::endl;
-        return "";
-    }
-
-    std::ostringstream imageContent;
-    imageContent << imageFile.rdbuf();
-    return imageContent.str();
-}
-
-std::string readHtmlFile(const std::string& filePath) {
-    std::ifstream htmlFile(filePath);
-
-    if (!htmlFile) {
-        std::cerr << "Error opening HTML file: " << filePath << std::endl;
-        return "";
-    }
-
-    std::ostringstream htmlContent;
-    htmlContent << htmlFile.rdbuf();
-    return htmlContent.str();
 }
 
 int main()
@@ -109,33 +81,23 @@ int main()
 		HttpRequestHandler obj(buff);
 		std::cout << obj << std::endl;
 		response.set_status(200);
-		response.set_content_type("text/plain");
-		response.set_body("Recieved!");
-		response.set_content_len(response.get_length());
+		response.set_body("text/plain","Recieved!");
 
 		HttpResponse imageResponse;
 		imageResponse.set_status(200);
-		imageResponse.set_content_type("image/jpeg");
-		imageResponse.set_body(readImageFile("imgs/goku.jpg"));
-		imageResponse.set_content_len(imageResponse.get_length());
+		imageResponse.set_body("image/jpeg",readImageFile("imgs/goku.jpg"));
 
 		HttpResponse htmlResponse;
 		htmlResponse.set_status(200);
-		htmlResponse.set_content_type("text/html");
-		htmlResponse.set_body(readHtmlFile("html/dropdown.html"));
-		htmlResponse.set_content_len(htmlResponse.get_length());
+		htmlResponse.set_body("text/html",readHtmlFile("html/dropdown.html"));
 
 		HttpResponse htmlUpload;
 		htmlUpload.set_status(200);
-		htmlUpload.set_content_type("text/html");
-		htmlUpload.set_body(readHtmlFile("html/upload.html"));
-		htmlUpload.set_content_len(htmlUpload.get_length());
+		htmlUpload.set_body("text/html",readHtmlFile("html/upload.html"));
 
 		HttpResponse htmlError;
 		htmlError.set_status(404);
-		htmlError.set_content_type("text/html");
-		htmlError.set_body(readHtmlFile("html/error.html"));
-		htmlError.set_content_len(htmlError.get_length());
+		htmlError.set_body("text/html",readHtmlFile("html/error.html"));
 
 		if (strncmp(buff, "GET / HTTP/1.1", strlen("GET / HTTP/1.1")) == 0)
 			n = write(connfd, htmlResponse.get_response().c_str(), htmlResponse.get_response().length());

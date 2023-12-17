@@ -1,8 +1,9 @@
 #pragma once
 #include <iostream>
 #include <map>
+#include "HttpResponse.hpp"
 
-struct HttpRequestHandler
+class HttpRequestHandler
 {
 	public:
 		HttpRequestHandler(void);
@@ -16,11 +17,12 @@ struct HttpRequestHandler
 		std::string httpVersion;
 		std::map<std::string, std::string> headers;
 		std::string body;
-
+		HttpResponse response;
 		void parseMsg(const std::string &msg);
 	protected:
 	private:
-
+		void generateResponse();
+		void setHtmlBodyFromFile(const std::string &filename);
 	friend std::ostream &operator<<(std::ostream &os, const struct HttpRequestHandler &obj);
 };
 

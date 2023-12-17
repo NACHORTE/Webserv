@@ -1,8 +1,9 @@
 #include "HttpRequestHandler.hpp"
 #include "defines.h"
 #include <unistd.h>
-#include <cstring>
 #include <sstream>
+#include <fstream>
+#include "utils.hpp"
 #include "colors.h"
 
 HttpRequestHandler::HttpRequestHandler(void):
@@ -67,6 +68,84 @@ void HttpRequestHandler::parseMsg(const std::string &msg)
     std::stringstream bodyStream;
 	bodyStream << ss.rdbuf();
 	body = bodyStream.str();
+	generateResponse();
+}
+
+void HttpRequestHandler::setHtmlBodyFromFile(const std::string &filename)
+{
+	try
+	{
+		response.set_status(200);
+		response.set_body("text/html",readHtmlFile("html/index.html"));
+	}
+	catch (const std::invalid_argument &e) 
+	{
+		response.set_status(404);
+		try
+		{
+			response.set_body("text/html",readHtmlFile("html/error.html"));
+		}
+		catch (...)
+		{
+			response.set_body("text/plain","Error opening HTML file (file not found)");
+		}
+	}
+	catch (const std::runtime_error &e)
+	{
+		response.set_status(500);
+		response.set_body("text/plain",std::string("Error opening HTML file (other error): ") + e.what());
+	}
+}
+
+void HttpRequestHandler::generateResponse()
+{
+	std::string command_list[] = {"GET", "POST", "DELETE"};
+	std::string allowed_paths[] = {"html", "imgs"};
+
+	size_t num_elements = sizeof(command_list) / sizeof(command_list[0]);
+	int command_selected = -1;
+	for (int i = 0; i < num_elements; i++)
+	{
+		if (command == command_list[i])
+		{
+			command_selected = i;
+			break;
+		}
+	}
+	if (command_selected == -1)
+	{
+		response.set_status(400);
+		response.set_body("text/plain",std::string("Command \"") + command + std::string("\" couldn't be found"));
+		return ;
+	}
+
+	if (path == "/")
+	{
+		setHtmlBodyFromFile("html/index.html");
+		return ;
+	}
+	if (checkPathFormat(path) == false)
+	{
+		response.set_status(400);
+		response.set_body("text/plain",std::string("Path \"") + path + std::string("\" is invalid"));
+		return ;
+	}
+	if (checkAllowedPath(path, allowed_paths) == false)
+	{
+		response.set_status(403);
+		response.set_body("text/plain",std::string("Path \"") + path + std::string("\" is not allowed"));
+		return ;
+	}
+	num_elements = sizeof(allowed_paths) / sizeof(allowed_paths[0]);
+	for (int i = 0; i < num_elements; i++)
+	{
+		if (path.find(std::string("/") + allowed_paths[i]) != std::string::npos)
+		{
+			response.set_status(200);
+			setHtmlBodyFromFile(path);
+			return ;
+		}
+	}
 }
 
 std::ostream &operator<<(std::ostream &os, const HttpRequestHandler &obj)
