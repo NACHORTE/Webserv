@@ -11,10 +11,8 @@
 #include <fstream>
 #include <sstream>
 #include "defines.h"
-
-#define RED "\033[1;31m"
-#define RESET "\033[0m"
-
+#include "colors.h"
+#include "HttpRequestHandler.hpp"
 
 unsigned long millis()
 {
@@ -103,7 +101,8 @@ int main()
 			std::cout << "[SERVER] Error reading from socket\n";
 			return 1;
 		}
-		std::cout << buff << RED "$\n~~~~~~~~~~~~~~~\n" RESET;
+		HttpRequestHandler obj(buff);
+		std::cout << obj << std::endl;
 		response.set_status(200);
 		response.set_content_type("text/plain");
 		response.set_body("Hello from server!");

@@ -12,9 +12,11 @@
 
 # Don't ignore these files
 !src/**/*.cpp
+!src/**/*.h
 !src/**/*.hpp
 !html/**/*.html
 !include/**/*.hpp
+!include/**/*.h
 !Makefile
 !subject.pdf
 !.gitignore

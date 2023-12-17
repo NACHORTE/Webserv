@@ -3,51 +3,34 @@
 #include <unistd.h>
 #include <cstring>
 #include <sstream>
+#include "colors.h"
 
-HttpRequestHandler::HttpRequestHandler(void)
+HttpRequestHandler::HttpRequestHandler(void):
+	command(), path(), httpVersion(), headers(), body()
+{}
+
+HttpRequestHandler::HttpRequestHandler(const std::string &msg)
 {
+	parseMsg(msg);
 }
 
-HttpRequestHandler::HttpRequestHandler(const HttpRequestHandler & src)
-{
-	*this = src;
-}
+HttpRequestHandler::HttpRequestHandler(const HttpRequestHandler & src):
+	command(src.command), path(src.path), httpVersion(src.httpVersion),
+	headers(src.headers), body(src.body)
+{}
 
 HttpRequestHandler::~HttpRequestHandler()
-{
-}
-
-const std::string &HttpRequestHandler::getCommand()
-{
-	return _command;
-}
-
-const std::string &HttpRequestHandler::getPath()
-{
-	return _path;
-}
-
-const std::string &HttpRequestHandler::getHttpVersion()
-{
-	return _httpVersion;
-}
-
-const std::string &HttpRequestHandler::getHeader(const std::string &key)
-{
-	return _headers[key];
-}
-
-const std::string &HttpRequestHandler::getBody()
-{
-	return _body;
-}
-
+{}
 
 HttpRequestHandler &HttpRequestHandler::operator=(const HttpRequestHandler &rhs)
 {
 	if (this != &rhs)
 	{
-		// copy
+		command = rhs.command;
+		path = rhs.path;
+		httpVersion = rhs.httpVersion;
+		headers = rhs.headers;
+		body = rhs.body;
 	}
 	return (*this);
 }
@@ -61,7 +44,7 @@ void HttpRequestHandler::parseMsg(const std::string &msg)
     // Read first line and save Command, Path and httpversion
     std::getline(ss, line);
     std::istringstream lineStream(line);
-    lineStream >> _command >> _path >> _httpVersion;
+    lineStream >> command >> path >> httpVersion;
 
     // Save headers
     while (std::getline(ss, line) && !line.empty())
@@ -69,24 +52,35 @@ void HttpRequestHandler::parseMsg(const std::string &msg)
         size_t separator = line.find(":");
         if (separator != std::string::npos) {
             std::string key = line.substr(0, separator);
-            std::string value = line.substr(separator + 2);  // +2 to skip ": "
-            _headers[key] += value; // += so if the 
+            std::string value = line.substr(separator + 2);
+			std::cout << (int)value[value.length() - 1]  << (int)'\n'<< "\n";
+			if (!value.empty() && value[value.length() - 1] == '\n')
+			{
+				std::cout << "popping value of " << value << "\n";
+    			value.pop_back();
+			}
+			headers[key] += value;
         }
     }
 
 	//save the body
     std::stringstream bodyStream;
 	bodyStream << ss.rdbuf();
-	_body = bodyStream.str();
+	body = bodyStream.str();
 }
 
 std::ostream &operator<<(std::ostream &os, const HttpRequestHandler &obj)
 {
-
-	std::map<std::string, std::string>::iterator iterador;
-    for (iterador = obj._headers.begin(); iterador != miMapa.end(); ++iterador) {
-        // Acceder a la clave y al valor usando el iterador
-        std::cout << "Clave: " << iterador->first << ", Valor: " << iterador->second << std::endl;
+	os << GREEN "First line content:"
+			<< CYAN "\n\t_command: " RESET << "\"" <<obj.command << "\""
+			<< CYAN "\n\t_path: " RESET << "\"" << obj.path << "\""
+			<< CYAN "\n\t_httpversion: " RESET << "\"" << obj.httpVersion << "\""
+			<< "\n";
+	os << GREEN "Header content:" RESET "\n";
+	std::map<std::string, std::string>::const_iterator it;
+ 	for (it = obj.headers.begin(); it != obj.headers.end(); ++it) {
+        os << CYAN "\tKey: \"" RESET << it->first << CYAN "\"    Value: \"" RESET << it->second << CYAN "\"" RESET << std::endl;
     }
+		os << GREEN "Body content:" RESET "\n\t\""<< obj.body << "\"\n";
 	return (os);
 }
