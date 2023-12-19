@@ -11,6 +11,8 @@
 #include <sstream>
 #include <cstring>
 #include <fstream>
+#include <vector>
+#include <poll.h>
 
 #include "defines.h"
 #include "colors.h"
@@ -64,22 +66,67 @@ int main()
 		std::cout << "[" << millis() << "] SERVER WAITING\n";
 
 		unsigned int len = sizeof(client);
-		int connfd = accept(sockfd, (struct sockaddr *)&client, &len);
+		int connfd = accept(sockfd, (struct sockaddr *)&client, &len); //NOTE blocking call
 		if (connfd < 0)
 		{
 			std::cout << "[SERVER] Error accept\n";
 			return 1;
 		}
 		std::cout << "new_client!\n";
+
+		std::vector<struct pollfd> fds(1);
+		fds[0].fd = connfd;
+		fds[0].events = POLLIN;
+
 		char buff[BUFF_SIZE];
-		int n = read(connfd, buff, BUFF_SIZE);
+		int n;
+		std::string msg;
+		size_t fds_size = fds.size();
+		std::cout << "polling\n";
+		while ((n = poll(fds.data(),fds_size, 1000)) > 0)
+		{
+			std::cout << "inside polling\n";
+			for (size_t i = 0; i < fds_size; i++)
+			{
+				std::cout << "inside for " << i << "\n";
+				if (fds[i].revents & POLLIN)
+				{
+					std::cout << "inside if\n";
+					int n_read = read(connfd, buff, BUFF_SIZE);
+					if (n_read < 0)
+					{
+						std::cout << "[SERVER] Error reading from socket\n";
+						return 1;
+					}
+					std::cout << "n_read: " << n_read << "\n";
+					msg += std::string(buff,n_read);
+					std::cout << RED "buff:"<< "\n";
+					for (size_t i = 0; i < static_cast<size_t>(n_read); i++)
+					{
+						if (buff[i] == '\0')
+							std::cout << "\\0";
+						else if (buff[i] == '\n')
+							std::cout << buff[i];
+						else if (buff[i] == '\r')
+							std::cout << buff[i];
+						else if (isprint(buff[i]))
+							std::cout << buff[i];
+						else
+							std::cout << "\\x" << std::hex << (int)buff[i];
+					}
+					std::cout << RESET << "\n";
+				}
+			}
+		}
 		if (n < 0)
 		{
-			std::cout << "[SERVER] Error reading from socket\n";
+			std::cout << "[SERVER] Error polling\n";
 			return 1;
 		}
-		HttpRequestHandler obj(buff);
-		std::cout << obj << std::endl;
+		std::cout << BLUE << msg << RESET << std::endl;
+		//HttpRequestHandler obj(buff);
+		//std::cout << GREEN << buff << RESET << std::endl;
+		//std::cout << obj << std::endl;
 		response.set_status(200);
 		response.set_body("text/plain","Recieved!");
 
@@ -89,7 +136,7 @@ int main()
 
 		HttpResponse htmlResponse;
 		htmlResponse.set_status(200);
-		htmlResponse.set_body("text/html",readHtmlFile("html/dropdown.html"));
+		htmlResponse.set_body("text/html",readHtmlFile("html/index.html"));
 
 		HttpResponse htmlUpload;
 		htmlUpload.set_status(200);
@@ -99,28 +146,28 @@ int main()
 		htmlError.set_status(404);
 		htmlError.set_body("text/html",readHtmlFile("html/error.html"));
 
-		if (strncmp(buff, "GET / HTTP/1.1", strlen("GET / HTTP/1.1")) == 0)
+		if (strncmp(msg.c_str(), "GET / HTTP/1.1", strlen("GET / HTTP/1.1")) == 0)
 			n = write(connfd, htmlResponse.get_response().c_str(), htmlResponse.get_response().length());
-		else if (strncmp(buff, "GET /imgs/goku.jpg HTTP/1.1", strlen("GET /imgs/goku.jpg HTTP/1.1")) == 0)
+		else if (strncmp(msg.c_str(), "GET /imgs/goku.jpg HTTP/1.1", strlen("GET /imgs/goku.jpg HTTP/1.1")) == 0)
 		{
 			std::cout << "\n\n" << imageResponse.get_response().c_str() << "\n\n";
 			n = write(connfd, imageResponse.get_response().c_str(), imageResponse.get_response().length());
 		}
-		else if (strncmp(buff, "POST /dropdown HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
+		else if (strncmp(msg.c_str(), "POST /index HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
 		{
 			n = write(connfd, response.get_response().c_str(), response.get_response().length());
 		}
-		else if (strncmp(buff, "POST /upload HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
+		else if (strncmp(msg.c_str(), "POST /upload HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
 		{
 			std::string boundaryTag = "boundary=";
-			size_t boundaryPos = std::string(buff).find(boundaryTag);
-			std::string boundary = std::string(buff).substr(boundaryPos + boundaryTag.length());
-			size_t boundaryEndPos = std::string(buff).find("\r\n", boundaryPos);
+			size_t boundaryPos = msg.find(boundaryTag);
+			std::string boundary = msg.substr(boundaryPos + boundaryTag.length());
+			size_t boundaryEndPos = msg.find("\r\n", boundaryPos);
 
 			if (boundaryPos != std::string::npos) {
-				std::string boundaryDelimiter = "--" + std::string(buff).substr(boundaryPos + boundaryTag.length(), boundaryEndPos - (boundaryPos + boundaryTag.length()));
+				std::string boundaryDelimiter = "--" + msg.substr(boundaryPos + boundaryTag.length(), boundaryEndPos - (boundaryPos + boundaryTag.length()));
 				std::cout << "\n\nBoundary MIO: " << boundaryDelimiter << "\n\n";
-				std::string body = std::string(buff).substr(std::string(buff).find(boundaryDelimiter) + boundaryDelimiter.length() + 2);
+				std::string body = msg.substr(msg.find(boundaryDelimiter) + boundaryDelimiter.length() + 2);
 				std::cout << "\n\nBody MIO: " << body << "\n\n";
 				std::string filename;
 				std::string contentType;

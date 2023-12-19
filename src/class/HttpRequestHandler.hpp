@@ -3,6 +3,10 @@
 #include <map>
 #include "HttpResponse.hpp"
 
+/*
+ * This class is used to handle the HTTP request
+ * It parses the request and generates the response
+ */
 class HttpRequestHandler
 {
 	public:

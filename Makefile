@@ -15,8 +15,7 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 # Source files without SRC_DIR
-SRC := dropdown.cpp\
-	main.cpp\
+SRC := main.cpp\
 	class/HttpResponse.cpp\
 	class/HttpRequestHandler.cpp\
 	utils.cpp

@@ -97,6 +97,24 @@ void HttpRequestHandler::setHtmlBodyFromFile(const std::string &filename)
 	}
 }
 
+int checkPathFormat(const std::string &path)
+{//NOTE esto no esta todavia
+	if (path[0] != '/')
+		return (false);
+	if (path.find("..") != std::string::npos)
+		return (false);
+	return (true);
+}
+int checkAllowedPath(const std::string &path, const std::string *allowed_paths, size_t num_elements)
+{
+	for (size_t i = 0; i < num_elements; i++)
+	{
+		if (path.find(std::string("/") + allowed_paths[i]) != std::string::npos)
+			return (true);
+	}
+	return (false);
+}
+
 void HttpRequestHandler::generateResponse()
 {
 	std::string command_list[] = {"GET", "POST", "DELETE"};
@@ -119,6 +137,7 @@ void HttpRequestHandler::generateResponse()
 		return ;
 	}
 
+	num_elements = sizeof(allowed_paths) / sizeof(allowed_paths[0]);
 	if (path == "/")
 	{
 		setHtmlBodyFromFile("html/index.html");
@@ -130,13 +149,12 @@ void HttpRequestHandler::generateResponse()
 		response.set_body("text/plain",std::string("Path \"") + path + std::string("\" is invalid"));
 		return ;
 	}
-	if (checkAllowedPath(path, allowed_paths) == false)
+	if (checkAllowedPath(path, allowed_paths, num_elements) == false)
 	{
 		response.set_status(403);
 		response.set_body("text/plain",std::string("Path \"") + path + std::string("\" is not allowed"));
 		return ;
 	}
-	num_elements = sizeof(allowed_paths) / sizeof(allowed_paths[0]);
 	for (size_t i = 0; i < num_elements; i++)
 	{
 		if (path.find(std::string("/") + allowed_paths[i]) != std::string::npos)
