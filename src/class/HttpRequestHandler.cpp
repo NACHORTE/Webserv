@@ -76,7 +76,7 @@ void HttpRequestHandler::setHtmlBodyFromFile(const std::string &filename)
 	try
 	{
 		response.set_status(200);
-		response.set_body("text/html",readHtmlFile("html/index.html"));
+		response.set_body("text/html",readHtmlFile(filename));
 	}
 	catch (const std::invalid_argument &e) 
 	{
@@ -104,7 +104,7 @@ void HttpRequestHandler::generateResponse()
 
 	size_t num_elements = sizeof(command_list) / sizeof(command_list[0]);
 	int command_selected = -1;
-	for (int i = 0; i < num_elements; i++)
+	for (size_t i = 0; i < num_elements; i++)
 	{
 		if (command == command_list[i])
 		{
@@ -137,7 +137,7 @@ void HttpRequestHandler::generateResponse()
 		return ;
 	}
 	num_elements = sizeof(allowed_paths) / sizeof(allowed_paths[0]);
-	for (int i = 0; i < num_elements; i++)
+	for (size_t i = 0; i < num_elements; i++)
 	{
 		if (path.find(std::string("/") + allowed_paths[i]) != std::string::npos)
 		{

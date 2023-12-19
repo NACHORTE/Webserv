@@ -15,9 +15,11 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 # Source files without SRC_DIR
-SRC := class/response.cpp\
+SRC := dropdown.cpp\
+	main.cpp\
+	class/HttpResponse.cpp\
 	class/HttpRequestHandler.cpp\
-	main.cpp
+	utils.cpp
 
 # Setup obj and src files and obj folders
 SRC := $(addprefix $(SRC_DIR)/,$(SRC))
