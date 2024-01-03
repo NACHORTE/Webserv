@@ -18,6 +18,7 @@
 #include "colors.h"
 #include "HttpRequestHandler.hpp"
 #include "utils.hpp"
+#include "set_config.hpp"
 
 unsigned long millis()
 {
@@ -35,13 +36,22 @@ unsigned long millis()
 	return this_time - first_time;
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	struct sockaddr_in servaddr, client;
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	//const char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 29\n\nHello from server!";
 	HttpResponse response;
 
+	if (argc != 2)
+	{
+		std::cout << "[SERVER] Usage: ./server <config_file>\n";
+		return 1;
+	}
+	if (ok_config(argv[1]))
+		return 1;
+	config con_file(argv[1]);
+	argv[0][0] = 2;
 	if (sockfd == -1)
 	{
 		std::cout << "[SERVER] Error creating socket\n";
@@ -136,22 +146,46 @@ int main()
 
 		HttpResponse htmlResponse;
 		htmlResponse.set_status(200);
-		htmlResponse.set_body("text/html",readHtmlFile("html/index.html"));
+		htmlResponse.set_body("text/html",readFile("html/index.html"));
+
+		HttpResponse htmlPrin;
+		htmlPrin.set_status(200);
+		htmlPrin.set_body("text/html",readFile("html/principal.html"));
+
+		HttpResponse htmlSec;
+		htmlSec.set_status(200);
+		htmlSec.set_body("text/html",readFile("html/secundaria.html"));
 
 		HttpResponse htmlUpload;
 		htmlUpload.set_status(200);
-		htmlUpload.set_body("text/html",readHtmlFile("html/upload.html"));
+		htmlUpload.set_body("text/html",readFile("html/upload.html"));
 
 		HttpResponse htmlError;
 		htmlError.set_status(404);
-		htmlError.set_body("text/html",readHtmlFile("html/error.html"));
+		htmlError.set_body("text/html",readFile("html/error.html"));
 
 		if (strncmp(msg.c_str(), "GET / HTTP/1.1", strlen("GET / HTTP/1.1")) == 0)
+		{
+			std::cout << "\n index \n";
 			n = write(connfd, htmlResponse.get_response().c_str(), htmlResponse.get_response().length());
+		}
 		else if (strncmp(msg.c_str(), "GET /imgs/goku.jpg HTTP/1.1", strlen("GET /imgs/goku.jpg HTTP/1.1")) == 0)
 		{
 			std::cout << "\n\n" << imageResponse.get_response().c_str() << "\n\n";
 			n = write(connfd, imageResponse.get_response().c_str(), imageResponse.get_response().length());
+		}
+		else if (strncmp(msg.c_str(), "GET /secundaria.html HTTP/1.1", strlen("GET /secundaria.html HTTP/1.1")) == 0)
+		{
+			std::cout << "\n SECUNDARIA \n";
+			n = write(connfd, htmlSec.get_response().c_str(), htmlSec.get_response().length());
+		}
+		else if (strncmp(msg.c_str(), "GET /principal.html HTTP/1.1", strlen("GET /principal.html HTTP/1.1")) == 0)
+		{
+			n = write(connfd, htmlPrin.get_response().c_str(), htmlPrin.get_response().length());
+		}
+		else if (strncmp(msg.c_str(), "GET /index.html HTTP/1.1", strlen("GET /index.html HTTP/1.1")) == 0)
+		{
+			n = write(connfd, htmlResponse.get_response().c_str(), htmlResponse.get_response().length());
 		}
 		else if (strncmp(msg.c_str(), "POST /index HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
 		{

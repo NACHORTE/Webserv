@@ -2,5 +2,7 @@
 #include <string>
 
 std::string int_to_string(int n);
-std::string readHtmlFile(const std::string& filePath);
+std::string readFile(const std::string& filePath);
 std::string readImageFile(const std::string& filePath);
+std::string trim(const std::string& str);
+int ok_config(std::string config_file);

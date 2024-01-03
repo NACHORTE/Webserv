@@ -76,14 +76,14 @@ void HttpRequestHandler::setHtmlBodyFromFile(const std::string &filename)
 	try
 	{
 		response.set_status(200);
-		response.set_body("text/html",readHtmlFile(filename));
+		response.set_body("text/html",readFile(filename));
 	}
 	catch (const std::invalid_argument &e) 
 	{
 		response.set_status(404);
 		try
 		{
-			response.set_body("text/html",readHtmlFile("html/error.html"));
+			response.set_body("text/html",readFile("html/error.html"));
 		}
 		catch (...)
 		{
