@@ -50,8 +50,11 @@ int main(int argc, char **argv)
 	}
 	if (ok_config(argv[1]))
 		return 1;
-	config con_file(argv[1]);
-	argv[0][0] = 2;
+
+	std::vector<t_server> servers = read_config(argv[1]);
+	if (servers.size() == 0)
+		return 1;
+
 	if (sockfd == -1)
 	{
 		std::cout << "[SERVER] Error creating socket\n";
