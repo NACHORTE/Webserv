@@ -39,6 +39,18 @@ void HttpRequest::set_header(const std::string& key, const std::string& value)
 	headers.push_back(std::make_pair(key, value));
 }
 
+void HttpRequest::unset_header(const std::string& key)
+{
+	std::vector<std::pair<std::string, std::string>>::iterator it;
+	for (it = headers.begin(); it != headers.end();)
+	{
+		if (it->first == key)
+			it = headers.erase(it);
+		else
+			++it;
+	}
+}
+
 void HttpRequest::set_body(const std::string& body)
 {
 	this->body = body;
@@ -77,6 +89,9 @@ const std::string & HttpRequest::get_body() const
 
 void HttpRequest::parseRequest(const std::string& msg)
 {
+	// Clear current request
+	this->clear();
+
 	// Cast string to stream
 	std::istringstream iss(msg);
 

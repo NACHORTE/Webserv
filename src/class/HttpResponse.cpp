@@ -70,6 +70,11 @@ void HttpResponse::set_body(const std::string& content_type, const std::string& 
 			unset_header("Content-Length");
 		set_header("Content-Length", int_to_string(body.length()));
 	}
+	else
+	{
+		unset_header("Content-Type");
+		unset_header("Content-Length");
+	}
 }
 
 const std::string & HttpResponse::get_status_code() const
