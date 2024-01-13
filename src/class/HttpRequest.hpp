@@ -29,7 +29,7 @@ class HttpRequest {
 		const std::string & get_method() const;
 		const std::string & get_path() const;
 		const std::string & get_version() const;
-		std::vector<std::string> get_headers(const std::string& key) const; // returns a vector of all headers with the given key
+		std::vector<std::string> get_header(const std::string& key) const; // returns a vector of all headers with the given key
 		const std::string & get_body() const;
 
 		// member functions

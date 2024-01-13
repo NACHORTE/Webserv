@@ -59,7 +59,7 @@ const std::string & HttpRequest::get_version() const
 	return version;
 }
 
-std::vector<std::string> HttpRequest::get_headers(const std::string& key) const
+std::vector<std::string> HttpRequest::get_header(const std::string& key) const
 {
 	std::vector<std::string> output;
 

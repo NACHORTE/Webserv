@@ -1,19 +1,42 @@
 #pragma once
 #include <string>
+#include <vector>
+#include <iostream>
 
 class HttpResponse {
 	public:
-	HttpResponse();
-	HttpResponse(const std::string& status, const std::string& contentType, int content_len, const std::string& body);
-	~HttpResponse();
+		// constructor, destructor, copy constructor
+		HttpResponse();
+		HttpResponse(HttpResponse const & src);
+		~HttpResponse();
 
-	void set_status(int code);
-	void set_body(const std::string& content_type, const std::string& body);
-	int get_length();
-	std::string get_response();
+		// getters, setters
+		void set_status_code(int code, const std::string& phrase);
+		void set_status_phrase(const std::string& phrase);
+		void set_header(const std::string& key, const std::string& value);
+		void set_body(const std::string& content_type, const std::string& body);
+
+		const std::string & get_status_code() const;
+		const std::string & get_status_phrase() const;
+		std::vector<std::string> get_header(const std::string& key) const; // returns a vector of all headers with the given key
+		const std::string & get_body() const;
+
+		// member functions
+		void clear();
+		bool empty() const;
+		std::string to_string() const; // convert an HttpResponse to a string
+
+		// operator overloads
+		HttpResponse & operator=(HttpResponse const & rhs);
+		std::string operator()() const; // equivalent to to_string()
+	protected:
 	private:
-	std::string status;
-	std::string content_type;
-	std::string content_len;
-	std::string body;
+		std::string status_code;
+		std::string status_phrase;
+		std::vector<std::pair<std::string, std::string>> headers;
+		std::string body;
+	
+	friend std::ostream & operator<<(std::ostream & o, HttpResponse const & rhs);
 };
+
+std::ostream & operator<<(std::ostream & o, HttpResponse const & rhs);

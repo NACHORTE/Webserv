@@ -3,68 +3,113 @@
 #include "utils.hpp"
 #include <map>
 
-HttpResponse::HttpResponse()
-{
-	this->status = "HTTP/1.1 200 OK\n";
-	this->content_type = "Content-Type: text/plain\n";
-	this->content_len = "Content-Length: 29\n\n";
-	this->body = "Default body";
-}
+HttpResponse::HttpResponse():
+	status_code("200"),
+	status_phrase("OK")
+{}
 
-HttpResponse::HttpResponse(const std::string& status, const std::string& contentType,
-	int content_len, const std::string& body)
-{
-	this->status = "HTTP/1.1 " + status + "\r\n";
-	this->content_type = "Content-Type: " + contentType + "\r\n";
-	this->content_len = "Content-Length: " + int_to_string(content_len) + "\r\n\r\n";
-	this->body = body;
-}
+HttpResponse::HttpResponse(const HttpResponse& other):
+	status_code(other.status_code),
+	status_phrase(other.status_phrase),
+	headers(other.headers),
+	body(other.body)
+{}
 
 HttpResponse::~HttpResponse()
 {}
 
-void HttpResponse::set_status(int code)
+
+void HttpResponse::set_status_code(int code, const std::string& phrase)
 {
-	std::map<int, std::string>::iterator it;
-	std::map<int, std::string> status_codes =
-	{
-		{200, "OK"},
-        {201, "Created"},
-        {204, "No Content"},
-        {400, "Bad Request"},
-        {401, "Unauthorized"},
-        {403, "Forbidden"},
-        {404, "Not Found"},
-        {500, "Internal Server Error"}
-	};
-	
-	this->status = "HTTP/1.1 " + int_to_string(code);
-	it = status_codes.find(code);
-	if (it != status_codes.end())
-		this->status += " " + it->second + "\r\n";
-	else if (code >= 200 && code < 300)
-		this->status += " OK\r\n";
-	else if (code >=400 && code < 500)
-		this->status += " Not Found\r\n";
-	else if (code >= 500)
-		this->status += " Internal Server Error\r\n";
+	this->status_code = int_to_string(code);
+	if (phrase.length() > 0)
+		this->status_phrase = phrase;
 	else
-		this->status += " Unknown Status\r\n";
+	{
+		if (code >= 200 && code < 300)
+			this->status_phrase = "OK";
+		else if (code >=400 && code < 500)
+			this->status_phrase = "Not Found";
+		else if (code >= 500)
+			this->status_phrase = "Internal Server Error";
+		else
+			this->status_phrase = "";
+	}
+}
+
+void HttpResponse::set_status_phrase(const std::string& phrase)
+{
+	this->status_phrase = phrase;
+}
+
+void HttpResponse::set_header(const std::string& key, const std::string& value)
+{
+	// Multiple headers with the same key are allowed
+	headers.push_back(std::make_pair(key, value));
 }
 
 void HttpResponse::set_body(const std::string& content_type, const std::string& body)
 {
-	this->content_type = "Content-Type: " + content_type + "\r\n";
 	this->body = body;
-	this->content_len = "Content-Length: " + int_to_string(body.length()) + "\n\n";
+	if (body.length() > 0)
+	{
+		set_header("Content-Type", content_type);
+		set_header("Content-Length", int_to_string(body.length()));
+	}
 }
 
-int HttpResponse::get_length()
+const std::string & HttpResponse::get_status_code() const
 {
-	return this->body.length();
+	return status_code;
 }
 
-std::string HttpResponse::get_response()
+const std::string & HttpResponse::get_status_phrase() const
 {
-	return this->status + this->content_type + this->content_len + this->body;
+	return status_phrase;
+}
+
+std::vector<std::string> HttpResponse::get_header(const std::string& key) const
+{
+	std::vector<std::string> ret;
+	for (auto it = headers.begin(); it != headers.end(); ++it)
+	{
+		if (it->first == key)
+			ret.push_back(it->second);
+	}
+	return ret;
+}
+
+const std::string & HttpResponse::get_body() const
+{
+	return body;
+}
+
+void HttpResponse::clear()
+{
+	status_code.clear();
+	status_phrase.clear();
+	headers.clear();
+	body.clear();
+}
+
+bool HttpResponse::empty() const
+{
+	return (status_code.empty()
+		&& status_phrase.empty()
+		&& headers.empty()
+		&& body.empty());
+}
+
+std::string HttpResponse::to_string() const
+{
+	if (status_code == "")
+		return "";
+
+	std::string output;
+	output += "HTTP/1.1" + status_code + " " + status_phrase + "\r\n";
+	size_t header_size = headers.size();
+	for (size_t i = 0; i < header_size; i++)
+		output += headers[i].first + ": " + headers[i].second + "\r\n";
+	output += "\r\n" + body;
+	return output;
 }
