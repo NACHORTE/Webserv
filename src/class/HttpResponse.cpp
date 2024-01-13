@@ -3,9 +3,7 @@
 #include "utils.hpp"
 #include <map>
 
-HttpResponse::HttpResponse():
-	status_code("200"),
-	status_phrase("OK")
+HttpResponse::HttpResponse()
 {}
 
 HttpResponse::HttpResponse(const HttpResponse& other):
