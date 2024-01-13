@@ -106,7 +106,7 @@ std::string HttpResponse::to_string() const
 		return "";
 
 	std::string output;
-	output += "HTTP/1.1" + status_code + " " + status_phrase + "\r\n";
+	output += "HTTP/1.1 " + status_code + " " + status_phrase + "\r\n";
 	size_t header_size = headers.size();
 	for (size_t i = 0; i < header_size; i++)
 		output += headers[i].first + ": " + headers[i].second + "\r\n";
