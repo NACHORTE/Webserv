@@ -132,3 +132,26 @@ std::string HttpResponse::to_string() const
 	output += "\r\n" + body;
 	return output;
 }
+
+HttpResponse & HttpResponse::operator=(const HttpResponse& rhs)
+{
+	if (this != &rhs)
+	{
+		this->status_code = rhs.status_code;
+		this->status_phrase = rhs.status_phrase;
+		this->headers = rhs.headers;
+		this->body = rhs.body;
+	}
+	return *this;
+}
+
+std::string HttpResponse::operator()() const
+{
+	return to_string();
+}
+
+std::ostream & operator<<(std::ostream & o, const HttpResponse& rhs)
+{
+	o << rhs.to_string();
+	return o;
+}
