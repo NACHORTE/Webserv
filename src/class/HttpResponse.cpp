@@ -46,12 +46,28 @@ void HttpResponse::set_header(const std::string& key, const std::string& value)
 	headers.push_back(std::make_pair(key, value));
 }
 
+void HttpResponse::unset_header(const std::string& key)
+{
+	std::vector<std::pair<std::string, std::string>>::iterator it;
+	for (it = headers.begin(); it != headers.end();)
+	{
+		if (it->first == key)
+			it = headers.erase(it);
+		else
+			++it;
+	}
+}
+
 void HttpResponse::set_body(const std::string& content_type, const std::string& body)
 {
 	this->body = body;
 	if (body.length() > 0)
 	{
+		if (get_header("Content-Type").size() > 0)
+			unset_header("Content-Type");
 		set_header("Content-Type", content_type);
+		if (get_header("Content-Length").size() > 0)
+			unset_header("Content-Length");
 		set_header("Content-Length", int_to_string(body.length()));
 	}
 }
