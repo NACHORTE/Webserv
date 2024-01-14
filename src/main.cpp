@@ -37,8 +37,9 @@ unsigned long millis()
 
 int main(int argc, char **argv)
 {
-	struct sockaddr_in servaddr, client;
-	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	//struct sockaddr_in servaddr, client;
+	struct sockaddr_in client;
+	//int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	//const char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 29\n\nHello from server!";
 	HttpResponse response;
 
@@ -54,7 +55,7 @@ int main(int argc, char **argv)
 	if (servers.size() == 0)
 		return 1;
 
-	if (sockfd == -1)
+	/*if (sockfd == -1)
 	{
 		std::cout << "[SERVER] Error creating socket\n";
 		return 1;
@@ -72,13 +73,13 @@ int main(int argc, char **argv)
 	{
 		std::cout << "[SERVER] Error listen\n";
 		return 1;
-	}
+	}*/
 	while(1)
 	{
 		std::cout << "[" << millis() << "] SERVER WAITING\n";
 
 		unsigned int len = sizeof(client);
-		int connfd = accept(sockfd, (struct sockaddr *)&client, &len); //NOTE blocking call
+		int connfd = accept(servers[0].sockfd, (struct sockaddr *)&client, &len); //NOTE blocking call
 		if (connfd < 0)
 		{
 			std::cout << "[SERVER] Error accept\n";
