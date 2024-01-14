@@ -16,7 +16,6 @@
 
 #include "defines.h"
 #include "colors.h"
-#include "HttpRequestHandler.hpp"
 #include "utils.hpp"
 #include "set_config.hpp"
 

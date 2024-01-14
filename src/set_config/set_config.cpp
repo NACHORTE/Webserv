@@ -217,6 +217,30 @@ int read_location(t_location *location, std::istringstream &iss)
 	return 0;
 }
 
+int init_socket(t_server *server)
+{
+	server->servaddr.sin_family = AF_INET;
+	server->servaddr.sin_addr.s_addr = inet_addr(server->host.c_str());
+	server->servaddr.sin_port = htons(server->port);
+
+	if ((server->sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	{
+		std::cerr << "Error creating socket" << std::endl;
+		return 1;
+	}
+	if (bind(server->sockfd, (struct sockaddr *)&server->servaddr, sizeof(server->servaddr)) < 0)
+	{
+		std::cerr << "Error binding socket" << std::endl;
+		return 1;
+	}
+	if (listen(server->sockfd, BACKLOG) < 0)
+	{
+		std::cerr << "Error listening socket" << std::endl;
+		return 1;
+	}
+	return 0;
+}
+
 std::vector<t_server> read_config(const std::string& config_file)
 {
 	std::string input;
@@ -239,6 +263,8 @@ std::vector<t_server> read_config(const std::string& config_file)
 				t_server server;
 				init_server(&server);
 				servers.push_back(server);
+				if (init_socket(&servers[n_server]))
+					return std::vector<t_server>();
 			}
 			else
 				return std::vector<t_server>();

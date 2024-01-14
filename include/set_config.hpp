@@ -2,6 +2,10 @@
 #include <string>
 #include "utils.hpp"
 #include <vector>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include "defines.h"
+#include <arpa/inet.h>
 
 typedef struct s_location
 {
@@ -14,6 +18,8 @@ typedef struct s_location
 
 typedef struct s_server
 {
+	struct sockaddr_in servaddr;
+	int sockfd;
 	int port;
     std::string sv_name;
     std::string host;
