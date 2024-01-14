@@ -18,7 +18,7 @@ endif
 SRC := set_config/set_config.cpp\
 	main.cpp\
 	class/HttpResponse.cpp\
-	class/HttpRequestHandler.cpp\
+	class/HttpRequest.cpp\
 	utils.cpp
 
 # Setup obj and src files and obj folders

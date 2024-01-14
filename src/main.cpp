@@ -170,29 +170,29 @@ int main(int argc, char **argv)
 		if (strncmp(msg.c_str(), "GET / HTTP/1.1", strlen("GET / HTTP/1.1")) == 0)
 		{
 			std::cout << "\n index \n";
-			n = write(connfd, htmlResponse.get_response().c_str(), htmlResponse.get_response().length());
+			n = write(connfd, htmlResponse.to_string().c_str(), htmlResponse.to_string().length());
 		}
 		else if (strncmp(msg.c_str(), "GET /imgs/goku.jpg HTTP/1.1", strlen("GET /imgs/goku.jpg HTTP/1.1")) == 0)
 		{
-			std::cout << "\n\n" << imageResponse.get_response().c_str() << "\n\n";
-			n = write(connfd, imageResponse.get_response().c_str(), imageResponse.get_response().length());
+			std::cout << "\n\n" << imageResponse.to_string().c_str() << "\n\n";
+			n = write(connfd, imageResponse.to_string().c_str(), imageResponse.to_string().length());
 		}
 		else if (strncmp(msg.c_str(), "GET /secundaria.html HTTP/1.1", strlen("GET /secundaria.html HTTP/1.1")) == 0)
 		{
 			std::cout << "\n SECUNDARIA \n";
-			n = write(connfd, htmlSec.get_response().c_str(), htmlSec.get_response().length());
+			n = write(connfd, htmlSec.to_string().c_str(), htmlSec.to_string().length());
 		}
 		else if (strncmp(msg.c_str(), "GET /principal.html HTTP/1.1", strlen("GET /principal.html HTTP/1.1")) == 0)
 		{
-			n = write(connfd, htmlPrin.get_response().c_str(), htmlPrin.get_response().length());
+			n = write(connfd, htmlPrin.to_string().c_str(), htmlPrin.to_string().length());
 		}
 		else if (strncmp(msg.c_str(), "GET /index.html HTTP/1.1", strlen("GET /index.html HTTP/1.1")) == 0)
 		{
-			n = write(connfd, htmlResponse.get_response().c_str(), htmlResponse.get_response().length());
+			n = write(connfd, htmlResponse.to_string().c_str(), htmlResponse.to_string().length());
 		}
 		else if (strncmp(msg.c_str(), "POST /index HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
 		{
-			n = write(connfd, response.get_response().c_str(), response.get_response().length());
+			n = write(connfd, response.to_string().c_str(), response.to_string().length());
 		}
 		else if (strncmp(msg.c_str(), "POST /upload HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
 		{
@@ -236,7 +236,7 @@ int main(int argc, char **argv)
 				std::ofstream outputFile("./upload/" + filename, std::ios::binary);
 				outputFile.write(binaryData.c_str(), binaryData.size());
 				outputFile.close();
-				n = write(connfd, htmlUpload.get_response().c_str(), htmlUpload.get_response().length());
+				n = write(connfd, htmlUpload.to_string().c_str(), htmlUpload.to_string().length());
 
 
 			} else {
@@ -246,32 +246,32 @@ int main(int argc, char **argv)
 		}
 		else
 		{
-			n = write(connfd, htmlError.get_response().c_str(), htmlError.get_response().length());
+			n = write(connfd, htmlError.to_string().c_str(), htmlError.to_string().length());
 			std::cout << "Not found\n";
 			n = 1;
 		}
-			//n = write(connfd, response.get_response().c_str(), response.get_response().length());
+			//n = write(connfd, response.to_string().c_str(), response.to_string().length());
 
 		if (n < 0)
 		{
 			std::cout << "[SERVER] Error writing to socket\n";
 			return 1;
 		}
-		/*n = write(connfd, htmlResponse.get_response().c_str(), htmlResponse.get_response().length());
+		/*n = write(connfd, htmlResponse.to_string().c_str(), htmlResponse.to_string().length());
 		if (n < 0)
 		{
 			std::cout << "[SERVER] Error writing to socket\n";
 			return 1;
 		}*/
 
-		/*n = write(connfd, imageResponse.get_response().c_str(), imageResponse.get_response().length());
+		/*n = write(connfd, imageResponse.to_string().c_str(), imageResponse.to_string().length());
 		if (n < 0)
 		{
 			std::cout << "[SERVER] Error writing to socket\n";
 			return 1;
 		}*/
 
-		/*n = write(connfd, response.get_response().c_str(), response.get_response().length());
+		/*n = write(connfd, response.to_string().c_str(), response.to_string().length());
 		if (n < 0)
 		{
 			std::cout << "[SERVER] Error writing to socket\n";

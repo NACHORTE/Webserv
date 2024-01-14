@@ -11,8 +11,7 @@ class HttpResponse {
 		~HttpResponse();
 
 		// getters, setters
-		void set_status_code(int code, const std::string& phrase = "");
-		void set_status_phrase(const std::string& phrase);
+		void set_status(int code, const std::string& phrase = "");
 		void set_header(const std::string& key, const std::string& value);
 		void unset_header(const std::string& key);
 		void set_body(const std::string& content_type, const std::string& body);

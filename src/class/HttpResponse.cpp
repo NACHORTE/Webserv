@@ -17,7 +17,7 @@ HttpResponse::~HttpResponse()
 {}
 
 
-void HttpResponse::set_status_code(int code, const std::string& phrase)
+void HttpResponse::set_status(int code, const std::string& phrase)
 {
 	this->status_code = int_to_string(code);
 	if (phrase.length() > 0)
@@ -33,11 +33,6 @@ void HttpResponse::set_status_code(int code, const std::string& phrase)
 		else
 			this->status_phrase = "";
 	}
-}
-
-void HttpResponse::set_status_phrase(const std::string& phrase)
-{
-	this->status_phrase = phrase;
 }
 
 void HttpResponse::set_header(const std::string& key, const std::string& value)
