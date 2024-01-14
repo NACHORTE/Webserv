@@ -2,6 +2,8 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
+#include <vector>
+
 std::string int_to_string(int n)
 {
 	std::stringstream ss;
@@ -75,4 +77,32 @@ char back(std::string str)
 void pop_back(std::string& str)
 {
 	str.erase(str.length() - 1);
+}
+
+bool allowed_path(std::string path, std::vector<std::string> allowed_paths) {
+	// path "/" is always allowed
+	if (path == "/")
+		return true;
+
+	// if path contains ".." it is not allowed
+	if (path.find("..") != std::string::npos)
+		return false;
+
+	// search for path starting with allowed paths
+	std::vector<std::string>::iterator it;
+	for (it = allowed_paths.begin(); it != allowed_paths.end(); it++)
+	{
+		// compare path with iterator as a file
+		if (back(*it) != '/'	// if allowed path does not end with "/" its a file
+			&& path == *it)	// path must be exactly the same as allowed path
+			return true;
+
+		// compare path with iterator as a directory
+		if (back(*it) == '/'	// if allowed path ends with "/" its a directory
+			&& path.compare(0, it->size(), *it) == 0	// if path starts with allowed path
+			&& path.size() > it->size())	// if path is longer than allowed path (is a file in the directory)
+			return true;
+	}
+
+	return false;
 }

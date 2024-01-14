@@ -8,3 +8,4 @@ std::string trim(const std::string& str);
 int ok_config(std::string config_file);
 char back(std::string str);
 void pop_back(std::string& str);
+bool allowed_path(std::string path, std::vector<std::string> allowed_paths);
