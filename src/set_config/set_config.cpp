@@ -263,8 +263,6 @@ std::vector<t_server> read_config(const std::string& config_file)
 				t_server server;
 				init_server(&server);
 				servers.push_back(server);
-				if (init_socket(&servers[n_server]))
-					return std::vector<t_server>();
 			}
 			else
 				return std::vector<t_server>();
@@ -274,6 +272,8 @@ std::vector<t_server> read_config(const std::string& config_file)
 		{
 			in_server = 0;
 			if (!check_full_server(&servers[n_server], n_server))
+				return std::vector<t_server>();
+			if (init_socket(&servers[n_server]))
 				return std::vector<t_server>();
 			n_server++;
 			continue;
@@ -334,6 +334,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			}
 			if (iss >> word && word.back() == ';')
 			{
+				word.pop_back();
 				servers[n_server].root = word;
 				//std::cout << "root: " << servers[n_server].root << std::endl;
 			}
@@ -352,6 +353,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			}
 			if (iss >> word && word.back() == ';')
 			{
+				word.pop_back();
 				servers[n_server].host = word;
 				//std::cout << "host: " << servers[n_server].host << std::endl;
 			}
@@ -370,6 +372,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			}
 			if (iss >> word && word.back() == ';')
 			{
+				word.pop_back();
 				servers[n_server].error_page = word;
 				//std::cout << "error_page: " << servers[n_server].error_page << std::endl;
 			}
@@ -388,6 +391,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			}
 			if (iss >> word && word.back() == ';')
 			{
+				word.pop_back();
 				servers[n_server].index = word;
 				//std::cout << "index: " << servers[n_server].index << std::endl;
 			}

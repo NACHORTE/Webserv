@@ -74,11 +74,27 @@ int main(int argc, char **argv)
 		std::cout << "[SERVER] Error listen\n";
 		return 1;
 	}*/
+	/*servers[0].servaddr.sin_family = AF_INET;
+	servers[0].servaddr.sin_addr.s_addr = inet_addr(servers[0].host.c_str());
+	servers[0].servaddr.sin_port = htons(servers[0].port);
+
+	if ((servers[0].sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	{
+		std::cerr << "Error creating socket" << std::endl;
+		return 1;
+	}
+	if (bind(servers[0].sockfd, (struct sockaddr *)&servers[0].servaddr, sizeof(servers[0].servaddr)) < 0)
+	{
+		std::cerr << "Error binding socket" << std::endl;
+		return 1;
+	}
+	listen(servers[0].sockfd, BACKLOG);*/
 	while(1)
 	{
 		std::cout << "[" << millis() << "] SERVER WAITING\n";
 
 		unsigned int len = sizeof(client);
+		std::cout << "sockfd:" << servers[0].sockfd << "\n";
 		int connfd = accept(servers[0].sockfd, (struct sockaddr *)&client, &len); //NOTE blocking call
 		if (connfd < 0)
 		{
