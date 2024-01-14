@@ -3,6 +3,15 @@
 #include "utils.hpp"
 #include <vector>
 
+typedef struct s_location
+{
+	std::string path;
+	std::string root;
+	std::string index;
+	std::string autoindex;
+	std::string methods;
+}	t_location;
+
 typedef struct s_server
 {
 	int port;
@@ -11,6 +20,7 @@ typedef struct s_server
     std::string root;
     std::string error_page;
     std::string index;
+	std::vector<t_location> locations;
     int max_body;
 }	t_server;
 

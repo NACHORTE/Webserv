@@ -21,12 +21,28 @@ std::string read_data(std::string line, std::string key)
 void init_server(t_server *server)
 {
 	server->port = 0;
-	server->sv_name = "Default";
+	server->sv_name = "";
 	server->host = "";
 	server->root = "";
 	server->error_page = "";
 	server->index = "";
 	server->max_body = 0;
+}
+
+void init_location(t_location *location)
+{
+	location->path = "";
+	location->root = "";
+	location->index = "";
+	location->autoindex = "";
+	location->methods = "";
+}
+
+int check_duplicated(std::string var)
+{
+	if (var == "" || var == "0")
+		return 0;
+	return 1;
 }
 
 int check_full_server(t_server *server, int n_server)
@@ -69,6 +85,138 @@ int check_full_server(t_server *server, int n_server)
 	return 1;
 }
 
+void print_location(t_location location)
+{
+	std::cout << "path: " << location.path << std::endl;
+	std::cout << "root: " << location.root << std::endl;
+	std::cout << "index: " << location.index << std::endl;
+	std::cout << "autoindex: " << location.autoindex << std::endl;
+	std::cout << "methods: " << location.methods << std::endl;
+}
+
+void print_server(t_server server)
+{
+	std::cout << "port: " << server.port << std::endl;
+	std::cout << "server_name: " << server.sv_name << std::endl;
+	std::cout << "host: " << server.host << std::endl;
+	std::cout << "root: " << server.root << std::endl;
+	std::cout << "error_page: " << server.error_page << std::endl;
+	std::cout << "index: " << server.index << std::endl;
+	std::cout << "max_body: " << server.max_body << std::endl;
+	for (size_t i = 0; i < server.locations.size(); i++)
+	{
+		std::cout << "location " << i + 1 << ":" << std::endl;
+		print_location(server.locations[i]);
+	}
+}
+
+int read_location(t_location *location, std::istringstream &iss)
+{
+	std::string word;
+
+	if (iss >> word && word[0] == '/')
+	{
+		location->path = word;
+		//std::cout << "path: " << location->path << std::endl;
+	}
+	else
+	{
+		std::cerr << "Error reading config file, missing/error: path" << std::endl;
+		return 0;
+	}
+	if (iss >> word && word != "{")
+	{
+		std::cerr << "Error reading config file (location), missing/error: {" << std::endl;
+		return 0;
+	}
+	while (iss >> word)
+	{
+		if (word == "}")
+		{
+			return 1;
+			break;
+		}
+		else if (word == "root")
+		{
+			if (check_duplicated(location->root))
+			{
+				std::cerr << "Error reading config file (location), duplicated: root" << std::endl;
+				return 0;
+			}
+			if (iss >> word && word.back() == ';')
+			{
+				location->root = word;
+				//std::cout << "root: " << location->root << std::endl;
+			}
+			else
+			{
+				std::cerr << "Error reading config file (location), missing/error: root" << std::endl;
+				return 0;
+			}
+		}
+		else if (word == "index")
+		{
+			if (check_duplicated(location->index))
+			{
+				std::cerr << "Error reading config file (location), duplicated: index" << std::endl;
+				return 0;
+			}
+			if (iss >> word && word.back() == ';')
+			{
+				location->index = word;
+				//std::cout << "index: " << location->index << std::endl;
+			}
+			else
+			{
+				std::cerr << "Error reading config file (location), missing/error: index" << std::endl;
+				return 0;
+			}
+		}
+		else if (word == "autoindex")
+		{
+			if (check_duplicated(location->autoindex))
+			{
+				std::cerr << "Error reading config file (location), duplicated: autoindex" << std::endl;
+				return 0;
+			}
+			if (iss >> word && word.back() == ';')
+			{
+				location->autoindex = word;
+				//std::cout << "autoindex: " << location->autoindex << std::endl;
+			}
+			else
+			{
+				std::cerr << "Error reading config file (location), missing/error: autoindex" << std::endl;
+				return 0;
+			}
+		}
+		else if (word == "methods")
+		{
+			if (check_duplicated(location->methods))
+			{
+				std::cerr << "Error reading config file (location), duplicated: methods" << std::endl;
+				return 0;
+			}
+			if (iss >> word && word.back() == ';')
+			{
+				location->methods = word;
+				//std::cout << "methods: " << location->methods << std::endl;
+			}
+			else
+			{
+				std::cerr << "Error reading config file (location), missing/error: methods" << std::endl;
+				return 0;
+			}
+		}
+		else
+		{
+			std::cerr << "Error reading config file (location), unknown: " << word << std::endl;
+			return 0;
+		}
+	}
+	return 0;
+}
+
 std::vector<t_server> read_config(const std::string& config_file)
 {
 	std::string input;
@@ -104,8 +252,22 @@ std::vector<t_server> read_config(const std::string& config_file)
 			n_server++;
 			continue;
 		}
+		else if (in_server && word == "location")
+		{
+			t_location location;
+			init_location(&location);
+			if (!read_location(&location, iss))
+				return std::vector<t_server>();
+			servers[n_server].locations.push_back(location);
+			continue;
+		}
 		else if (in_server && word == "listen")
 		{
+			if (check_duplicated(int_to_string(servers[n_server].port)))
+			{
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: listen" << std::endl;
+				return std::vector<t_server>();
+			}
 			if (iss >> word && word.find_first_not_of("0123456789;") == std::string::npos  && word.back() == ';')
 			{
 				std::istringstream iss_num(word);
@@ -114,12 +276,17 @@ std::vector<t_server> read_config(const std::string& config_file)
 			}
 			else
 			{
-				std::cerr << "Error reading config file, missing/error: listen" << std::endl;
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: listen" << std::endl;
 				return std::vector<t_server>();
 			}
 		}
 		else if (in_server && word == "server_name")
 		{
+			if (check_duplicated(servers[n_server].sv_name))
+			{
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: server_name" << std::endl;
+				return std::vector<t_server>();
+			}
 			if (iss >> word && word.back() == ';')
 			{
 				word.pop_back();
@@ -128,12 +295,17 @@ std::vector<t_server> read_config(const std::string& config_file)
 			}
 			else
 			{
-				std::cerr << "Error reading config file, missing/error: server_name" << std::endl;
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: server_name" << std::endl;
 				return std::vector<t_server>();
 			}
 		}
 		else if (in_server && word == "root")
 		{
+			if (check_duplicated(servers[n_server].root))
+			{
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: root" << std::endl;
+				return std::vector<t_server>();
+			}
 			if (iss >> word && word.back() == ';')
 			{
 				servers[n_server].root = word;
@@ -141,12 +313,17 @@ std::vector<t_server> read_config(const std::string& config_file)
 			}
 			else
 			{
-				std::cerr << "Error reading config file, missing/error: root" << std::endl;
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: root" << std::endl;
 				return std::vector<t_server>();
 			}
 		}
 		else if (in_server && word == "host")
 		{
+			if (check_duplicated(servers[n_server].host))
+			{
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: host" << std::endl;
+				return std::vector<t_server>();
+			}
 			if (iss >> word && word.back() == ';')
 			{
 				servers[n_server].host = word;
@@ -154,12 +331,17 @@ std::vector<t_server> read_config(const std::string& config_file)
 			}
 			else
 			{
-				std::cerr << "Error reading config file, missing/error: host" << std::endl;
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: host" << std::endl;
 				return std::vector<t_server>();
 			}
 		}
 		else if (in_server && word == "error_page")
 		{
+			if (check_duplicated(servers[n_server].error_page))
+			{
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: error_page" << std::endl;
+				return std::vector<t_server>();
+			}
 			if (iss >> word && word.back() == ';')
 			{
 				servers[n_server].error_page = word;
@@ -167,12 +349,17 @@ std::vector<t_server> read_config(const std::string& config_file)
 			}
 			else
 			{
-				std::cerr << "Error reading config file, missing/error: error_page" << std::endl;
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: error_page" << std::endl;
 				return std::vector<t_server>();
 			}
 		}
 		else if(in_server && word == "index")
 		{
+			if (check_duplicated(servers[n_server].index))
+			{
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: index" << std::endl;
+				return std::vector<t_server>();
+			}
 			if (iss >> word && word.back() == ';')
 			{
 				servers[n_server].index = word;
@@ -180,12 +367,17 @@ std::vector<t_server> read_config(const std::string& config_file)
 			}
 			else
 			{
-				std::cerr << "Error reading config file, missing/error: index" << std::endl;
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: index" << std::endl;
 				return std::vector<t_server>();
 			}
 		}
 		else if (in_server && word == "max_body")
 		{
+			if (check_duplicated(int_to_string(servers[n_server].max_body)))
+			{
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: max_body" << std::endl;
+				return std::vector<t_server>();
+			}
 			if (iss >> word && word.find_first_not_of("0123456789;") == std::string::npos && word.back() == ';')
 			{
 				std::istringstream iss_num(word);
@@ -194,7 +386,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			}
 			else
 			{
-				std::cerr << "Error reading config file, missing/error: max_body" << std::endl;
+				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: max_body" << std::endl;
 				return std::vector<t_server>();
 			}
 		}
@@ -203,6 +395,16 @@ std::vector<t_server> read_config(const std::string& config_file)
 			std::cerr << "Error reading config file, unknown: " << word << std::endl;
 			return std::vector<t_server>();
 		}
+	}
+	if (in_server == 1)
+	{
+		std::cerr << "Error reading config file, missing: }" << std::endl;
+		return std::vector<t_server>();
+	}
+	for (size_t i = 0; i < servers.size(); i++)
+	{
+		std::cout << "server " << i + 1 << ":" << std::endl;
+		print_server(servers[i]);
 	}
 	return servers;
 }
