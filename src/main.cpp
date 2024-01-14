@@ -74,21 +74,7 @@ int main(int argc, char **argv)
 		std::cout << "[SERVER] Error listen\n";
 		return 1;
 	}*/
-	/*servers[0].servaddr.sin_family = AF_INET;
-	servers[0].servaddr.sin_addr.s_addr = inet_addr(servers[0].host.c_str());
-	servers[0].servaddr.sin_port = htons(servers[0].port);
 
-	if ((servers[0].sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	{
-		std::cerr << "Error creating socket" << std::endl;
-		return 1;
-	}
-	if (bind(servers[0].sockfd, (struct sockaddr *)&servers[0].servaddr, sizeof(servers[0].servaddr)) < 0)
-	{
-		std::cerr << "Error binding socket" << std::endl;
-		return 1;
-	}
-	listen(servers[0].sockfd, BACKLOG);*/
 	while(1)
 	{
 		std::cout << "[" << millis() << "] SERVER WAITING\n";
@@ -103,16 +89,22 @@ int main(int argc, char **argv)
 		}
 		std::cout << "new_client!\n";
 
-		std::vector<struct pollfd> fds(1);
-		fds[0].fd = connfd;
-		fds[0].events = POLLIN;
+		std::vector<struct pollfd> fds(servers.size());
+		for (size_t i = 0; i < servers.size(); i++)
+		{
+			fds[i].fd = servers[i].sockfd;
+			fds[i].events = POLLIN;
+		}
+
+		/*fds[0].fd = connfd;
+		fds[0].events = POLLIN;*/
 
 		char buff[BUFF_SIZE];
 		int n;
 		std::string msg;
 		size_t fds_size = fds.size();
 		std::cout << "polling\n";
-		while ((n = poll(fds.data(),fds_size, 1000)) > 0)
+		while ((n = poll(&fds[0],fds_size, 1000)) > 0)
 		{
 			std::cout << "inside polling\n";
 			for (size_t i = 0; i < fds_size; i++)
@@ -212,12 +204,12 @@ int main(int argc, char **argv)
 		}
 		else if (strncmp(msg.c_str(), "POST /upload HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
 		{
-			std::string boundaryTag = "boundary=";
+			/*std::string boundaryTag = "boundary=";
 			size_t boundaryPos = msg.find(boundaryTag);
 			std::string boundary = msg.substr(boundaryPos + boundaryTag.length());
-			size_t boundaryEndPos = msg.find("\r\n", boundaryPos);
+			size_t boundaryEndPos = msg.find("\r\n", boundaryPos);*/
 
-			if (boundaryPos != std::string::npos) {
+			/*if (boundaryPos != std::string::npos) {
 				std::string boundaryDelimiter = "--" + msg.substr(boundaryPos + boundaryTag.length(), boundaryEndPos - (boundaryPos + boundaryTag.length()));
 				std::cout << "\n\nBoundary MIO: " << boundaryDelimiter << "\n\n";
 				std::string body = msg.substr(msg.find(boundaryDelimiter) + boundaryDelimiter.length() + 2);
@@ -257,7 +249,7 @@ int main(int argc, char **argv)
 
 			} else {
 				std::cout << "Boundary not found\n";
-			}
+			}*/
 			std::cout << "FILE RECIEVED\n";
 		}
 		else

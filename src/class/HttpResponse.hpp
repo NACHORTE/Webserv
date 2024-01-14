@@ -33,7 +33,7 @@ class HttpResponse {
 	private:
 		std::string status_code;
 		std::string status_phrase;
-		std::vector<std::pair<std::string, std::string>> headers;
+		std::vector<std::pair<std::string, std::string> > headers;
 		std::string body;
 	
 	friend std::ostream & operator<<(std::ostream & o, HttpResponse const & rhs);

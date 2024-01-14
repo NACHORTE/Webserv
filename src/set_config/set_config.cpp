@@ -143,7 +143,7 @@ int read_location(t_location *location, std::istringstream &iss)
 				std::cerr << "Error reading config file (location), duplicated: root" << std::endl;
 				return 0;
 			}
-			if (iss >> word && word.back() == ';')
+			if (iss >> word && back(word) == ';')
 			{
 				location->root = word;
 				//std::cout << "root: " << location->root << std::endl;
@@ -161,7 +161,7 @@ int read_location(t_location *location, std::istringstream &iss)
 				std::cerr << "Error reading config file (location), duplicated: index" << std::endl;
 				return 0;
 			}
-			if (iss >> word && word.back() == ';')
+			if (iss >> word && back(word) == ';')
 			{
 				location->index = word;
 				//std::cout << "index: " << location->index << std::endl;
@@ -179,7 +179,7 @@ int read_location(t_location *location, std::istringstream &iss)
 				std::cerr << "Error reading config file (location), duplicated: autoindex" << std::endl;
 				return 0;
 			}
-			if (iss >> word && word.back() == ';')
+			if (iss >> word && back(word) == ';')
 			{
 				location->autoindex = word;
 				//std::cout << "autoindex: " << location->autoindex << std::endl;
@@ -197,7 +197,7 @@ int read_location(t_location *location, std::istringstream &iss)
 				std::cerr << "Error reading config file (location), duplicated: methods" << std::endl;
 				return 0;
 			}
-			if (iss >> word && word.back() == ';')
+			if (iss >> word && back(word) == ';')
 			{
 				location->methods = word;
 				//std::cout << "methods: " << location->methods << std::endl;
@@ -294,7 +294,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: listen" << std::endl;
 				return std::vector<t_server>();
 			}
-			if (iss >> word && word.find_first_not_of("0123456789;") == std::string::npos  && word.back() == ';')
+			if (iss >> word && word.find_first_not_of("0123456789;") == std::string::npos  && back(word) == ';')
 			{
 				std::istringstream iss_num(word);
 				iss_num >> servers[n_server].port;
@@ -313,9 +313,9 @@ std::vector<t_server> read_config(const std::string& config_file)
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: server_name" << std::endl;
 				return std::vector<t_server>();
 			}
-			if (iss >> word && word.back() == ';')
+			if (iss >> word && back(word) == ';')
 			{
-				word.pop_back();
+				pop_back(word);
 				servers[n_server].sv_name = word;
 				//std::cout << "server_name: " << servers[n_server].sv_name << std::endl;
 			}
@@ -332,9 +332,9 @@ std::vector<t_server> read_config(const std::string& config_file)
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: root" << std::endl;
 				return std::vector<t_server>();
 			}
-			if (iss >> word && word.back() == ';')
+			if (iss >> word && back(word) == ';')
 			{
-				word.pop_back();
+				pop_back(word);
 				servers[n_server].root = word;
 				//std::cout << "root: " << servers[n_server].root << std::endl;
 			}
@@ -351,9 +351,9 @@ std::vector<t_server> read_config(const std::string& config_file)
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: host" << std::endl;
 				return std::vector<t_server>();
 			}
-			if (iss >> word && word.back() == ';')
+			if (iss >> word && back(word) == ';')
 			{
-				word.pop_back();
+				pop_back(word);
 				servers[n_server].host = word;
 				//std::cout << "host: " << servers[n_server].host << std::endl;
 			}
@@ -370,9 +370,9 @@ std::vector<t_server> read_config(const std::string& config_file)
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: error_page" << std::endl;
 				return std::vector<t_server>();
 			}
-			if (iss >> word && word.back() == ';')
+			if (iss >> word && back(word) == ';')
 			{
-				word.pop_back();
+				pop_back(word);
 				servers[n_server].error_page = word;
 				//std::cout << "error_page: " << servers[n_server].error_page << std::endl;
 			}
@@ -389,9 +389,9 @@ std::vector<t_server> read_config(const std::string& config_file)
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: index" << std::endl;
 				return std::vector<t_server>();
 			}
-			if (iss >> word && word.back() == ';')
+			if (iss >> word && back(word) == ';')
 			{
-				word.pop_back();
+				pop_back(word);
 				servers[n_server].index = word;
 				//std::cout << "index: " << servers[n_server].index << std::endl;
 			}
@@ -408,7 +408,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: max_body" << std::endl;
 				return std::vector<t_server>();
 			}
-			if (iss >> word && word.find_first_not_of("0123456789;") == std::string::npos && word.back() == ';')
+			if (iss >> word && word.find_first_not_of("0123456789;") == std::string::npos && back(word) == ';')
 			{
 				std::istringstream iss_num(word);
 				iss_num >> servers[n_server].max_body;

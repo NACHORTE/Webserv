@@ -41,7 +41,7 @@ void HttpRequest::set_header(const std::string& key, const std::string& value)
 
 void HttpRequest::unset_header(const std::string& key)
 {
-	std::vector<std::pair<std::string, std::string>>::iterator it;
+	std::vector<std::pair<std::string, std::string> >::iterator it;
 	for (it = headers.begin(); it != headers.end();)
 	{
 		if (it->first == key)

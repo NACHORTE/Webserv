@@ -10,7 +10,7 @@ std::string int_to_string(int n)
 }
 
 std::string readImageFile(const std::string& filePath) {
-    std::ifstream imageFile(filePath, std::ios::binary);
+    std::ifstream imageFile(filePath.c_str(), std::ios::binary);
 
     if (!imageFile) {
         std::cerr << "Error opening image file: " << filePath << std::endl;
@@ -23,7 +23,7 @@ std::string readImageFile(const std::string& filePath) {
 }
 
 std::string readFile(const std::string& filePath) {
-    std::ifstream htmlFile(filePath);
+    std::ifstream htmlFile(filePath.c_str());
 
     if (!htmlFile.is_open()) {
         if (htmlFile.fail()) {
@@ -49,7 +49,7 @@ int ok_config(std::string config_file)
         std::cerr << "Config file does not have .conf extension: " << config_file << std::endl;
         return 1;
     }
-	std::ifstream file(config_file);
+	std::ifstream file(config_file.c_str());
 	if(!file.is_open())
 	{
 		std::cerr << "Error opening config file: " << config_file << std::endl;
@@ -65,4 +65,14 @@ std::string trim(const std::string& str)
         return str;
     size_t last = str.find_last_not_of(" \t\r\n");
     return str.substr(first, (last - first + 1));
+}
+
+char back(std::string str)
+{
+	return str[str.length() - 1];
+}
+
+void pop_back(std::string& str)
+{
+	str.erase(str.length() - 1);
 }

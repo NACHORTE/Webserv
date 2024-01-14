@@ -47,7 +47,7 @@ class HttpRequest {
 		std::string method;	// GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS, TRACE, PATCH
 		std::string path;	// /path/to/file
 		std::string version;	// HTTP/1.1
-		std::vector<std::pair<std::string, std::string>> headers;	// key-value pairs
+		std::vector<std::pair<std::string, std::string> > headers;	// key-value pairs
 		std::string body;	// body of the request
 	
 	friend std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs);

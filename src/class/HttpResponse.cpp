@@ -43,7 +43,7 @@ void HttpResponse::set_header(const std::string& key, const std::string& value)
 
 void HttpResponse::unset_header(const std::string& key)
 {
-	std::vector<std::pair<std::string, std::string>>::iterator it;
+	std::vector<std::pair<std::string, std::string> >::iterator it;
 	for (it = headers.begin(); it != headers.end();)
 	{
 		if (it->first == key)
@@ -85,7 +85,8 @@ const std::string & HttpResponse::get_status_phrase() const
 std::vector<std::string> HttpResponse::get_header(const std::string& key) const
 {
 	std::vector<std::string> ret;
-	for (auto it = headers.begin(); it != headers.end(); ++it)
+	std::vector<std::pair<std::string, std::string> >::const_iterator it;
+	for (it = headers.begin(); it != headers.end(); ++it)
 	{
 		if (it->first == key)
 			ret.push_back(it->second);
