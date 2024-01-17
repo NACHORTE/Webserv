@@ -25,10 +25,10 @@ std::string readImageFile(const std::string& filePath) {
 }
 
 std::string readFile(const std::string& filePath) {
-    std::ifstream htmlFile(filePath.c_str());
+    std::ifstream file(filePath.c_str());
 
-    if (!htmlFile.is_open()) {
-        if (htmlFile.fail()) {
+    if (!file.is_open()) {
+        if (file.fail()) {
             // Opening the file failed for a reason other than "file not found"
             std::cerr << "Error opening HTML file (other error): " << filePath << std::endl;
             throw std::runtime_error("Error opening HTML file (other error): " + filePath);
@@ -40,7 +40,7 @@ std::string readFile(const std::string& filePath) {
     }
 
     std::ostringstream htmlContent;
-    htmlContent << htmlFile.rdbuf();
+    htmlContent << file.rdbuf();
     return htmlContent.str();
 }
 
@@ -77,32 +77,4 @@ char back(std::string str)
 void pop_back(std::string& str)
 {
 	str.erase(str.length() - 1);
-}
-
-bool allowed_path(std::string path, std::vector<std::string> allowed_paths) {
-	// path "/" is always allowed
-	if (path == "/")
-		return true;
-
-	// if path contains ".." it is not allowed
-	if (path.find("..") != std::string::npos)
-		return false;
-
-	// search for path starting with allowed paths
-	std::vector<std::string>::iterator it;
-	for (it = allowed_paths.begin(); it != allowed_paths.end(); it++)
-	{
-		// compare path with iterator as a file
-		if (back(*it) != '/'	// if allowed path does not end with "/" its a file
-			&& path == *it)	// path must be exactly the same as allowed path
-			return true;
-
-		// compare path with iterator as a directory
-		if (back(*it) == '/'	// if allowed path ends with "/" its a directory
-			&& path.compare(0, it->size(), *it) == 0	// if path starts with allowed path
-			&& path.size() > it->size())	// if path is longer than allowed path (is a file in the directory)
-			return true;
-	}
-
-	return false;
 }
