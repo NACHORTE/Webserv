@@ -17,7 +17,7 @@ class Server
 		std::string _host;
 		int _port;
 		std::map<std::string, HttpResponse (*)(HttpRequest)> _allowed_methods;
-		std::vector<Location> _allowed_paths;
+		Locations _allowed_paths;
 
 	friend std::ostream &operator<<(std::ostream &os, const Server &obj);
 };
