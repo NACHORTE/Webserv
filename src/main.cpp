@@ -13,7 +13,7 @@
 #include <fstream>
 #include <vector>
 #include <poll.h>
-
+#include <fcntl.h>
 #include "defines.h"
 #include "colors.h"
 #include "utils.hpp"
@@ -75,27 +75,87 @@ int main(int argc, char **argv)
 		return 1;
 	}*/
 
+	//INIT RESPONSES MANUALLY
+	response.set_status(200);
+	response.set_body("text/plain","Recieved!");
+
+	HttpResponse imageResponse;
+	imageResponse.set_status(200);
+	imageResponse.set_body("image/jpeg",readImageFile("imgs/goku.jpg"));
+
+	HttpResponse htmlResponse;
+	htmlResponse.set_status(200);
+	htmlResponse.set_body("text/html",readFile("html/index.html"));
+
+	HttpResponse htmlPrin;
+	htmlPrin.set_status(200);
+	htmlPrin.set_body("text/html",readFile("html/principal.html"));
+
+	HttpResponse htmlSec;
+	htmlSec.set_status(200);
+	htmlSec.set_body("text/html",readFile("html/secundaria.html"));
+
+	HttpResponse htmlUpload;
+	htmlUpload.set_status(200);
+	htmlUpload.set_body("text/html",readFile("html/upload.html"));
+
+	HttpResponse htmlError;
+	htmlError.set_status(404);
+	htmlError.set_body("text/html",readFile("html/error.html"));
+
+	if (fcntl(servers[0].sockfd, F_SETFL, O_NONBLOCK) < 0)
+	{
+		std::cout << "[SERVER] Error fcntl\n";
+		return 1;
+	}
+
 	while(1)
 	{
-		std::cout << "[" << millis() << "] SERVER WAITING\n";
-
+		//std::cout << "[" << millis() << "] SERVER WAITING\n";
 		unsigned int len = sizeof(client);
-		std::cout << "sockfd:" << servers[0].sockfd << "\n";
-		int connfd = accept(servers[0].sockfd, (struct sockaddr *)&client, &len); //NOTE blocking call
+		//std::cout << "sockfd:" << servers[0].sockfd << "\n";
+		
+		std::vector<int> connfds(servers.size(), 0);
+		for (size_t i = 0; i < servers.size(); i++)
+		{
+			connfds[i] = accept(servers[i].sockfd, (struct sockaddr *)&client, &len); //NOTE blocking call
+			if (connfds[i] < 0)
+			{
+				//std::cout << "[SERVER] No connections\n";
+				continue;
+			}
+			std::cout << "new_client!\n";
+		}
+		int some_connection = 0;
+		for (size_t i = 0; i < servers.size(); i++)
+		{
+			if (connfds[i] > 0)
+			{
+				some_connection = 1;
+				break;
+			}
+		}
+		if (!some_connection)
+			continue;
+		/*int connfd = accept(servers[0].sockfd, (struct sockaddr *)&client, &len); //NOTE blocking call
 		if (connfd < 0)
 		{
-			std::cout << "[SERVER] Error accept\n";
-			return 1;
+			//std::cout << "[SERVER] No connections\n";
+			continue;
 		}
-		std::cout << "new_client!\n";
+		std::cout << "new_client!\n";*/
 
 		std::vector<struct pollfd> fds(servers.size());
-		for (size_t i = 0; i < servers.size(); i++)
+		/*for (size_t i = 0; i < servers.size(); i++)
 		{
 			fds[i].fd = servers[i].sockfd;
 			fds[i].events = POLLIN;
+		}*/
+		for (size_t i = 0; i < servers.size(); i++)
+		{
+			fds[i].fd = connfds[i];
+			fds[i].events = POLLIN;
 		}
-
 		/*fds[0].fd = connfd;
 		fds[0].events = POLLIN;*/
 
@@ -104,16 +164,22 @@ int main(int argc, char **argv)
 		std::string msg;
 		size_t fds_size = fds.size();
 		std::cout << "polling\n";
+		std::cout << "fds_size: " << fds_size << "\n";
 		while ((n = poll(&fds[0],fds_size, 1000)) > 0)
 		{
 			std::cout << "inside polling\n";
+			if (n < 0)
+			{
+			std::cout << "[SERVER] Error polling\n";
+			return 1;
+			}
 			for (size_t i = 0; i < fds_size; i++)
 			{
 				std::cout << "inside for " << i << "\n";
 				if (fds[i].revents & POLLIN)
 				{
 					std::cout << "inside if\n";
-					int n_read = read(connfd, buff, BUFF_SIZE);
+					int n_read = read(fds[i].fd, buff, BUFF_SIZE);
 					if (n_read < 0)
 					{
 						std::cout << "[SERVER] Error reading from socket\n";
@@ -136,19 +202,115 @@ int main(int argc, char **argv)
 							std::cout << "\\x" << std::hex << (int)buff[i];
 					}
 					std::cout << RESET << "\n";
+					if (strncmp(msg.c_str(), "GET / HTTP/1.1", strlen("GET / HTTP/1.1")) == 0)
+					{
+						std::cout << "\n index \n";
+						n = write(connfds[i], htmlResponse.to_string().c_str(), htmlResponse.to_string().length());
+					}
+					else if (strncmp(msg.c_str(), "GET /imgs/goku.jpg HTTP/1.1", strlen("GET /imgs/goku.jpg HTTP/1.1")) == 0)
+					{
+						std::cout << "\n\n" << imageResponse.to_string().c_str() << "\n\n";
+						n = write(connfds[i], imageResponse.to_string().c_str(), imageResponse.to_string().length());
+					}
+					else if (strncmp(msg.c_str(), "GET /secundaria.html HTTP/1.1", strlen("GET /secundaria.html HTTP/1.1")) == 0)
+					{
+						std::cout << "\n SECUNDARIA \n";
+						n = write(connfds[i], htmlSec.to_string().c_str(), htmlSec.to_string().length());
+					}
+					else if (strncmp(msg.c_str(), "GET /principal.html HTTP/1.1", strlen("GET /principal.html HTTP/1.1")) == 0)
+					{
+						n = write(connfds[i], htmlPrin.to_string().c_str(), htmlPrin.to_string().length());
+					}
+					else if (strncmp(msg.c_str(), "GET /index.html HTTP/1.1", strlen("GET /index.html HTTP/1.1")) == 0)
+					{
+						n = write(connfds[i], htmlResponse.to_string().c_str(), htmlResponse.to_string().length());
+					}
+					else if (strncmp(msg.c_str(), "POST /index HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
+					{
+						n = write(connfds[i], response.to_string().c_str(), response.to_string().length());
+					}
+					else if (!msg.empty())
+					{
+						n = write(connfds[i], htmlError.to_string().c_str(), htmlError.to_string().length());
+						std::cout << "Not found\n";
+						n = 1;
+					}
+
+					if (msg.empty())
+					{
+						std::cout << "msg is empty\n";
+						break;
+					}
+					memset(buff, 0, BUFF_SIZE);
+					std::cout << BLUE << msg << RESET << std::endl;
+					msg.clear();
+					close(connfds[i]);
 				}
+				std::cout << "end for\n";
 			}
+			std::cout << "msg: hola\n";
+			break;
+			//std::cout << BLUE << msg << RESET << std::endl;
+			//HttpRequestHandler obj(buff);
+			//std::cout << GREEN << buff << RESET << std::endl;
+			//std::cout << obj << std::endl;
+			
+			/*if (strncmp(msg.c_str(), "GET / HTTP/1.1", strlen("GET / HTTP/1.1")) == 0)
+			{
+				std::cout << "\n index \n";
+				n = write(connfds[0], htmlResponse.to_string().c_str(), htmlResponse.to_string().length());
+			}
+			else if (strncmp(msg.c_str(), "GET /imgs/goku.jpg HTTP/1.1", strlen("GET /imgs/goku.jpg HTTP/1.1")) == 0)
+			{
+				std::cout << "\n\n" << imageResponse.to_string().c_str() << "\n\n";
+				n = write(connfds[0], imageResponse.to_string().c_str(), imageResponse.to_string().length());
+			}
+			else if (strncmp(msg.c_str(), "GET /secundaria.html HTTP/1.1", strlen("GET /secundaria.html HTTP/1.1")) == 0)
+			{
+				std::cout << "\n SECUNDARIA \n";
+				n = write(connfds[0], htmlSec.to_string().c_str(), htmlSec.to_string().length());
+			}
+			else if (strncmp(msg.c_str(), "GET /principal.html HTTP/1.1", strlen("GET /principal.html HTTP/1.1")) == 0)
+			{
+				n = write(connfds[0], htmlPrin.to_string().c_str(), htmlPrin.to_string().length());
+			}
+			else if (strncmp(msg.c_str(), "GET /index.html HTTP/1.1", strlen("GET /index.html HTTP/1.1")) == 0)
+			{
+				n = write(connfds[0], htmlResponse.to_string().c_str(), htmlResponse.to_string().length());
+			}
+			else if (strncmp(msg.c_str(), "POST /index HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
+			{
+				n = write(connfds[0], response.to_string().c_str(), response.to_string().length());
+			}
+			else if (!msg.empty())
+			{
+				n = write(connfds[0], htmlError.to_string().c_str(), htmlError.to_string().length());
+				std::cout << "Not found\n";
+				n = 1;
+			}
+
+			if (msg.empty())
+			{
+				std::cout << "msg is empty\n";
+				break;
+			}
+			memset(buff, 0, BUFF_SIZE);
+			msg.clear();
+			close(connfds[0]);*/
 		}
-		if (n < 0)
-		{
-			std::cout << "[SERVER] Error polling\n";
-			return 1;
-		}
-		std::cout << BLUE << msg << RESET << std::endl;
+		for (size_t i = 0; i < fds_size; i++)
+			{
+				std::cout << "fds[" << i << "].fd: " << fds[i].fd << "\n";
+				std::cout << "fds[" << i << "].events: " << fds[i].events << "\n";
+				std::cout << "fds[" << i << "].revents: " << fds[i].revents << "\n";
+				close(fds[i].fd);
+			}
+		std::cout << "FIN POLL\n";
+		//std::cout << BLUE << msg << RESET << std::endl;
 		//HttpRequestHandler obj(buff);
 		//std::cout << GREEN << buff << RESET << std::endl;
 		//std::cout << obj << std::endl;
-		response.set_status(200);
+		/*response.set_status(200);
 		response.set_body("text/plain","Recieved!");
 
 		HttpResponse imageResponse;
@@ -203,7 +365,7 @@ int main(int argc, char **argv)
 			n = write(connfd, response.to_string().c_str(), response.to_string().length());
 		}
 		else if (strncmp(msg.c_str(), "POST /upload HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
-		{
+		{*/
 			/*std::string boundaryTag = "boundary=";
 			size_t boundaryPos = msg.find(boundaryTag);
 			std::string boundary = msg.substr(boundaryPos + boundaryTag.length());
@@ -250,9 +412,9 @@ int main(int argc, char **argv)
 			} else {
 				std::cout << "Boundary not found\n";
 			}*/
-			std::cout << "FILE RECIEVED\n";
-		}
-		else
+			//std::cout << "FILE RECIEVED\n";
+		//}
+		/*else
 		{
 			n = write(connfd, htmlError.to_string().c_str(), htmlError.to_string().length());
 			std::cout << "Not found\n";
@@ -264,7 +426,7 @@ int main(int argc, char **argv)
 		{
 			std::cout << "[SERVER] Error writing to socket\n";
 			return 1;
-		}
+		}*/
 		/*n = write(connfd, htmlResponse.to_string().c_str(), htmlResponse.to_string().length());
 		if (n < 0)
 		{
@@ -285,8 +447,8 @@ int main(int argc, char **argv)
 			std::cout << "[SERVER] Error writing to socket\n";
 			return 1;
 		}*/
-		memset(buff, 0, BUFF_SIZE);
-		close(connfd);
+		//memset(buff, 0, BUFF_SIZE);
+		//close(connfd);
 	}
 	return 0;
 }
