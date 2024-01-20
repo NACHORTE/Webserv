@@ -9,7 +9,7 @@ class HttpResponse {
 		// constructor, destructor, copy constructor
 		HttpResponse();
 		HttpResponse(HttpResponse const & src);
-		HttpResponse(HttpRequest const & src, const std::vector<std::string> & allowed_paths);
+		HttpResponse(HttpRequest const & src);
 		~HttpResponse();
 
 		// getters, setters
@@ -27,7 +27,7 @@ class HttpResponse {
 		void clear();
 		bool empty() const;
 		std::string to_string() const; // convert an HttpResponse to a string
-		void generate_response(const HttpRequest & req, const std::vector<std::string> & allowed_paths); // generate a response based on the request (and allowed paths)
+		void generate_response(const HttpRequest & req, const std::vector<std::pair<std::string,std::string> >& allowed_paths); // generate a response based on the request (and allowed paths)
 
 		// operator overloads
 		HttpResponse & operator=(HttpResponse const & rhs);

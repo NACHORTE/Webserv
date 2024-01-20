@@ -13,9 +13,9 @@ HttpResponse::HttpResponse(const HttpResponse& other):
 	body(other.body)
 {}
 
-HttpResponse::HttpResponse(const HttpRequest& req, const std::vector<std::string>& allowed_paths)
+HttpResponse::HttpResponse(const HttpRequest& req)
 {
-	generate_response(req, allowed_paths);
+	generate_response(req);
 }
 
 HttpResponse::~HttpResponse()
@@ -127,33 +127,6 @@ std::string HttpResponse::to_string() const
 	return output;
 }
 
-static bool allowed_path(std::string path, std::vector<std::string> allowed_paths) {
-	// path "/" is always allowed
-	if (path == "/")
-		return true;
-
-	// if path contains ".." it is not allowed
-	if (path.find("..") != std::string::npos)
-		return false;
-
-	// search for path starting with allowed paths
-	std::vector<std::string>::iterator it;
-	for (it = allowed_paths.begin(); it != allowed_paths.end(); it++)
-	{
-		// compare path with iterator as a file
-		if (back(*it) != '/'	// if allowed path does not end with "/" its a file
-			&& path == *it)	// path must be exactly the same as allowed path
-			return true;
-
-		// compare path with iterator as a directory
-		if (back(*it) == '/'	// if allowed path ends with "/" its a directory
-			&& path.compare(0, it->size(), *it) == 0	// if path starts with allowed path
-			&& path.size() > it->size())	// if path is longer than allowed path (is a file in the directory)
-			return true;
-	}
-
-	return false;
-}
 
 std::string get_content_type(const std::string & path) {
 	std::vector<std::pair<std::string, std::string> > content_type;
@@ -182,54 +155,9 @@ std::string get_content_type(const std::string & path) {
 	return "text/html";
 }
 
-void HttpResponse::generate_response(const HttpRequest& req, const std::vector<std::string>& allowed_paths)
+void HttpResponse::generate_response(const HttpRequest& req)
 {
-	// clear the response
-	clear();
 
-	// check if path is allowed
-	if (!allowed_path(req.get_path(), allowed_paths))
-	{
-		set_status(403, "Forbidden");
-		return;
-	}
-
-	// check if method is allowed
-	if (req.get_method() != "GET")
-	{
-		set_status(405, "Method Not Allowed");
-		return;
-	}
-	if (req.get_path() == "/" || req.get_path() == "/index.html")
-	{
-		set_status(200, "OK");
-		set_body("text/html", readFile("./html/index.html"));
-		return;
-	}
-	// check if file exists
-	std::string file_path = "." + req.get_path();
-	std::string file_content;
-	try
-	{
-		file_content = readImageFile(file_path);
-	}
-	catch (const std::invalid_argument& e)
-	{
-		set_status(404, "Not Found");
-		return;
-	}
-	catch (const std::runtime_error& e)
-	{
-		set_status(500, "Internal Server Error");
-		return;
-	}
-
-	// set status code
-	set_status(200, "OK");
-	std::cout << get_content_type(file_path) << std::endl;
-
-	// set body
-	set_body(get_content_type(file_path), file_content);
 }
 
 HttpResponse & HttpResponse::operator=(const HttpResponse& rhs)
