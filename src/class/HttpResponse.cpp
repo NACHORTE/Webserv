@@ -13,10 +13,10 @@ HttpResponse::HttpResponse(const HttpResponse& other):
 	body(other.body)
 {}
 
-HttpResponse::HttpResponse(const HttpRequest& req)
+/*HttpResponse::HttpResponse(const HttpRequest& req)
 {
 	generate_response(req);
-}
+}*/
 
 HttpResponse::~HttpResponse()
 {}
@@ -155,10 +155,10 @@ std::string get_content_type(const std::string & path) {
 	return "text/html";
 }
 
-void HttpResponse::generate_response(const HttpRequest& req)
+/*void HttpResponse::generate_response(const HttpRequest& req)
 {
 
-}
+}*/
 
 HttpResponse & HttpResponse::operator=(const HttpResponse& rhs)
 {
