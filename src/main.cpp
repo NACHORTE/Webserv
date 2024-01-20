@@ -103,10 +103,19 @@ int main(int argc, char **argv)
 	htmlError.set_status(404);
 	htmlError.set_body("text/html",readFile("html/error.html"));
 
-	if (fcntl(servers[0].sockfd, F_SETFL, O_NONBLOCK) < 0)
+	/*if (fcntl(servers[0].sockfd, F_SETFL, O_NONBLOCK) < 0)
 	{
 		std::cout << "[SERVER] Error fcntl\n";
 		return 1;
+	}*/
+
+	for (size_t i = 0; i < servers.size(); i++)
+	{
+		if (fcntl(servers[i].sockfd, F_SETFL, O_NONBLOCK) < 0)
+		{
+			std::cout << "[SERVER] Error fcntl\n";
+			return 1;
+		}
 	}
 
 	while(1)
