@@ -13,10 +13,10 @@ HttpResponse::HttpResponse(const HttpResponse& other):
 	body(other.body)
 {}
 
-/*HttpResponse::HttpResponse(const HttpRequest& req)
+HttpResponse::HttpResponse(const HttpRequest& req, const Locations & valid_paths)
 {
-	generate_response(req);
-}*/
+	generate_response(req, valid_paths);
+}
 
 HttpResponse::~HttpResponse()
 {}
@@ -127,38 +127,61 @@ std::string HttpResponse::to_string() const
 	return output;
 }
 
-
-std::string get_content_type(const std::string & path) {
-	std::vector<std::pair<std::string, std::string> > content_type;
-	content_type.push_back(std::make_pair(".html", "text/html"));
-	content_type.push_back(std::make_pair(".css", "text/css"));
-	content_type.push_back(std::make_pair(".js", "application/javascript"));
-	content_type.push_back(std::make_pair(".jpg", "image/jpeg"));
-	content_type.push_back(std::make_pair(".jpeg", "image/jpeg"));
-	content_type.push_back(std::make_pair(".png", "image/png"));
-	content_type.push_back(std::make_pair(".gif", "image/gif"));
-	content_type.push_back(std::make_pair(".swf", "application/x-shockwave-flash"));
-	content_type.push_back(std::make_pair(".txt", "text/plain"));
-	content_type.push_back(std::make_pair(".pdf", "application/pdf"));
-	content_type.push_back(std::make_pair(".mp3", "audio/mpeg"));
-	content_type.push_back(std::make_pair(".mp4", "video/mp4"));
-	content_type.push_back(std::make_pair(".avi", "video/x-msvideo"));
-	content_type.push_back(std::make_pair(".mpeg", "video/mpeg"));
-	content_type.push_back(std::make_pair(".ico", "image/x-icon"));
-
-	std::string extension = path.substr(path.find_last_of('.'));
-	if (extension == "")
-		return "text/html";
-	for (size_t i = 0; i < content_type.size(); i++)
-		if (content_type[i].first == extension)
-			return content_type[i].second;
-	return "text/html";
+static bool isBinaryFile(const std::string & filename)
+{
+	std::string contentType = getContentType(filename);
+	return (contentType.substr(0,5) != "text/");
 }
 
-/*void HttpResponse::generate_response(const HttpRequest& req)
+void HttpResponse::generate_response(const HttpRequest& req, const Locations & valid_paths)
 {
+	// Empty everything
+	clear();
 
-}*/
+	// If request is not valid, return 400 Bad Request
+	if (valid_paths.isPathAllowed(req.get_method(), req.get_path()) == false)
+	{
+		//NOTE Maybe try a file and if it fails, return this
+		set_status(403);
+		set_body("text/html", "<html><body><h1>403 Forbidden</h1></body></html>");
+		return;
+	}
+
+	//THIS SHOULD GO IN THE GET METHOD FROM THE SERVER
+	// Get the path of the requested file
+	std::string filename = valid_paths.getFilename(req.get_method(), req.get_path());
+	std::string extension = getExtension(filename);
+
+	// If the file ends with ".cgi", run the file and return the output
+	if (extension == "cgi")
+	{
+		//something with fork and execve
+		return;
+	}
+
+	// The request was succesful
+	try
+	{
+		set_status(200);
+		set_body(getContentType(filename), readFile(filename, isBinaryFile(filename)));
+	}
+	// Catch FileNotFound and return 404 Not Found
+	catch (FileNotFound & e)
+	{
+		// NOTE Maybe try a file and if it fails, return this
+		set_status(404);
+		set_body("text/html", "<html><body><h1>404 Not Found</h1></body></html>");
+		return;
+	}
+	// Catch FileNotOpen and any other exceptions
+	catch (std::exception & e)
+	{
+		// NOTE Maybe try a file and if it fails, return this
+		set_status(500);
+		set_body("text/html", "<html><body><h1>500 Internal Server Error</h1></body></html>");
+		return;
+	}
+}
 
 HttpResponse & HttpResponse::operator=(const HttpResponse& rhs)
 {
