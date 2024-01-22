@@ -18,17 +18,7 @@ std::string readFile(const std::string& filePath, bool binary) {
 
 	// If file wasn't opened, throw an exception
     if (!file.is_open())
-	{
-		// Opening the file failed for a reason other than "file not found"
-		if (file.fail())
-		{
-		    std::cerr << "Error opening HTML file (other error): " << filePath << std::endl; //NOTE remove this message maybe
-		    throw FileNotOpen();
-		}
-		// The file was not found
-		std::cerr << "File not found: " << filePath << std::endl; //NOTE remove this message maybe
-		throw FileNotFound();
-    }
+		throw std::runtime_error("Could not open file: " + filePath);
 
 	// Read the file into a string
     std::ostringstream htmlContent;

@@ -6,7 +6,7 @@ HttpResponse GET(const HttpRequest & req, const Locations & valid_paths)
 	HttpResponse ret;
 
 	// Get the path of the requested file
-	std::string filename = valid_paths.getFilename(req.get_method(), req.get_path());
+	std::string filename = valid_paths.getFilename(req.get_path());
 
 	// If the file ends with ".cgi", run the file and return the output
 	if (getExtension(filename) == "cgi")
@@ -24,18 +24,11 @@ HttpResponse GET(const HttpRequest & req, const Locations & valid_paths)
 		ret.set_body(getContentType(filename), readFile(filename, isBinaryFile(filename)));
 	}
 	// Catch FileNotFound and return 404 Not Found
-	catch (FileNotFound & e)
+	catch (std::exception & e)
 	{
 		// NOTE Maybe try a file and if it fails, return this
 		ret.set_status(404);
 		ret.set_body("text/html", "<html><body><h1>404 Not Found</h1></body></html>");
-	}
-	// Catch FileNotOpen and any other exceptions
-	catch (std::exception & e)
-	{
-		// NOTE Maybe try a file and if it fails, return this
-		ret.set_status(500);
-		ret.set_body("text/html", "<html><body><h1>500 Internal Server Error</h1></body></html>");
 	}
 
 	return ret;

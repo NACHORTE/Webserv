@@ -15,11 +15,16 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 # Source files without SRC_DIR
-SRC := set_config/set_config.cpp\
-	main.cpp\
+SRC := GET.cpp\
+	set_config/set_config.cpp\
+	DELETE.cpp\
 	class/HttpResponse.cpp\
 	class/HttpRequest.cpp\
-	utils.cpp
+	class/Locations.cpp\
+	class/Server.cpp\
+	utils.cpp\
+	POST.cpp\
+	main.cpp
 
 # Setup obj and src files and obj folders
 SRC := $(addprefix $(SRC_DIR)/,$(SRC))

@@ -29,7 +29,7 @@ class Locations
 		~Locations();
 
 		// Setters and getters
-		std::string getFilename(const std::string & method, const std::string & path) const; // returns the filename associated with the path. Returns empty string if no match is found
+		std::string getFilename(const std::string & path) const; // returns the filename associated with the path. Returns empty string if no match is found
 
 		// Member functions
 		bool addLocation(const Locations::Location & location);

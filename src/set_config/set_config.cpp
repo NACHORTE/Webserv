@@ -247,7 +247,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 	std::string word;
 	std::string content;
 	int in_server = 0;
-	input = readFile(config_file);
+	input = readFile(config_file); //NOTE try catch
 	std::istringstream iss(input);
 	std::vector <t_server> servers;
 	int n_server = 0;

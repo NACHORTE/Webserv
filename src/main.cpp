@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 
 	HttpResponse imageResponse;
 	imageResponse.set_status(200);
-	imageResponse.set_body("image/jpeg",readImageFile("imgs/goku.jpg"));
+	imageResponse.set_body("image/jpeg",readFile("img/goku.jpg", std::ios::binary));
 
 	HttpResponse htmlResponse;
 	htmlResponse.set_status(200);
@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 						std::cout << "\n index \n";
 						n = write(connfds[i], htmlResponse.to_string().c_str(), htmlResponse.to_string().length());
 					}
-					else if (strncmp(msg.c_str(), "GET /imgs/goku.jpg HTTP/1.1", strlen("GET /imgs/goku.jpg HTTP/1.1")) == 0)
+					else if (strncmp(msg.c_str(), "GET /img/goku.jpg HTTP/1.1", strlen("GET /img/goku.jpg HTTP/1.1")) == 0)
 					{
 						std::cout << "\n\n" << imageResponse.to_string().c_str() << "\n\n";
 						n = write(connfds[i], imageResponse.to_string().c_str(), imageResponse.to_string().length());
@@ -188,7 +188,7 @@ int main(int argc, char **argv)
 					{
 						n = write(connfds[i], htmlResponse.to_string().c_str(), htmlResponse.to_string().length());
 					}
-					else if (strncmp(msg.c_str(), "POST /index HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
+					else if (strncmp(msg.c_str(), "POST /upload HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
 					{
 						n = write(connfds[i], response.to_string().c_str(), response.to_string().length());
 					}

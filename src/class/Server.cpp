@@ -22,6 +22,7 @@ Server::Server(void)
 	_allowed_paths.addLocation("/upload/", false, "", location_allowed_methods);
 
 	location_allowed_methods.clear();
+	location_allowed_methods.insert("GET");
 	location_allowed_methods.insert("POST");
 	_allowed_paths.addLocation("/upload", true, "", location_allowed_methods);
 
@@ -29,6 +30,12 @@ Server::Server(void)
 	location_allowed_methods.insert("POST");
 	location_allowed_methods.insert("GET");
 	_allowed_paths.addLocation("/bin-cgi/", false, "", location_allowed_methods);
+
+	std::cout << "allowed paths:" << std::endl;
+	std::cout << _allowed_paths << std::endl;
+	std::cout << "allowed methods:" << std::endl;
+	for (std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)>::iterator it = _allowed_methods.begin(); it != _allowed_methods.end(); ++it)
+		std::cout << it->first << std::endl;
 }
 
 Server::Server(const Server & src)

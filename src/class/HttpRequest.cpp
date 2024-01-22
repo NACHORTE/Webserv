@@ -25,12 +25,12 @@ void HttpRequest::set_method(const std::string& method)
 
 void HttpRequest::set_path(const std::string& path)
 {
-	this->_path = _path;
+	this->_path = path;
 }
 
 void HttpRequest::set_version(const std::string& version)
 {
-	this->_version = _version;
+	this->_version = version;
 }
 
 void HttpRequest::set_header(const std::string& key, const std::string& value)

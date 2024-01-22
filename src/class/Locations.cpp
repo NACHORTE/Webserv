@@ -69,12 +69,12 @@ static std::string construct_path(const std::string & path)
 	return std::string ("./") + path;
 }
 
-std::string Locations::getFilename(const std::string & method, const std::string & path) const
+std::string Locations::getFilename(const std::string & path) const
 {
 	size_t len = _locations.size();
 	for (size_t i = 0; i < len; ++i)
 	{
-		if (_locations[i].isPathAllowed(path) && _locations[i].isMethodAllowed(method))
+		if (_locations[i].isPathAllowed(path))
 		{
 			if (_locations[i]._filename == "")
 				return construct_path(path);
