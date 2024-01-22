@@ -31,11 +31,11 @@ Server::Server(void)
 	location_allowed_methods.insert("GET");
 	_allowed_paths.addLocation("/bin-cgi/", false, "", location_allowed_methods);
 
-	std::cout << "allowed paths:" << std::endl;
-	std::cout << _allowed_paths << std::endl;
-	std::cout << "allowed methods:" << std::endl;
-	for (std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)>::iterator it = _allowed_methods.begin(); it != _allowed_methods.end(); ++it)
-		std::cout << it->first << std::endl;
+	//std::cout << "allowed paths:" << std::endl;
+	//std::cout << _allowed_paths << std::endl;
+	//std::cout << "allowed methods:" << std::endl;
+	//for (std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)>::iterator it = _allowed_methods.begin(); it != _allowed_methods.end(); ++it)
+	//	std::cout << it->first << std::endl;
 }
 
 Server::Server(const Server & src)

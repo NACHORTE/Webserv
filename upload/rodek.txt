@@ -1,7 +1,0 @@
-Al parecer los txt son bien sencillos
-
-------WebKitFormBoundaryaqhXnXhsqel8JSDw
-Content-Disposition: form-data; name="data1"
-
-
-------WebKitFormBoundaryaqhXnXhsqel8JSDw--

@@ -5,12 +5,17 @@ HttpResponse GET(const HttpRequest & req, const Locations & valid_paths)
 {
 	HttpResponse ret;
 
+	// Get the path without the query string
+	std::string path = req.get_path();
+	path = path.substr(0, path.find('?'));
+
 	// Get the path of the requested file
-	std::string filename = valid_paths.getFilename(req.get_path());
+	std::string filename = valid_paths.getFilename(path);
 
 	// If the file ends with ".cgi", run the file and return the output
-	if (getExtension(filename) == "cgi")
+	if (getExtension(path) == "cgi") // XXX this does not work /bin-cgi/ls.cgi?dir=/etc split by ? 
 	{
+		//char **envp = getEnvp(req.get_path());
 		//something with fork and execve
 		ret.set_status(200, "CGI OK");
 		ret.set_body("text/html", "<html><body><h1>CGI</h1></body></html>");

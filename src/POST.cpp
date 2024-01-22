@@ -3,6 +3,7 @@
 
 HttpResponse POST(const HttpRequest & req, const Locations & valid_paths)
 {
+	// CHECK for trying to create a file outside /upload
 	(void)req;
 	(void)valid_paths;
 	HttpResponse ret;
