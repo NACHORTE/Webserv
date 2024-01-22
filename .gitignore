@@ -22,7 +22,8 @@
 !.gitignore
 !imgs/**/*
 !upload/**/*
-!default.conf
+!**/*.conf
+!bin-cgi/**/*.cgi
 
 #ignore all object files and libraries
 **/*.o
