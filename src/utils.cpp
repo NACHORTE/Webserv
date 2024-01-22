@@ -12,7 +12,7 @@ std::string int_to_string(int n)
 	return ss.str();
 }
 
-std::string readFile(const std::string& filePath, bool binary = false) {
+std::string readFile(const std::string& filePath, bool binary) {
 	// Open the file in binary or text mode
     std::ifstream file(filePath.c_str(), binary ? std::ios::binary : std::ios::in);
 
@@ -86,7 +86,7 @@ std::string getExtension(const std::string & filename)
 	return filename.substr(pos + 1);
 }
 
-std::string getContentType(const std::string & path) {
+std::string getContentType(const std::string & filename) {
 	// List of extension-content_type pairs that only initializes once
 	static std::map<std::string, std::string> content_type;
 	if (content_type.empty())
@@ -109,7 +109,7 @@ std::string getContentType(const std::string & path) {
 	}
 
 	// Get the extension of the file
-	std::string extension = getExtension(path);
+	std::string extension = getExtension(filename);
 
 	// If the extension is not in the map, return "application/octet-stream"
 	if (extension == "" || content_type.count(extension) == 0)
@@ -117,4 +117,10 @@ std::string getContentType(const std::string & path) {
 	
 	// Return the content type
 	return content_type[extension];
+}
+
+bool isBinaryFile(const std::string & filename)
+{
+	std::string contentType = getContentType(filename);
+	return (contentType.substr(0,5) != "text/");
 }

@@ -11,8 +11,8 @@ HttpRequest::HttpRequest(const std::string& msg)
 }
 
 HttpRequest::HttpRequest(const HttpRequest& other):
-	method(other.method), path(other.path), version(other.version),
-	headers(other.headers), body(other.body)
+	_method(other._method), _path(other._path), _version(other._version),
+	_headers(other._headers), _body(other._body)
 {}
 
 HttpRequest::~HttpRequest()
@@ -20,32 +20,32 @@ HttpRequest::~HttpRequest()
 
 void HttpRequest::set_method(const std::string& method)
 {
-	this->method = method;
+	this->_method = method;
 }
 
 void HttpRequest::set_path(const std::string& path)
 {
-	this->path = path;
+	this->_path = _path;
 }
 
 void HttpRequest::set_version(const std::string& version)
 {
-	this->version = version;
+	this->_version = _version;
 }
 
 void HttpRequest::set_header(const std::string& key, const std::string& value)
 {
 	// Multiple headers with the same key are allowed
-	headers.push_back(std::make_pair(key, value));
+	_headers.push_back(std::make_pair(key, value));
 }
 
 void HttpRequest::unset_header(const std::string& key)
 {
 	std::vector<std::pair<std::string, std::string> >::iterator it;
-	for (it = headers.begin(); it != headers.end();)
+	for (it = _headers.begin(); it != _headers.end();)
 	{
 		if (it->first == key)
-			it = headers.erase(it);
+			it = _headers.erase(it);
 		else
 			++it;
 	}
@@ -53,38 +53,38 @@ void HttpRequest::unset_header(const std::string& key)
 
 void HttpRequest::set_body(const std::string& body)
 {
-	this->body = body;
+	this->_body = body;
 }
 
 const std::string & HttpRequest::get_method() const
 {
-	return method;
+	return _method;
 }
 
 const std::string & HttpRequest::get_path() const
 {
-	return path;
+	return _path;
 }
 
 const std::string & HttpRequest::get_version() const
 {
-	return version;
+	return _version;
 }
 
 std::vector<std::string> HttpRequest::get_header(const std::string& key) const
 {
 	std::vector<std::string> output;
 
-	size_t header_size = headers.size();
+	size_t header_size = _headers.size();
 	for (size_t i = 0; i < header_size; i++)
-		if (headers[i].first == key)
-			output.push_back(headers[i].second);
+		if (_headers[i].first == key)
+			output.push_back(_headers[i].second);
 	return output;
 }
 
 const std::string & HttpRequest::get_body() const
 {
-	return body;
+	return _body;
 }
 
 void HttpRequest::parseRequest(const std::string& msg)
@@ -99,7 +99,7 @@ void HttpRequest::parseRequest(const std::string& msg)
 	std::string line;
 	std::getline(iss, line);
 	std::istringstream iss_line(line);
-	iss_line >> method >> path >> version;
+	iss_line >> _method >> _path >> _version;
 	// Check if line is valid
 	if (iss_line.fail()) // NOTE check if there is no more words in iss_line
 		return (this->clear());
@@ -114,52 +114,52 @@ void HttpRequest::parseRequest(const std::string& msg)
 		// Parse line
 		std::string key = trim(line.substr(0, index));
 		std::string value = trim(line.substr(index + 1));
-		headers.push_back(std::make_pair(key, value));
+		_headers.push_back(std::make_pair(key, value));
 	}
 
 	// Get body
-	body = iss.str().substr(iss.tellg());
+	_body = iss.str().substr(iss.tellg());
 }
 
 std::string HttpRequest::to_string() const
 {
 	if (this->empty())
 		return "";
-	std::string ret = method + " " + path + " " + version + "\r\n";
-	size_t header_size = headers.size();
+	std::string ret = _method + " " + _path + " " + _version + "\r\n";
+	size_t header_size = _headers.size();
 	for (size_t i = 0; i < header_size; i++)
-		ret += headers[i].first + ": " + headers[i].second + "\r\n";
-	ret += "\r\n" + body;
+		ret += _headers[i].first + ": " + _headers[i].second + "\r\n";
+	ret += "\r\n" + _body;
 	return ret;
 }
 
 void HttpRequest::clear()
 {
-	method.clear();
-	path.clear();
-	version.clear();
-	headers.clear();
-	body.clear();
+	_method.clear();
+	_path.clear();
+	_version.clear();
+	_headers.clear();
+	_body.clear();
 }
 
 bool HttpRequest::empty() const
 {
-	return (method.empty()
-		&& path.empty()
-		&& version.empty()
-		&& headers.empty()
-		&& body.empty());
+	return (_method.empty()
+		&& _path.empty()
+		&& _version.empty()
+		&& _headers.empty()
+		&& _body.empty());
 }
 
 HttpRequest & HttpRequest::operator=(HttpRequest const & rhs)
 {
 	if (this != &rhs)
 	{
-		this->method = rhs.method;
-		this->path = rhs.path;
-		this->version = rhs.version;
-		this->headers = rhs.headers;
-		this->body = rhs.body;
+		this->_method = rhs._method;
+		this->_path = rhs._path;
+		this->_version = rhs._version;
+		this->_headers = rhs._headers;
+		this->_body = rhs._body;
 	}
 	return *this;
 }

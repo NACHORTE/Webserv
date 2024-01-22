@@ -1,4 +1,4 @@
-#include "Location.hpp"
+#include "Locations.hpp"
 #include "utils.hpp"
 #include "colors.h"
 
@@ -12,7 +12,7 @@ bool Locations::Location::isPathAllowed(const std::string & path) const
 	size_t len = path.size();
 	if (len > 1 && path[len - 1] == '/')
 		return false;
-	
+
 	// check as a file
 	if (_isFile)
 	{
@@ -140,7 +140,6 @@ Locations::Location &Locations::operator[](size_t index)
 std::ostream &operator<<(std::ostream &os, const Locations &obj)
 {
 	size_t len = obj._locations.size();
-	os << "Locations:\n";
 	for (size_t i = 0; i < len; ++i)
 	{
 		os << "[" << i << "]:\n";
@@ -157,7 +156,7 @@ std::ostream &operator<<(std::ostream &os, const Locations &obj)
 		{
 			os << *it;
 			++it;
-			if (it == obj._locations[i]._allowedMethods.end())
+			if (it != obj._locations[i]._allowedMethods.end())
 				os << ", ";
 		}
 		os << std::endl;

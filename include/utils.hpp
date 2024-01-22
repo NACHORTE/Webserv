@@ -12,4 +12,5 @@ int ok_config(std::string config_file);
 char back(std::string str);
 void pop_back(std::string& str);
 std::string getExtension(const std::string & filename);
-std::string getContentType(const std::string & path);
+std::string getContentType(const std::string & filename);
+bool isBinaryFile(const std::string & filename);

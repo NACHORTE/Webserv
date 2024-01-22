@@ -4,13 +4,17 @@
 #include <iostream>
 #include "HttpRequest.hpp"
 #include "Locations.hpp"
+#include <map>
 
 class HttpResponse {
 	public:
-		// constructor, destructor, copy constructor
+		// Constructor, destructor, copy constructor
 		HttpResponse();
 		HttpResponse(HttpResponse const & src);
-		HttpResponse(HttpRequest const & req, const Locations & valid_paths);
+		HttpResponse( // Executes generate response
+			HttpRequest const & req,
+			const Locations & valid_paths,
+			const std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> & valid_methods);
 		~HttpResponse();
 
 		// getters, setters
@@ -25,20 +29,23 @@ class HttpResponse {
 		const std::string & get_body() const;
 
 		// member functions
-		void clear();
-		bool empty() const;
+		void clear(); // clear the response
+		bool empty() const; // check if the response is empty
 		std::string to_string() const; // convert an HttpResponse to a string
-		void generate_response(const HttpRequest &, const Locations & valid_paths); // generate a response based on the request (and allowed paths)
+		void generate_response( // Generate a response based on the request (and allowed paths and methods)
+			const HttpRequest & req,
+			const Locations & valid_paths,
+			const std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> & valid_methods);
 
 		// operator overloads
 		HttpResponse & operator=(HttpResponse const & rhs);
 		std::string operator()() const; // equivalent to to_string()
 	protected:
 	private:
-		std::string status_code;
-		std::string status_phrase;
-		std::vector<std::pair<std::string, std::string> > headers;
-		std::string body;
+		std::string _status_code;
+		std::string _status_phrase;
+		std::vector<std::pair<std::string, std::string> > _headers;
+		std::string _body;
 
 	friend std::ostream & operator<<(std::ostream & o, HttpResponse const & rhs);
 };

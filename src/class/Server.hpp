@@ -2,21 +2,22 @@
 #include <iostream>
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
-#include "Location.hpp"
+#include "Locations.hpp"
 #include <map>
 
 class Server
 {
 	public:
-		Server(void);
+		Server();
 		Server(const Server & src);
 		~Server();
 		Server & operator=(const Server & rhs);
 	protected:
 	private:
+	public:
 		std::string _host;
 		int _port;
-		std::map<std::string, HttpResponse (*)(HttpRequest)> _allowed_methods;
+		std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> _allowed_methods;
 		Locations _allowed_paths;
 
 	friend std::ostream &operator<<(std::ostream &os, const Server &obj);

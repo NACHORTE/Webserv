@@ -1,7 +1,34 @@
 #include "Server.hpp"
+#include "HttpMethods.hpp"
+#include "utils.hpp"
 
 Server::Server(void)
 {
+	_allowed_methods["GET"] = GET;
+	_allowed_methods["POST"] = POST;
+	_allowed_methods["DELETE"] = DELETE;
+
+	std::set<std::string> location_allowed_methods;
+	location_allowed_methods.insert("GET");
+	_allowed_paths.addLocation("/", true, "/html/index.html", location_allowed_methods);
+	_allowed_paths.addLocation("/index.html", true, "/html/index.html", location_allowed_methods);
+	_allowed_paths.addLocation("/favicon.ico", true, "/img/favicon.ico", location_allowed_methods);
+	_allowed_paths.addLocation("/html/", false, "", location_allowed_methods);
+	_allowed_paths.addLocation("/img/", false, "", location_allowed_methods);
+
+	location_allowed_methods.clear();
+	location_allowed_methods.insert("GET");
+	location_allowed_methods.insert("DELETE");
+	_allowed_paths.addLocation("/upload/", false, "", location_allowed_methods);
+
+	location_allowed_methods.clear();
+	location_allowed_methods.insert("POST");
+	_allowed_paths.addLocation("/upload", true, "", location_allowed_methods);
+
+	location_allowed_methods.clear();
+	location_allowed_methods.insert("POST");
+	location_allowed_methods.insert("GET");
+	_allowed_paths.addLocation("/bin-cgi/", false, "", location_allowed_methods);
 }
 
 Server::Server(const Server & src)
