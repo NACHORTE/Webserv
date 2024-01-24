@@ -142,16 +142,31 @@ int main(int argc, char **argv)
 				{
 					some_event = 1;
 					std::cout << "inside if\n";
-					int n_read = read(fds[i].fd, buff, BUFF_SIZE);
-					if (n_read < 0)
+					int n_read = 0;
+					if (fcntl(fds[i].fd, F_SETFL, O_NONBLOCK) < 0)
+					{
+						std::cout << "[SERVER] Error fcntl\n";
+						return 1;
+					}
+					/*while (poll(&fds[0],fds_size, 1000) > 0 && (fds[i].revents & POLLIN) && ((n_read = read(fds[i].fd, buff, BUFF_SIZE)) > 0))  //NOTE do while for little buff
+					{
+						std::cout << "n_read: " << (int)n_read << "\n";
+						msg += std::string(buff,n_read);
+					}
+					std::cout << "fuera while\n";*/
+					while ((n_read = read(fds[i].fd, buff, BUFF_SIZE)) > 0)
+					{
+						std::cout << "n_read: " << (int)n_read << "\n";
+						msg += std::string(buff,n_read);
+					}
+					/*if (n_read < 0)
 					{
 						std::cout << "[SERVER] Error reading from socket\n";
 						return 1;
-					}
-					std::cout << "n_read: " << n_read << "\n";
-					msg += std::string(buff,n_read);
+					}*/
+					/*size_t msg_size = msg.size();
 					std::cout << RED "buff:"<< "\n";
-					for (size_t i = 0; i < static_cast<size_t>(n_read); i++)
+					for (size_t i = 0; i < msg_size; i++)
 					{
 						if (buff[i] == '\0')
 							std::cout << "\\0";
@@ -164,7 +179,7 @@ int main(int argc, char **argv)
 						else
 							std::cout << "\\x" << std::hex << (int)buff[i];
 					}
-					std::cout << RESET << "\n";
+					std::cout << RESET << "\n";*/
 					if (strncmp(msg.c_str(), "GET / HTTP/1.1", strlen("GET / HTTP/1.1")) == 0)
 					{
 						std::cout << "\n index \n";
