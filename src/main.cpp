@@ -37,10 +37,19 @@ unsigned long millis()
 	return this_time - first_time;
 }
 
+static void print_long_str(const std::string & str, size_t max_size = 1000)
+{
+	if (str.size() > max_size)
+		std::cout << str.substr(0, max_size) << "...";
+	else
+		std::cout << str;
+}
+
 int main(int argc, char **argv)
 {
 	struct sockaddr_in client;
 	HttpResponse response;
+	Server server;
 
 	if (argc != 2)
 	{
@@ -53,34 +62,6 @@ int main(int argc, char **argv)
 	std::vector<t_server> servers = read_config(argv[1]);
 	if (servers.size() == 0)
 		return 1;
-
-	//INIT RESPONSES MANUALLY
-	response.set_status(200);
-	response.set_body("text/plain","Recieved!");
-
-	HttpResponse imageResponse;
-	imageResponse.set_status(200);
-	imageResponse.set_body("image/jpeg",readFile("img/goku.jpg", std::ios::binary));
-
-	HttpResponse htmlResponse;
-	htmlResponse.set_status(200);
-	htmlResponse.set_body("text/html",readFile("html/index.html"));
-
-	HttpResponse htmlPrin;
-	htmlPrin.set_status(200);
-	htmlPrin.set_body("text/html",readFile("html/principal.html"));
-
-	HttpResponse htmlSec;
-	htmlSec.set_status(200);
-	htmlSec.set_body("text/html",readFile("html/secundaria.html"));
-
-	HttpResponse htmlUpload;
-	htmlUpload.set_status(200);
-	htmlUpload.set_body("text/html",readFile("html/upload.html"));
-
-	HttpResponse htmlError;
-	htmlError.set_status(404);
-	htmlError.set_body("text/html",readFile("html/error.html"));
 
 	for (size_t i = 0; i < servers.size(); i++)
 	{
@@ -156,41 +137,22 @@ int main(int argc, char **argv)
 						msg += std::string(buff,n_read);
 					}
 					std::cout << "fuera while\n";
-					if (strncmp(msg.c_str(), "GET / HTTP/1.1", strlen("GET / HTTP/1.1")) == 0)
-					{
-						std::cout << "\n index \n";
-						n = write(connfds[i], htmlResponse.to_string().c_str(), htmlResponse.to_string().length());
-					}
-					else if (strncmp(msg.c_str(), "GET /img/goku.jpg HTTP/1.1", strlen("GET /img/goku.jpg HTTP/1.1")) == 0)
-					{
-						std::cout << "\n\n" << imageResponse.to_string().c_str() << "\n\n";
-						n = write(connfds[i], imageResponse.to_string().c_str(), imageResponse.to_string().length());
-					}
-					else if (strncmp(msg.c_str(), "GET /secundaria.html HTTP/1.1", strlen("GET /secundaria.html HTTP/1.1")) == 0)
-					{
-						std::cout << "\n SECUNDARIA \n";
-						n = write(connfds[i], htmlSec.to_string().c_str(), htmlSec.to_string().length());
-					}
-					else if (strncmp(msg.c_str(), "GET /principal.html HTTP/1.1", strlen("GET /principal.html HTTP/1.1")) == 0)
-					{
-						n = write(connfds[i], htmlPrin.to_string().c_str(), htmlPrin.to_string().length());
-					}
-					else if (strncmp(msg.c_str(), "GET /index.html HTTP/1.1", strlen("GET /index.html HTTP/1.1")) == 0)
-					{
-						n = write(connfds[i], htmlResponse.to_string().c_str(), htmlResponse.to_string().length());
-					}
-					else if (strncmp(msg.c_str(), "POST /upload HTTP/1.1", strlen("POST /upload HTTP/1.1")) == 0) 
-					{
-						n = write(connfds[i], response.to_string().c_str(), response.to_string().length());
-					}
-					else if (!msg.empty())
-					{
-						n = write(connfds[i], htmlError.to_string().c_str(), htmlError.to_string().length());
-						std::cout << "Not found\n";
-						n = 1;
-					}
+
+					HttpRequest request(msg);
+					std::string request_str = request();
+					std::cout << "-\nRequest:\n" << BLUE;
+					print_long_str(request_str, 5000);
+					std::cout << RESET << "-" << std::endl;
+
+					response.generate(request, server._allowed_paths, server._allowed_methods);
+					std::string response_str = response();
+					std::cout << "-\nResponse:\n" << GREEN;
+					print_long_str(response_str, 5000);
+					std::cout << RESET << "-" << std::endl;
+
+					write(fds[i].fd, response_str.c_str(), response_str.size());
+
 					memset(buff, 0, BUFF_SIZE);
-					std::cout << BLUE << msg << RESET << std::endl;
 					msg.clear();
 					close(connfds[i]);
 				}

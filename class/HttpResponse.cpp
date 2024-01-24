@@ -18,7 +18,7 @@ HttpResponse::HttpResponse(
 	const Locations & valid_paths,
 	const std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> & valid_methods)
 {
-	generate_response(req, valid_paths, valid_methods);
+	generate(req, valid_paths, valid_methods);
 }
 
 HttpResponse::~HttpResponse()
@@ -130,7 +130,7 @@ std::string HttpResponse::to_string() const
 	return (output);
 }
 
-void HttpResponse::generate_response(
+void HttpResponse::generate(
 	const HttpRequest & req,
 	const Locations & valid_paths,
 	const std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> & valid_methods)

@@ -32,7 +32,7 @@ class HttpResponse {
 		void clear(); // clear the response
 		bool empty() const; // check if the response is empty
 		std::string to_string() const; // convert an HttpResponse to a string
-		void generate_response( // Generate a response based on the request (and allowed paths and methods)
+		void generate( // Generate a response based on the request (and allowed paths and methods)
 			const HttpRequest & req,
 			const Locations & valid_paths,
 			const std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> & valid_methods);

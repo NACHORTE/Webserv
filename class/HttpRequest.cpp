@@ -169,6 +169,11 @@ std::string HttpRequest::operator()() const
 	return to_string();
 }
 
+std::vector<std::string> HttpRequest::operator[](const std::string& key) const
+{
+	return get_header(key);
+}
+
 std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs)
 {
 	o << rhs.to_string();
