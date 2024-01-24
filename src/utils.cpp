@@ -81,6 +81,8 @@ std::string getContentType(const std::string & filename) {
 	static std::map<std::string, std::string> content_type;
 	if (content_type.empty())
 	{
+		content_type["txt"] = "text/plain";
+		content_type["htm"] = "text/html";
 		content_type["html"] = "text/html";
 		content_type["css"] = "text/css";
 		content_type["js"] = "application/javascript";

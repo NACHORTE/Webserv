@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "HttpResponse.hpp"
+#include "HttpRequest.hpp"
+#include "Server.hpp"
 #include <sstream>
 #include <cstring>
 #include <fstream>
@@ -42,7 +44,7 @@ int main(int argc, char **argv)
 
 	if (argc != 2)
 	{
-		std::cout << "[SERVER] Usage: ./server <config_file>\n";
+		std::cout << "[SERVER] Usage: ./Webserv <config_file>\n";
 		return 1;
 	}
 	if (ok_config(argv[1]))
@@ -154,27 +156,6 @@ int main(int argc, char **argv)
 						msg += std::string(buff,n_read);
 					}
 					std::cout << "fuera while\n";
-					/*if (n_read < 0)
-					{
-						std::cout << "[SERVER] Error reading from socket\n";
-						return 1;
-					}*/
-					/*size_t msg_size = msg.size();
-					std::cout << RED "buff:"<< "\n";
-					for (size_t i = 0; i < msg_size; i++)
-					{
-						if (buff[i] == '\0')
-							std::cout << "\\0";
-						else if (buff[i] == '\n')
-							std::cout << buff[i];
-						else if (buff[i] == '\r')
-							std::cout << buff[i];
-						else if (isprint(buff[i]))
-							std::cout << buff[i];
-						else
-							std::cout << "\\x" << std::hex << (int)buff[i];
-					}
-					std::cout << RESET << "\n";*/
 					if (strncmp(msg.c_str(), "GET / HTTP/1.1", strlen("GET / HTTP/1.1")) == 0)
 					{
 						std::cout << "\n index \n";
@@ -217,7 +198,6 @@ int main(int argc, char **argv)
 			}
 			if (!some_event)
 				break;
-			std::cout << "msg: hola\n";
 		}
 		for (size_t i = 0; i < fds_size; i++)
 			{
