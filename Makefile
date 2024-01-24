@@ -5,7 +5,6 @@ RM := rm -f
 CFLAGS := -Wall -Wextra -Werror -std=c++98
 
 # proyect directories
-SRC_DIR := src
 INCLUDE_DIR := include
 OBJ_DIR := obj
 
@@ -15,20 +14,19 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 # Source files without SRC_DIR
-SRC := GET.cpp\
-	set_config/set_config.cpp\
-	DELETE.cpp\
+SRC := class/HttpRequest.cpp\
 	class/HttpResponse.cpp\
-	class/HttpRequest.cpp\
 	class/Locations.cpp\
 	class/Server.cpp\
-	utils.cpp\
-	POST.cpp\
-	main.cpp
+	src/DELETE.cpp\
+	src/GET.cpp\
+	src/POST.cpp\
+	src/main.cpp\
+	src/set_config/set_config.cpp\
+	src/utils.cpp
 
 # Setup obj and src files and obj folders
-SRC := $(addprefix $(SRC_DIR)/,$(SRC))
-OBJ := $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
+OBJ := $(SRC:%.cpp=$(OBJ_DIR)/%.o)
 OBJ_FOLDER := $(sort $(dir $(OBJ)))
 
 # Add -l, -L and -I flags
@@ -42,7 +40,7 @@ $(NAME): $(OBJ)
 %.a:
 	@make -C $(dir $@)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+$(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(OBJ_FOLDER)
 	$(CC) $(CFLAGS) $(INCLUDE_PATH_FLAG) -c -o $@ $<
 
