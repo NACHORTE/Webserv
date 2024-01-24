@@ -7,7 +7,7 @@ HttpRequest::HttpRequest()
 
 HttpRequest::HttpRequest(const std::string& msg)
 {
-	parseRequest(msg);
+	parse(msg);
 }
 
 HttpRequest::HttpRequest(const HttpRequest& other):
@@ -87,7 +87,7 @@ const std::string & HttpRequest::get_body() const
 	return _body;
 }
 
-void HttpRequest::parseRequest(const std::string& msg)
+void HttpRequest::parse(const std::string& msg)
 {
 	// Clear current request
 	this->clear();

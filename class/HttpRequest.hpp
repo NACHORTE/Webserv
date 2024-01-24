@@ -34,7 +34,7 @@ class HttpRequest {
 		const std::string & get_body() const;
 
 		// member functions
-		void parseRequest(const std::string& msg); // parse a string into an HttpRequest
+		void parse(const std::string& msg); // parse a string into an HttpRequest
 		std::string to_string() const; // convert an HttpRequest to a string
 		void clear(); // clear all fields
 		bool empty() const; // check if all fields are empty
