@@ -116,3 +116,38 @@ bool isBinaryFile(const std::string & filename)
 	std::string contentType = getContentType(filename);
 	return (contentType.substr(0,5) != "text/");
 }
+
+// Create a map with the pairs key-value in the string, each param split by the separator and each key-value split by the eq
+// Example: "key1=value1;key2=value2" -> {"key1": "value1", "key2": "value2"}
+std::map<std::string,std::string> get_params(const std::string & str, char separator, char eq)
+{
+	std::map<std::string,std::string> ret;
+
+	size_t begin;
+	size_t end = 0;
+	do
+	{
+		// Update begin and end to the next param
+		begin = end;
+		end = str.find(separator, begin);
+
+		// Get the param
+		std::string param = str.substr(begin, end - begin);
+
+		// If no eq, skip this param
+		size_t eq_pos = param.find(eq);
+		if (eq_pos != std::string::npos)
+		{
+			// Get the key and value, trim it and add it to the map
+			std::string key = trim(param.substr(0, eq_pos));
+			std::string value = trim(param.substr(eq_pos + 1));
+			ret[key] = value;
+		}
+
+		// Add 1 to end to skip the separator
+		if (end != std::string::npos)
+			end++;
+	} while (end != std::string::npos && end < str.length());
+
+	return ret;
+}

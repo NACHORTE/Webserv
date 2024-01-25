@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <map>
 
 std::string int_to_string(int n);
 std::string readFile(const std::string& filePath, bool binary = false);
@@ -10,3 +11,4 @@ void pop_back(std::string& str);
 std::string getExtension(const std::string & filename);
 std::string getContentType(const std::string & filename);
 bool isBinaryFile(const std::string & filename);
+std::map<std::string,std::string> get_params(const std::string & str, char separator = ';', char eq = '=');

@@ -1,27 +1,40 @@
 #include "HttpMethods.hpp"
 #include "utils.hpp"
+#include <map>
 
 HttpResponse POST(const HttpRequest & req, const Locations & valid_paths)
 {
-	// NOTE ADD extension to uploaded files
-	// CHECK for trying to create a file outside /upload
-	/*	HttpResponse ret;
-		std::string content_type = req["Content-Type"];
-		std::string boundaryTag = "boundary=";
-		size_t boundaryPos = content_type.find(boundaryTag);
-		std::string boundary = content_type.substr(boundaryPos + boundaryTag.length());
+	// TODO ADD extension to uploaded files
+	// NOTE only /upload allows to create a file
+	/*HttpResponse ret;
 
-		if (boundaryPos == std::string::npos)
-		{
-			std::cout << "No boundary found\n";
-			ret.set_status(400, "Bad request");
-			ret.set_body("text/html", "<html><body><h1>400 Bad request</h1></body></html>");
-			return ret;
-		}
-		std::string boundaryDelimiter = "--" + msg.substr(boundaryPos + boundaryTag.length(), boundaryEndPos - (boundaryPos + boundaryTag.length()));
-		std::cout << "\n\nBoundary MIO: " << boundaryDelimiter << "\n\n";
+	// Get the content of the content-type header
+	std::vector<std::string> content_type_header = req["Content-Type"];
+	if (content_type_header.size() != 1)
+		return (ret.set_status(400, "Bad request"),
+			ret.set_body("text/html", "<html><body><h1>400 Bad request</h1><p>incorrent amount of content-type</p></body></html>"),
+			ret);
+	// Get the content-type name
+	std::string content_type_name = content_type_header[0].substr(0, content_type_header[0].find(";"));
+	std::map<std::string,std::string> content_type_params = get_params(content_type_header[0]);
+	// TODO Check if the content-type is multipart/form-data
+	// Get the boundary
+	std::string boundaryTag = "boundary=";
+	size_t boundaryPos = content_type.find(boundaryTag);
+	if (boundaryPos == std::string::npos)
+		return(ret.set_status(400, "Bad request"),
+			ret.set_body("text/html", "<html><body><h1>400 Bad request</h1><p></p></body></html>"),
+			ret);
+	std::string boundary = content_type.substr(boundaryPos + boundaryTag.length());
+	// If the boundary is empty, return 400 Bad Request
+	if (boundary.length() == 0)
+		return(ret.set_status(400, "Bad request"),
+			ret.set_body("text/html", "<html><body><h1>400 Bad request</h1><p></p></body></html>"),
+			ret);
+
+	std::string boundaryDelimiter = "--" + boundary;
+
 		std::string body = msg.substr(msg.find(boundaryDelimiter) + boundaryDelimiter.length() + 2);
-		std::cout << "\n\nBody MIO: " << body << "\n\n";
 		std::string filename;
 		std::string contentType;
 		size_t filenameStart = body.find("filename=\"");
