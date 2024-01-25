@@ -26,7 +26,7 @@ HttpResponse GET(const HttpRequest & req, const Locations & valid_paths)
 	try
 	{
 		ret.set_status(200);
-		ret.set_body(getContentType(filename), readFile(filename, isBinaryFile(filename)));
+		ret.set_body(extToMime(filename), readFile(filename, isBinaryFile(filename)));
 	}
 	// Catch FileNotFound and return 404 Not Found
 	catch (std::exception & e)
