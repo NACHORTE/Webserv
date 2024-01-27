@@ -334,7 +334,7 @@ std::string removeQuotes(const std::string& str)
 /**
  * @brief Decodes a URL-encoded string.
  *
- * This function takes a URL-encoded string and decodes it, replacing percent-encoded
+ * Takes a URL-encoded string and decodes it, replacing percent-encoded
  * characters and converting '+' to space (' ').
  *
  * @param str The URL-encoded string to decode.
@@ -344,9 +344,6 @@ std::string removeQuotes(const std::string& str)
  * - Replaces '+' with space (' ').
  * - Replaces '%xx' with the corresponding character, where 'xx' are hexadecimal digits.
  * - If 'xx' is not a valid hexadecimal representation, the '%' is left unchanged.
- *
- * @warning The function assumes that the input string is properly URL-encoded. Invalid
- * or incomplete percent-encoded sequences may lead to unexpected behavior.
  *
  * @example
  * \code{.cpp}
