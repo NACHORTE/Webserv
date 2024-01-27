@@ -14,3 +14,4 @@ std::string mimeToExt(const std::string & mime);
 bool isBinaryFile(const std::string & filename);
 std::map<std::string,std::string> get_params(const std::string & str, char separator = ';', char eq = '=');
 std::string removeQuotes(const std::string& str);
+std::string decodeURL(std::string str);

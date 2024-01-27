@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <cctype>
 
 static std::map<std::string, std::string> _ext_mime_map;
 
@@ -327,5 +328,65 @@ std::string removeQuotes(const std::string& str)
 {
 	if (str.length() > 1 && str[0] == '"' && str[str.length() - 1] == '"')
 		return str.substr(1, str.length() - 2);
+	return str;
+}
+
+/**
+ * @brief Decodes a URL-encoded string.
+ *
+ * This function takes a URL-encoded string and decodes it, replacing percent-encoded
+ * characters and converting '+' to space (' ').
+ *
+ * @param str The URL-encoded string to decode.
+ * @return The decoded string.
+ *
+ * @note The function performs the following transformations:
+ * - Replaces '+' with space (' ').
+ * - Replaces '%xx' with the corresponding character, where 'xx' are hexadecimal digits.
+ * - If 'xx' is not a valid hexadecimal representation, the '%' is left unchanged.
+ *
+ * @warning The function assumes that the input string is properly URL-encoded. Invalid
+ * or incomplete percent-encoded sequences may lead to unexpected behavior.
+ *
+ * @example
+ * \code{.cpp}
+ * std::string encoded = "Hello%20World%21";
+ * std::string decoded = decodeURL(encoded);
+ * // decoded now contains "Hello World!"
+ * \endcode
+ */
+std::string decodeURL(std::string str)
+{
+	size_t strLen = str.length();
+	std::string hex = "0123456789abcdef";
+
+	// Replace '+' with ' '
+	size_t pos = 0;
+	while ((pos = str.find('+', pos)) != std::string::npos)
+		str[pos] = ' ';
+
+	// Replace '%xx' with the corresponding character
+	pos = 0;
+	while ((pos = str.find('%', pos)) != std::string::npos)
+	{
+		// If pos can't fit '%xx', break
+		if (pos > strLen - 3)
+			break;
+
+		// If the next two characters are not hex digits, skip this '%'
+		if (hex.find(tolower(str[pos + 1])) == std::string::npos
+			|| hex.find(tolower(str[pos + 2])) == std::string::npos)
+		{
+			++pos;
+			continue;
+		}
+
+		// Get the encoded character (first 4 bits are the first hex digit, last 4 bits are the second hex digit)
+		char c = (hex.find(tolower(str[pos + 1])) << 4) | hex.find(tolower(str[pos + 2]));
+
+		// Replace '%xx' with the decoded character
+		str.replace(pos, 3, 1, c);
+	}
+
 	return str;
 }
