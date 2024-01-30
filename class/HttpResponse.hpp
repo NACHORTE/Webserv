@@ -36,7 +36,11 @@ class HttpResponse {
 			const HttpRequest & req,
 			const Locations & valid_paths,
 			const std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> & valid_methods);
-
+		static HttpResponse Error(	// generate an error response
+			int code,
+			const std::string & phrase = "",
+			const std::string & msg = "");
+	
 		// operator overloads
 		HttpResponse & operator=(HttpResponse const & rhs);
 		std::string operator()() const; // equivalent to to_string()
@@ -46,6 +50,9 @@ class HttpResponse {
 		std::string _status_phrase;
 		std::vector<std::pair<std::string, std::string> > _headers;
 		std::string _body;
+
+		static void initErrorPages(); // initialize the error pages map
+		static std::map<int, std::string> _errorPages; // map of error codes to error files (for Error)
 
 	friend std::ostream & operator<<(std::ostream & o, HttpResponse const & rhs);
 };

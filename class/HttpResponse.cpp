@@ -2,6 +2,17 @@
 #include <sstream>
 #include "utils.hpp"
 #include <map>
+#include <fstream>
+
+std::map<int, std::string> HttpResponse::_errorPages;
+
+void HttpResponse::initErrorPages()
+{
+	if (_errorPages.size() > 0)
+		return;
+	_errorPages[404] = "./html/404.html";
+	_errorPages[500] = "./html/500.html";
+}
 
 HttpResponse::HttpResponse()
 {}
@@ -167,6 +178,35 @@ void HttpResponse::generate(
 		set_status(500, "Internal Server Error");
 		set_body("text/html", "<html><body><h1>500 Internal Server Error</h1></body></html>");
 	}
+}
+
+HttpResponse HttpResponse::Error(	// generate a default error page
+			int code,
+			const std::string & phrase,
+			const std::string & msg)
+{
+	HttpResponse ret;
+
+	// Initialize the error pages map
+	initErrorPages();
+
+	// Set the status code and phrase
+	ret.set_status(code, phrase);
+	
+	// try to get the error page first from the error pages map
+	try
+	{
+		std::string filename = _errorPages.at(code);
+		ret.set_body(extToMime(filename),readFile(filename));
+	}
+	// if it fails, return a generic error page
+	catch(const std::exception& e)
+	{
+		ret.set_body("text/html", "<html><body><h1>" + ret.get_status_code() + " "
+			+ ret.get_status_phrase() + "</h1><p>" + msg + "</p></body></html>");
+	}
+
+	return ret;	
 }
 
 HttpResponse & HttpResponse::operator=(const HttpResponse& rhs)
