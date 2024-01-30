@@ -25,7 +25,7 @@ static std::vector<MultipartForm> parseMultipartForm(const std::string& body, st
 
 	// Loop through the parts
     size_t pos = 0;
-    while ((pos = body.find("--" + boundary, pos)) != std::string::npos // Find the next part
+    while ((pos = body.find(boundary, pos)) != std::string::npos // Find the next part
 		&& body.substr(pos + bLen, 2) != "--")	// Exit the loop if this part starts with --boundary--
 	{
 		MultipartForm form;
@@ -35,9 +35,10 @@ static std::vector<MultipartForm> parseMultipartForm(const std::string& body, st
 
 		// Get the part substring
 		std::string part = body.substr(pos, body.find(boundary, pos) - pos);
-	
+
 		// Get headers using header separator '\n' and key-value separator ':'
 		std::map<std::string, std::string> headers = get_params(part.substr(0, part.find("\r\n\r\n")), '\n', ':');
+		for (std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); it++)
 		// If there is no Content-Disposition header, skip this part
 		if (headers.count(CONTENT_DISPOSITION) == 0)
 			continue;
@@ -60,22 +61,31 @@ static std::vector<MultipartForm> parseMultipartForm(const std::string& body, st
 		// If the filename doesn't have an extension (or the correct one), add it
 		if (getExtension(CDParams["filename"]) != mimeToExt(headers[CONTENT_TYPE]))
 			CDParams["filename"] += "." + mimeToExt(headers[CONTENT_TYPE]);
-		
 		// Save everything to the form
 		form.name = CDParams["name"];
 		form.filename = CDParams["filename"];
-		form.contentType = headers[CONTENT_TYPE];		
+		form.contentType = headers[CONTENT_TYPE];
 		form.data = part.substr(part.find("\r\n\r\n") + 4);
 
 		// Add the form to the vector
 		parts.push_back(form);
     }
-
-    return parts;
+	for (std::vector<MultipartForm>::iterator it = parts.begin(); it != parts.end(); it++)
+	{
+		std::cout << "name: " << it->name << std::endl;
+		std::cout << "filename: " << it->filename << std::endl;
+		std::cout << "contentType: " << it->contentType << std::endl;
+		if (it->data.size() < 100)
+			std::cout << "data: " << it->data << std::endl;
+		else
+			std::cout << "data: " << it->data.substr(0,100) << "..." << std::endl;
+	}
+	return parts;
 }
 
 HttpResponse POST(const HttpRequest & req, const Locations & valid_paths)
 {
+	(void)valid_paths; // XXX
 	// TODO ADD extension to uploaded files
 	// TODO manage upload file size
 	// NOTE only /upload allows to create a file

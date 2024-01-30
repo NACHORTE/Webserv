@@ -40,7 +40,7 @@ unsigned long millis()
 static void print_long_str(const std::string & str, size_t max_size = 1000)
 {
 	if (str.size() > max_size)
-		std::cout << str.substr(0, max_size) << "...";
+		std::cout << str.substr(str.size()- max_size) << "...";
 	else
 		std::cout << str;
 }
