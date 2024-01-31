@@ -8,51 +8,54 @@
 
 class HttpResponse {
 	public:
-		// Constructor, destructor, copy constructor
+	// Constructor, destructor, copy constructor
+
 		HttpResponse();
 		HttpResponse(HttpResponse const & src);
-		HttpResponse( // Executes generate response
+		HttpResponse(
 			HttpRequest const & req,
 			const Locations & valid_paths,
 			const std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> & valid_methods);
 		~HttpResponse();
 
-		// getters, setters
-		void set_status(int code, const std::string& phrase = "");
-		void set_header(const std::string& key, const std::string& value);
-		void unset_header(const std::string& key);
-		void set_body(const std::string& content_type, const std::string& body);
+	// getters, setters
 
-		const std::string & get_status_code() const;
-		const std::string & get_status_phrase() const;
-		std::vector<std::string> get_header(const std::string& key) const; // returns a vector of all headers with the given key
-		const std::string & get_body() const;
+		void setStatus(int code, const std::string& phrase = "");
+		void setHeader(const std::string& key, const std::string& value);
+		void unsetHeader(const std::string& key);
+		void setBody(const std::string& content_type, const std::string& body);
+		void setBody(const std::string& filename);
+	
+		const std::string & getStatusCode() const;
+		const std::string & getStatusPhrase() const;
+		std::vector<std::string> getHeader(const std::string& key) const;
+		const std::string & getBody() const;
 
-		// member functions
-		void clear(); // clear the response
-		bool empty() const; // check if the response is empty
-		std::string to_string() const; // convert an HttpResponse to a string
-		void generate( // Generate a response based on the request (and allowed paths and methods)
+	// member functions
+
+		void clear();
+		bool empty() const;
+		std::string to_string() const;
+		void generate(
 			const HttpRequest & req,
 			const Locations & valid_paths,
 			const std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> & valid_methods);
-		static HttpResponse Error(	// generate an error response
+		static HttpResponse error(
 			int code,
 			const std::string & phrase = "",
 			const std::string & msg = "");
 	
-		// operator overloads
+	// operator overloads
+
 		HttpResponse & operator=(HttpResponse const & rhs);
-		std::string operator()() const; // equivalent to to_string()
+		std::string operator()() const;
+
 	protected:
 	private:
 		std::string _status_code;
 		std::string _status_phrase;
 		std::vector<std::pair<std::string, std::string> > _headers;
 		std::string _body;
-
-		static void initErrorPages(); // initialize the error pages map
-		static std::map<int, std::string> _errorPages; // map of error codes to error files (for Error)
 
 	friend std::ostream & operator<<(std::ostream & o, HttpResponse const & rhs);
 };

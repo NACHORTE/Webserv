@@ -33,13 +33,13 @@ void HttpRequest::set_version(const std::string& version)
 	this->_version = version;
 }
 
-void HttpRequest::set_header(const std::string& key, const std::string& value)
+void HttpRequest::setHeader(const std::string& key, const std::string& value)
 {
 	// Multiple headers with the same key are allowed
 	_headers.push_back(std::make_pair(key, value));
 }
 
-void HttpRequest::unset_header(const std::string& key)
+void HttpRequest::unsetHeader(const std::string& key)
 {
 	std::vector<std::pair<std::string, std::string> >::iterator it;
 	for (it = _headers.begin(); it != _headers.end();)
@@ -51,7 +51,7 @@ void HttpRequest::unset_header(const std::string& key)
 	}
 }
 
-void HttpRequest::set_body(const std::string& body)
+void HttpRequest::setBody(const std::string& body)
 {
 	this->_body = body;
 }
@@ -71,7 +71,7 @@ const std::string & HttpRequest::get_version() const
 	return _version;
 }
 
-std::vector<std::string> HttpRequest::get_header(const std::string& key) const
+std::vector<std::string> HttpRequest::getHeader(const std::string& key) const
 {
 	std::vector<std::string> output;
 
@@ -82,7 +82,7 @@ std::vector<std::string> HttpRequest::get_header(const std::string& key) const
 	return output;
 }
 
-const std::string & HttpRequest::get_body() const
+const std::string & HttpRequest::getBody() const
 {
 	return _body;
 }
@@ -171,7 +171,7 @@ std::string HttpRequest::operator()() const
 
 std::vector<std::string> HttpRequest::operator[](const std::string& key) const
 {
-	return get_header(key);
+	return getHeader(key);
 }
 
 std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs)

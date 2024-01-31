@@ -58,9 +58,6 @@ static std::vector<MultipartForm> parseMultipartForm(const std::string& body, st
 			CDParams["filename"] = CDParams.count("name");
 		else
 			CDParams["filename"] = removeQuotes(CDParams["filename"]);
-		// If the filename doesn't have an extension (or the correct one), add it
-		if (getExtension(CDParams["filename"]) != mimeToExt(headers[CONTENT_TYPE]))
-			CDParams["filename"] += "." + mimeToExt(headers[CONTENT_TYPE]);
 		// Save everything to the form
 		form.name = CDParams["name"];
 		form.filename = CDParams["filename"];
@@ -85,7 +82,6 @@ static std::vector<MultipartForm> parseMultipartForm(const std::string& body, st
 
 HttpResponse POST(const HttpRequest & req, const Locations & valid_paths)
 {
-	(void)valid_paths; // XXX
 	// TODO ADD extension to uploaded files
 	// TODO manage upload file size
 	// NOTE only /upload allows to create a file
@@ -94,9 +90,7 @@ HttpResponse POST(const HttpRequest & req, const Locations & valid_paths)
 	// Get the content of the content-type header
 	std::vector<std::string> contentTypeHeader = req["Content-Type"];
 	if (contentTypeHeader.size() != 1)
-		return (ret.set_status(400, "Bad request"), //NOTE try using a file
-			ret.set_body("text/html", "<html><body><h1>400 Bad request</h1><p>incorrent amount of content-type</p></body></html>"),
-			ret);
+		return HttpResponse::error(400, "Bad Request", "Content-Type header must be specified once");
 
 	// Get the content-type name and parameters
 	std::string contentTypeName = contentTypeHeader[0].substr(0, contentTypeHeader[0].find(";"));
@@ -104,22 +98,18 @@ HttpResponse POST(const HttpRequest & req, const Locations & valid_paths)
 
 	// If there is a charset specified and it's not UTF-8, return 415 Unsupported Media Type
 	if (contentTypeParams.count("charset") == 1 && contentTypeParams["charset"] != "UTF-8")
-		return (ret.set_status(415, "Unsupported Media Type"), // NOTE try using a file
-			ret.set_body("text/html", "<html><body><h1>415 Unsupported Media Type</h1><p>charset not supported</p></body></html>"),
-			ret);
-
-	// If the content type is multipart/form-data and there is no boundary or the boundary is empty, return 400 Bad Request
-	if (contentTypeName == "multipart/form-data"	// If the content type is multipart/form-data
-		&& (contentTypeParams.count("boundary") == 0 // and if there is no boundary
-			|| contentTypeParams["boundary"].length() == 0)) // or if the boundary is empty
-		return (ret.set_status(400, "Bad request"), // NOTE try using a file
-			ret.set_body("text/html", "<html><body><h1>400 Bad request</h1><p>boundary not specified</p></body></html>"),
-			ret);
+		return HttpResponse::error(415, "Unsupported Media Type", "Only UTF-8 charset is supported");
 
 	// If the content type is multipart/form-data, parse the body
 	if (contentTypeName == "multipart/form-data")
 	{
-		std::vector<MultipartForm> forms = parseMultipartForm(req.get_body(), contentTypeParams["boundary"]);
+		// If there is no boundary specified, return 400 Bad Request
+		if ((contentTypeParams.count("boundary") == 0
+			|| contentTypeParams["boundary"].length() == 0))
+			return HttpResponse::error(400, "Bad Request", "multipart/form-data requires a boundary");
+
+		std::vector<MultipartForm> forms = parseMultipartForm(req.getBody(), contentTypeParams["boundary"]);
+		//NOTE ADD HERE THE EXTENSION
 		size_t len = forms.size();
 		for (size_t i = 0; i < len; i++)
 		{
@@ -129,7 +119,7 @@ HttpResponse POST(const HttpRequest & req, const Locations & valid_paths)
 			file.close();
 		}
 	}
-	ret.set_status(200, "POST OK");
-	ret.set_body("text/html", "<html><body><h1>POST</h1></body></html>");
+	ret.setStatus(200, "POST OK");
+	ret.setBody("text/html", "<html><body><h1>POST</h1></body></html>");
 	return ret;
 }

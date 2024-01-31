@@ -12,8 +12,8 @@ HttpResponse DELETE(const HttpRequest & req, const Locations & valid_paths)
 	// If a file was not found, return 404
 	if (filename == "")
 	{
-		ret.set_status(404, "Not Found");
-		ret.set_body("text/html", "<html><body><h1>404 Not Found</h1></body></html>");
+		ret.setStatus(404, "Not Found");
+		ret.setBody("text/html", "<html><body><h1>404 Not Found</h1></body></html>");
 		return ret;
 	}
 
@@ -21,19 +21,19 @@ HttpResponse DELETE(const HttpRequest & req, const Locations & valid_paths)
 	std::ifstream file(filename.c_str());
 	if (!file.is_open())
 	{
-		ret.set_status(404, "Not Found");
-		ret.set_body("text/html", "<html><body><h1>404 Not Found</h1></body></html>");
+		ret.setStatus(404, "Not Found");
+		ret.setBody("text/html", "<html><body><h1>404 Not Found</h1></body></html>");
 		return ret;
 	}
 	file.close();
 
 	// delete file
 	if (std::remove(filename.c_str()) == 0)
-		ret.set_status(200, "OK");
+		ret.setStatus(200, "OK");
 	else
 	{
-		ret.set_status(500, "Internal Server Error");
-		ret.set_body("text/html", "<html><body><h1>200 OK</h1></body></html>");
+		ret.setStatus(500, "Internal Server Error");
+		ret.setBody("text/html", "<html><body><h1>200 OK</h1></body></html>");
 	}
 	return ret;
 }

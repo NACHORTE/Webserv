@@ -23,15 +23,15 @@ class HttpRequest {
 		void set_method(const std::string& method);
 		void set_path(const std::string& path);
 		void set_version(const std::string& version);
-		void set_header(const std::string& key, const std::string& value);
-		void unset_header(const std::string& key);
-		void set_body(const std::string& body);
+		void setHeader(const std::string& key, const std::string& value);
+		void unsetHeader(const std::string& key);
+		void setBody(const std::string& body);
 
 		const std::string & get_method() const;
 		const std::string & get_path() const;
 		const std::string & get_version() const;
-		std::vector<std::string> get_header(const std::string& key) const; // returns a vector of all headers with the given key
-		const std::string & get_body() const;
+		std::vector<std::string> getHeader(const std::string& key) const; // returns a vector of all headers with the given key
+		const std::string & getBody() const;
 
 		// member functions
 		void parse(const std::string& msg); // parse a string into an HttpRequest
@@ -42,7 +42,7 @@ class HttpRequest {
 		// operator overloads
 		HttpRequest & operator=(HttpRequest const & rhs);
 		std::string operator()() const; // equivalent to to_string()
-		std::vector<std::string> operator[](const std::string& key) const; // equivalent to get_header(key)
+		std::vector<std::string> operator[](const std::string& key) const; // equivalent to getHeader(key)
 	protected:
 	private:
 		std::string _method;	// GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS, TRACE, PATCH
