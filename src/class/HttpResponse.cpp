@@ -3,6 +3,7 @@
 #include "utils.hpp"
 #include <map>
 #include <fstream>
+#include "colors.h"
 
 std::map<int, std::string> _errorPages;
 
@@ -303,6 +304,10 @@ void HttpResponse::generate(
 	if (valid_methods.count(req.get_method()) == 0)
 		return (void)(*this = error(405, "Method Not Allowed"));
 
+	// If path does not exist, return 404 Not Found
+	if (valid_paths.pathExists(req.get_path()) == false)
+		return (void)(*this = error(404, "Not Found"));
+
 	// If request is not valid, return 403 Forbidden
 	if (valid_paths.isPathAllowed(req.get_method(), req.get_path()) == false)
 		return (void)(*this = error(403, "Forbidden"));
@@ -357,7 +362,7 @@ HttpResponse HttpResponse::error(	// generate a default error page
 	try
 	{
 		std::string filename = _errorPages.at(code);
-		ret.setBody(extToMime(filename),readFile(filename));
+		ret.setBody(extToMime(filename),readFile(filename, isBinaryFile(filename)));
 	}
 	// if it fails, return a generic error page
 	catch(const std::exception& e)

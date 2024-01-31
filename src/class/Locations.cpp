@@ -123,6 +123,23 @@ bool Locations::isPathAllowed(const std::string & method, const std::string & pa
 	return false;
 }
 
+bool Locations::pathExists(const std::string & path) const
+{
+	std::vector<Location>::const_iterator i;
+	for (i = _locations.begin(); i != _locations.end(); ++i)
+	{
+		// If is file and path perfectly matches, return true
+		if (i->_isFile && i->_path == path)
+			return true;
+		// If is folder and path starts with i->_path, return true
+		if (!i->_isFile // if is folder
+			&& path.compare(0, i->_path.size(), i->_path) == 0	// if path starts with allowed path
+			&& path.size() > i->_path.size())	// if path is longer than allowed path (is a file in the directory)
+			return true;
+	}
+	return false;
+}
+
 Locations &Locations::operator=(const Locations &rhs)
 {
 	if (this != &rhs)

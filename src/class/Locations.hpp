@@ -35,6 +35,7 @@ class Locations
 		bool addLocation(const Locations::Location & location);
 		bool addLocation(std::string path, bool isFile, std::string filename, std::set<std::string> allowedMethods);
 		bool isPathAllowed(const std::string & method, const std::string & path) const;
+		bool pathExists(const std::string & path) const;
 
 		// Operator overloads
 		Locations & operator=(const Locations & rhs);

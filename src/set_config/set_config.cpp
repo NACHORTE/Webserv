@@ -230,8 +230,16 @@ int init_socket(t_server *server)
 	}
 	if (bind(server->sockfd, (struct sockaddr *)&server->servaddr, sizeof(server->servaddr)) < 0)
 	{
-		std::cerr << "Error binding socket" << std::endl;
-		return 1;
+		//XXX
+		if (server->port == 8080)
+			server->servaddr.sin_port = htons(8081);
+		else
+			server->servaddr.sin_port = htons(8080);
+		if (bind(server->sockfd, (struct sockaddr *)&server->servaddr, sizeof(server->servaddr)) < 0)
+		{
+			std::cerr << "Error binding socket" << std::endl;
+			return 1;
+		}
 	}
 	if (listen(server->sockfd, BACKLOG) < 0)
 	{

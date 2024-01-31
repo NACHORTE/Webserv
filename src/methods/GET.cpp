@@ -17,23 +17,19 @@ HttpResponse GET(const HttpRequest & req, const Locations & valid_paths)
 	{
 		//char **envp = getEnvp(req.get_path());
 		//something with fork and execve
-		ret.setStatus(200, "CGI OK");
-		ret.setBody("text/html", "<html><body><h1>CGI</h1></body></html>");
-		return ret;
+		return HttpResponse::error(501, "Not Implemented", "CGI is not implemented yet");
 	}
 
 	// The request was succesful
 	try
 	{
 		ret.setStatus(200);
-		ret.setBody(extToMime(filename), readFile(filename, isBinaryFile(filename)));
+		ret.setBody(filename);
 	}
 	// Catch FileNotFound and return 404 Not Found
 	catch (std::exception & e)
 	{
-		// NOTE Maybe try a file and if it fails, return this
-		ret.setStatus(404);
-		ret.setBody("text/html", "<html><body><h1>404 Not Found</h1></body></html>");
+		return HttpResponse::error(404, "Not Found", e.what());
 	}
 
 	return ret;
