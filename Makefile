@@ -5,7 +5,7 @@ RM := rm -f
 CFLAGS := -Wall -Wextra -Werror -std=c++98
 
 # proyect directories
-INCLUDE_DIR := include
+INCLUDE_DIR := src/include
 OBJ_DIR := obj
 
 UNAME_S := $(shell uname -s)
