@@ -83,7 +83,6 @@ std::string readFile(const std::string& filePath, bool binary)
 
 int ok_config(std::string config_file)
 {
-	//if (config_file.rfind(".conf") != config_file.length() - 5)
 	if (getExtension(config_file) != "conf")
 	{
         std::cerr << "Config file does not have .conf extension: " << config_file << std::endl;

@@ -45,21 +45,27 @@ static void print_long_str(const std::string & str, size_t max_size = 1000)
 		std::cout << str;
 }
 
+#define DEFAULT_CONFIG_FILE "config/default.conf"
+
 int main(int argc, char **argv)
 {
 	struct sockaddr_in client;
 	HttpResponse response;
 	Server server;
 
+	std::string config_file;
 	if (argc != 2)
 	{
-		std::cout << "[SERVER] Usage: ./Webserv <config_file>\n";
-		return 1;
+		std::cout << "[SERVER] setting config file to: " << DEFAULT_CONFIG_FILE << "\n";
+		config_file = DEFAULT_CONFIG_FILE;
 	}
-	if (ok_config(argv[1]))
+	else
+		config_file = argv[1];
+	std::cout << "[SERVER] config file: " << config_file << "\n";
+	if (ok_config(config_file))
 		return 1;
 
-	std::vector<t_server> servers = read_config(argv[1]);
+	std::vector<t_server> servers = read_config(config_file);
 	if (servers.size() == 0)
 		return 1;
 
