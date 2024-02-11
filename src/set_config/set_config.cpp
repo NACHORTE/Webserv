@@ -219,23 +219,24 @@ int read_location(t_location *location, std::istringstream &iss)
 
 int init_socket(t_server *server)
 {
-	server->servaddr.sin_family = AF_INET;
-	server->servaddr.sin_addr.s_addr = inet_addr(server->host.c_str());
-	server->servaddr.sin_port = htons(server->port);
+	struct sockaddr_in servaddr;
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_addr.s_addr = inet_addr(server->host.c_str());
+	servaddr.sin_port = htons(server->port);
 
 	if ((server->sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
 		std::cerr << "Error creating socket" << std::endl;
 		return 1;
 	}
-	if (bind(server->sockfd, (struct sockaddr *)&server->servaddr, sizeof(server->servaddr)) < 0)
+	if (bind(server->sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
 	{
 		//XXX
 		if (server->port == 8080)
-			server->servaddr.sin_port = htons(8081);
+			servaddr.sin_port = htons(8081);
 		else
-			server->servaddr.sin_port = htons(8080);
-		if (bind(server->sockfd, (struct sockaddr *)&server->servaddr, sizeof(server->servaddr)) < 0)
+			servaddr.sin_port = htons(8080);
+		if (bind(server->sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
 		{
 			std::cerr << "Error binding socket" << std::endl;
 			return 1;
@@ -260,7 +261,6 @@ std::vector<t_server> read_config(const std::string& config_file)
 	std::vector <t_server> servers;
 	int n_server = 0;
 
-	std::cout << input << std::endl;
 	while (iss >> word)
 	{
 		if (!in_server && word == "server")
@@ -279,8 +279,11 @@ std::vector<t_server> read_config(const std::string& config_file)
 		else if (in_server && word == "}")
 		{
 			in_server = 0;
+			// if fails to check full server, return empty vector
 			if (!check_full_server(&servers[n_server], n_server))
 				return std::vector<t_server>();
+
+			// if fails to init socket, return empty vector
 			if (init_socket(&servers[n_server]))
 				return std::vector<t_server>();
 			n_server++;

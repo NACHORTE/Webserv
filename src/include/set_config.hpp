@@ -18,7 +18,6 @@ typedef struct s_location
 
 typedef struct s_server
 {
-	struct sockaddr_in servaddr;
 	int sockfd;
 	int port;
     std::string sv_name;
