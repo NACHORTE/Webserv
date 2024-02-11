@@ -81,6 +81,7 @@ std::string readFile(const std::string& filePath, bool binary)
     return htmlContent.str();
 }
 
+// XXX FUERA DE AQUI
 int ok_config(std::string config_file)
 {
 	if (getExtension(config_file) != "conf")

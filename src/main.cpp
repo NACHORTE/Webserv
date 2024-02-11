@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 	if (ok_config(config_file))
 		return 1;
 
-	std::vector<t_server> servers = read_config(config_file);
+	std::vector<Server> servers = read_config(config_file);
 	if (servers.size() == 0)
 		return 1;
 

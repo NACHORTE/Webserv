@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include "set_config.hpp"
+#include "Server.hpp"
 
 std::string read_data(std::string line, std::string key)
 {
@@ -18,7 +19,7 @@ std::string read_data(std::string line, std::string key)
 	}
 }
 
-void init_server(t_server *server)
+void iniServer(Server *server)
 {
 	server->port = 0;
 	server->sv_name = "";
@@ -45,7 +46,7 @@ int check_duplicated(std::string var)
 	return 1;
 }
 
-int check_full_server(t_server *server, int n_server)
+int check_full_server(Server *server, int n_server)
 {
 	if (server->port == 0)
 	{
@@ -94,7 +95,7 @@ void print_location(t_location location)
 	std::cout << "methods: " << location.methods << std::endl;
 }
 
-void print_server(t_server server)
+void prinServer(Server server)
 {
 	std::cout << "port: " << server.port << std::endl;
 	std::cout << "server_name: " << server.sv_name << std::endl;
@@ -217,30 +218,33 @@ int read_location(t_location *location, std::istringstream &iss)
 	return 0;
 }
 
-int init_socket(t_server *server)
+int init_socket(Server *server)
 {
+	// Set up the server address struct
 	struct sockaddr_in servaddr;
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = inet_addr(server->host.c_str());
 	servaddr.sin_port = htons(server->port);
 
+	// Create the socket
 	if ((server->sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	{
-		std::cerr << "Error creating socket" << std::endl;
-		return 1;
-	}
+		return std::cout << "Error creating socket" << std::endl, 1;
+
+	// Enable the socket to begin listening
 	if (bind(server->sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
 	{
-		//XXX
+		//XXX vvvvv (for testing purposes only, remove later) select a different port if the current one is already in use
 		if (server->port == 8080)
 			servaddr.sin_port = htons(8081);
 		else
 			servaddr.sin_port = htons(8080);
 		if (bind(server->sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
 		{
-			std::cerr << "Error binding socket" << std::endl;
+			std::cout << "Error binding socket" << std::endl;
 			return 1;
 		}
+		// XXX ^^^^^^ And uncomment this line
+		//return std::cout << "Error binding socket" << std::endl, 1;
 	}
 	if (listen(server->sockfd, BACKLOG) < 0)
 	{
@@ -250,7 +254,7 @@ int init_socket(t_server *server)
 	return 0;
 }
 
-std::vector<t_server> read_config(const std::string& config_file)
+std::vector<Server> read_config(const std::string& config_file)
 {
 	std::string input;
 	std::string word;
@@ -258,7 +262,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 	int in_server = 0;
 	input = readFile(config_file); //NOTE try catch
 	std::istringstream iss(input);
-	std::vector <t_server> servers;
+	std::vector <Server> servers;
 	int n_server = 0;
 
 	while (iss >> word)
@@ -268,12 +272,12 @@ std::vector<t_server> read_config(const std::string& config_file)
 			if (iss >> word && word == "{")
 			{
 				in_server = 1;
-				t_server server;
-				init_server(&server);
+				Server server;
+				iniServer(&server);
 				servers.push_back(server);
 			}
 			else
-				return std::vector<t_server>();
+				return std::vector<Server>();
             continue;
         }
 		else if (in_server && word == "}")
@@ -281,11 +285,11 @@ std::vector<t_server> read_config(const std::string& config_file)
 			in_server = 0;
 			// if fails to check full server, return empty vector
 			if (!check_full_server(&servers[n_server], n_server))
-				return std::vector<t_server>();
-
+				return std::vector<Server>();
+			// XXX DONT INIT SOCKET HERE
 			// if fails to init socket, return empty vector
 			if (init_socket(&servers[n_server]))
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			n_server++;
 			continue;
 		}
@@ -294,7 +298,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			t_location location;
 			init_location(&location);
 			if (!read_location(&location, iss))
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			servers[n_server].locations.push_back(location);
 			continue;
 		}
@@ -303,7 +307,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			if (check_duplicated(int_to_string(servers[n_server].port)))
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: listen" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 			if (iss >> word && word.find_first_not_of("0123456789;") == std::string::npos  && back(word) == ';')
 			{
@@ -314,7 +318,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			else
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: listen" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 		}
 		else if (in_server && word == "server_name")
@@ -322,7 +326,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			if (check_duplicated(servers[n_server].sv_name))
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: server_name" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 			if (iss >> word && back(word) == ';')
 			{
@@ -333,7 +337,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			else
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: server_name" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 		}
 		else if (in_server && word == "root")
@@ -341,7 +345,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			if (check_duplicated(servers[n_server].root))
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: root" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 			if (iss >> word && back(word) == ';')
 			{
@@ -352,7 +356,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			else
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: root" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 		}
 		else if (in_server && word == "host")
@@ -360,7 +364,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			if (check_duplicated(servers[n_server].host))
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: host" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 			if (iss >> word && back(word) == ';')
 			{
@@ -371,7 +375,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			else
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: host" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 		}
 		else if (in_server && word == "error_page")
@@ -379,7 +383,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			if (check_duplicated(servers[n_server].error_page))
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: error_page" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 			if (iss >> word && back(word) == ';')
 			{
@@ -390,7 +394,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			else
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: error_page" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 		}
 		else if(in_server && word == "index")
@@ -398,7 +402,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			if (check_duplicated(servers[n_server].index))
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: index" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 			if (iss >> word && back(word) == ';')
 			{
@@ -409,7 +413,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			else
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: index" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 		}
 		else if (in_server && word == "max_body")
@@ -417,7 +421,7 @@ std::vector<t_server> read_config(const std::string& config_file)
 			if (check_duplicated(int_to_string(servers[n_server].max_body)))
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), duplicated: max_body" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 			if (iss >> word && word.find_first_not_of("0123456789;") == std::string::npos && back(word) == ';')
 			{
@@ -428,24 +432,24 @@ std::vector<t_server> read_config(const std::string& config_file)
 			else
 			{
 				std::cerr << "Error reading config file (server " << n_server + 1 << "), missing/error: max_body" << std::endl;
-				return std::vector<t_server>();
+				return std::vector<Server>();
 			}
 		}
 		else
 		{
 			std::cerr << "Error reading config file, unknown: " << word << std::endl;
-			return std::vector<t_server>();
+			return std::vector<Server>();
 		}
 	}
 	if (in_server == 1)
 	{
 		std::cerr << "Error reading config file, missing: }" << std::endl;
-		return std::vector<t_server>();
+		return std::vector<Server>();
 	}
 	for (size_t i = 0; i < servers.size(); i++)
 	{
 		std::cout << "server " << i + 1 << ":" << std::endl;
-		print_server(servers[i]);
+		prinServer(servers[i]);
 	}
 	return servers;
 }
