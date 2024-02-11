@@ -15,7 +15,7 @@ class Locations
 				bool isMethodAllowed(const std::string & method) const;
 
 				bool operator==(const Location & rhs) const;
-				std::string _path;
+				std::string _uri;
 				bool _isFile;
 				std::string _filename;
 				std::set<std::string> _allowedMethods;

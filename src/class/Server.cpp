@@ -25,10 +25,6 @@ Server::Server(void)
 	location_allowed_methods.insert("GET");
 	location_allowed_methods.insert("POST");
 	_allowed_paths.addLocation("/upload", true, "", location_allowed_methods);
-
-	location_allowed_methods.clear();
-	location_allowed_methods.insert("POST");
-	location_allowed_methods.insert("GET");
 	_allowed_paths.addLocation("/bin-cgi/", false, "", location_allowed_methods);
 
 	//std::cout << "allowed paths:" << std::endl;
