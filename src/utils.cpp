@@ -81,23 +81,6 @@ std::string readFile(const std::string& filePath, bool binary)
     return htmlContent.str();
 }
 
-// XXX FUERA DE AQUI
-int ok_config(std::string config_file)
-{
-	if (getExtension(config_file) != "conf")
-	{
-        std::cerr << "Config file does not have .conf extension: " << config_file << std::endl;
-        return 1;
-    }
-	std::ifstream file(config_file.c_str());
-	if(!file.is_open())
-	{
-		std::cerr << "Error opening config file: " << config_file << std::endl;
-		return 1;
-	}
-	return 0;
-}
-
 /**
  * @brief Trims specified characters from the beginning and end of a string.
  * 

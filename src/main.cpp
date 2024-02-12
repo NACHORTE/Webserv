@@ -47,6 +47,22 @@ static void print_long_str(const std::string & str, size_t max_size = 1000)
 
 #define DEFAULT_CONFIG_FILE "config/default.conf"
 
+static int ok_config(std::string config_file)
+{
+	if (getExtension(config_file) != "conf")
+	{
+        std::cerr << "Config file does not have .conf extension: " << config_file << std::endl;
+        return 1;
+    }
+	std::ifstream file(config_file.c_str());
+	if(!file.is_open())
+	{
+		std::cerr << "Error opening config file: " << config_file << std::endl;
+		return 1;
+	}
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	struct sockaddr_in client;
