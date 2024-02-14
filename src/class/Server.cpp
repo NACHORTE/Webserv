@@ -57,3 +57,83 @@ std::ostream &operator<<(std::ostream &os, const Server &obj)
 	(void)obj;
 	return (os);
 }
+
+void Server::setPort(int port)
+{
+	this->port = port;
+}
+
+int Server::getPort(void) const
+{
+	return (port);
+}
+
+std::string Server::getServerName(void) const
+{
+	return (sv_name);
+}
+
+void Server::setServerName(const std::string & serverName)
+{
+	sv_name = serverName;
+}
+
+std::string Server::getHost(void) const
+{
+	return (host);
+}
+
+void Server::setHost(const std::string & host)
+{
+	this->host = host;
+}
+
+std::string Server::getRoot(void) const
+{
+	return (root);
+}
+
+void Server::setRoot(const std::string & root)
+{
+	this->root = root;
+}
+
+std::string Server::getErrorPage(void) const
+{
+	return (error_page);
+}
+
+void Server::setErrorPage(const std::string & errorPage)
+{
+	error_page = errorPage;
+}
+
+std::string Server::getIndex(void) const
+{
+	return (index);
+}
+
+void Server::setIndex(const std::string & index)
+{
+	this->index = index;
+}
+
+std::vector<t_location> Server::getLocations(void) const
+{
+	return (locations);
+}
+
+int Server::getMaxBody(void) const
+{
+	return (max_body);
+}
+
+void Server::setMaxBody(int maxBody)
+{
+	max_body = maxBody;
+}
+
+void Server::addLocation(const t_location & location)
+{
+	locations.push_back(location);
+}
