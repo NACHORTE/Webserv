@@ -18,8 +18,6 @@ std::string read_data(std::string line, std::string key)
 		return "";
 	}
 }
- #include <iostream>
- #include "colors.h"
 
 void iniServer(Server *server)
 {
