@@ -4,7 +4,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <poll.h>
-#include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
 #include "HttpResponse.hpp"
@@ -15,13 +14,12 @@
 #include <fstream>
 #include <vector>
 #include <poll.h>
-#include <fcntl.h>
 #include "defines.h"
 #include "colors.h"
 #include "utils.hpp"
 #include "set_config.hpp"
 
-unsigned long millis()
+/*XXX unsigned long millis()
 {
 	static bool first = 1;
 	static unsigned long first_time;
@@ -35,7 +33,7 @@ unsigned long millis()
 	}
 	unsigned long this_time = tv.tv_sec *1000 + tv.tv_usec / 1000;
 	return this_time - first_time;
-}
+}*/
 
 static void print_long_str(const std::string & str, size_t max_size = 1000)
 {
@@ -47,17 +45,17 @@ static void print_long_str(const std::string & str, size_t max_size = 1000)
 
 #define DEFAULT_CONFIG_FILE "config/default.conf"
 
-static int ok_config(std::string config_file)
+static int checkParams(std::string config_file)
 {
 	if (getExtension(config_file) != "conf")
 	{
-        std::cerr << "Config file does not have .conf extension: " << config_file << std::endl;
+        std::cout << "Config file does not have .conf extension: " << config_file << std::endl;
         return 1;
     }
 	std::ifstream file(config_file.c_str());
 	if(!file.is_open())
 	{
-		std::cerr << "Error opening config file: " << config_file << std::endl;
+		std::cout << "Error opening config file: " << config_file << std::endl;
 		return 1;
 	}
 	return 0;
@@ -65,7 +63,29 @@ static int ok_config(std::string config_file)
 
 int main(int argc, char **argv)
 {
-	struct sockaddr_in client;
+	/*=============NEW MAIN================
+	// Check if there is a parameter and if it is a .conf file
+	if (checkParams(argc, argv) != 0)
+		return 1;
+
+	// Initialize webserv with the config file
+	try
+	{
+		Webserv webserv;
+
+		webserv.init("config/default.conf");
+		while(1)
+			webserv.loop();
+	}
+	catch (std::exception & e)
+	{
+		std::cout << e.what() << std::endl;
+		return 1;
+	}
+
+	return 0;
+	=====================================*/
+	
 	HttpResponse response;
 	Server server;
 
@@ -95,11 +115,12 @@ int main(int argc, char **argv)
 	}
 	while(1)
 	{
+		struct sockaddr_in client;
 		unsigned int len = sizeof(client);
 		std::vector<int> connfds(servers.size(), 0);
 		for (size_t i = 0; i < servers.size(); i++)
 		{
-			connfds[i] = accept(servers[i].sockfd, (struct sockaddr *)&client, &len); //NOTE blocking call
+			connfds[i] = accept(servers[i].sockfd, (struct sockaddr *)&client, &len);
 			if (connfds[i] < 0)
 			{
 				//std::cout << "[SERVER] No connections\n";

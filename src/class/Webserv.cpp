@@ -35,22 +35,30 @@ void Webserv::init(const std::string &configFile)
 
 	// Add servers to listeners or create new listeners
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++)
+		addServer(*it);
+}
+
+
+void Webserv::loop(void)
+{
+	// Loop through listeners
+	// NOTE try catch
+	std::vector<Listener>::iterator it;
+	for (it = _listeners.begin(); it != _listeners.end(); it++)
+		it->loop();
+}
+
+void Webserv::addServer(const Server &server)
+{
+	for (std::vector<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); it++)
 	{
-		bool added = 0;
-		for (std::vector<Listener>::iterator it2 = _listeners.begin(); it2 != _listeners.end(); it2++)
+		if (it->getPort() == server.getPort())
 		{
-			if (it->getPort() == it2->getPort())
-			{
-				it2->addServer(*it);
-				added = 1;
-				break;
-			}
-		}
-		if (!added)
-		{
-			Listener listener(it->getPort());
-			listener.addServer(*it);
-			_listeners.push_back(listener);
+			it->addServer(server);
+			return;
 		}
 	}
+	Listener listener(server.getPort());
+	listener.addServer(server);
+	_listeners.push_back(listener);
 }

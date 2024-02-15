@@ -26,12 +26,6 @@ Server::Server(void)
 	location_allowed_methods.insert("POST");
 	_allowed_paths.addLocation("/upload", true, "", location_allowed_methods);
 	_allowed_paths.addLocation("/bin-cgi/", false, "", location_allowed_methods);
-
-	//std::cout << "allowed paths:" << std::endl;
-	//std::cout << _allowed_paths << std::endl;
-	//std::cout << "allowed methods:" << std::endl;
-	//for (std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)>::iterator it = _allowed_methods.begin(); it != _allowed_methods.end(); ++it)
-	//	std::cout << it->first << std::endl;
 }
 
 Server::Server(const Server & src)
@@ -54,7 +48,18 @@ Server &Server::operator=(const Server &rhs)
 
 std::ostream &operator<<(std::ostream &os, const Server &obj)
 {
-	(void)obj;
+	os << "port: " << obj.port << std::endl;
+	os << "server_name: " << obj.sv_name<< std::endl;
+	os << "host: " << obj.host << std::endl;
+	os << "root: " << obj.root << std::endl;
+	os << "error_page: " << obj.error_page << std::endl;
+	os << "index: " << obj.index << std::endl;
+	os << "max_body: " << obj.max_body << std::endl;
+	for (size_t i = 0; i < obj.locations.size(); i++)
+	{
+		std::cout << "location " << i + 1 << ":" << std::endl;
+		std::cout << obj.locations[i] << std::endl;
+	}
 	return (os);
 }
 
@@ -68,7 +73,7 @@ int Server::getPort(void) const
 	return (port);
 }
 
-std::string Server::getServerName(void) const
+const std::string & Server::getServerName(void) const
 {
 	return (sv_name);
 }
@@ -78,7 +83,7 @@ void Server::setServerName(const std::string & serverName)
 	sv_name = serverName;
 }
 
-std::string Server::getHost(void) const
+const std::string & Server::getHost(void) const
 {
 	return (host);
 }
@@ -88,7 +93,7 @@ void Server::setHost(const std::string & host)
 	this->host = host;
 }
 
-std::string Server::getRoot(void) const
+const std::string & Server::getRoot(void) const
 {
 	return (root);
 }
@@ -98,7 +103,7 @@ void Server::setRoot(const std::string & root)
 	this->root = root;
 }
 
-std::string Server::getErrorPage(void) const
+const std::string & Server::getErrorPage(void) const
 {
 	return (error_page);
 }
@@ -108,7 +113,7 @@ void Server::setErrorPage(const std::string & errorPage)
 	error_page = errorPage;
 }
 
-std::string Server::getIndex(void) const
+const std::string & Server::getIndex(void) const
 {
 	return (index);
 }
@@ -118,7 +123,7 @@ void Server::setIndex(const std::string & index)
 	this->index = index;
 }
 
-std::vector<t_location> Server::getLocations(void) const
+const std::vector<t_location> & Server::getLocations(void) const
 {
 	return (locations);
 }

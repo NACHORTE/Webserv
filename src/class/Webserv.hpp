@@ -16,12 +16,14 @@ class Webserv
 	// Member functions
 		void init(const std::string &configFile);
 		void loop(void);
+		void addServer(const Server &server);
 
 	// Operator overloads
 		Webserv & operator=(const Webserv & rhs);
 	protected:
 	private:
-	std::vector<Listener> _listeners;
+		std::vector<Listener> _listeners;
+
 
 	friend std::ostream &operator<<(std::ostream &os, const Webserv &obj);
 };
