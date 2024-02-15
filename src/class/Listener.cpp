@@ -57,8 +57,13 @@ void Listener::loop()
 			if (_clients[i].first.revents & POLLOUT)
 				sendData(_clients[i].first.fd);
 			// Check if the file descriptor has been closed
-			if (_clients[i].first.revents & POLLHUP)
+			if (_clients[i].first.revents & POLLHUP) {
 				closeConnection(_clients[i].first.fd);
+				// Remove the client from the list of clients
+				_clients.erase(_clients.begin() + i);
+				// Decrement i to account for the removed client
+				i--;
+			}
 		}
 	}
 }
