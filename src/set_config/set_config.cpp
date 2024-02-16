@@ -149,7 +149,7 @@ int read_location(t_location *location, std::istringstream &iss)
 			}
 			if (iss >> word && back(word) == ';')
 			{
-				location->root = word;
+				location->setRoot(word);
 				//std::cout << "root: " << location->root << std::endl;
 			}
 			else
@@ -178,14 +178,14 @@ int read_location(t_location *location, std::istringstream &iss)
 		}
 		else if (word == "autoindex")
 		{
-			if (check_duplicated(location->autoindex))
+			if (check_duplicated(location->getAutoindex()))
 			{
 				std::cerr << "Error reading config file (location), duplicated: autoindex" << std::endl;
 				return 0;
 			}
 			if (iss >> word && back(word) == ';')
 			{
-				location->autoindex = word;
+				location->setAutoindex(word);
 				//std::cout << "autoindex: " << location->autoindex << std::endl;
 			}
 			else
@@ -196,14 +196,14 @@ int read_location(t_location *location, std::istringstream &iss)
 		}
 		else if (word == "methods")
 		{
-			if (check_duplicated(location->methods))
+			if (check_duplicated(location->getMethods()))
 			{
 				std::cerr << "Error reading config file (location), duplicated: methods" << std::endl;
 				return 0;
 			}
 			if (iss >> word && back(word) == ';')
 			{
-				location->methods = word;
+				location->setMethods(word);
 				//std::cout << "methods: " << location->methods << std::endl;
 			}
 			else
