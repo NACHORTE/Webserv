@@ -57,7 +57,7 @@ int read_location(t_location *location, std::istringstream &iss)
 
 	if (iss >> word && word[0] == '/')
 	{
-		location->path = word;
+		location->setPath(word);
 	}
 	else
 	{
@@ -78,7 +78,7 @@ int read_location(t_location *location, std::istringstream &iss)
 		}
 		else if (word == "root")
 		{
-			if (check_duplicated(location->root))
+			if (check_duplicated(location->getRoot()))
 			{
 				std::cout << "Error reading config file (location), duplicated: root" << std::endl;
 				return 0;
