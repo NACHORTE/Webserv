@@ -85,12 +85,8 @@ int read_location(t_location *location, std::istringstream &iss)
 			}
 			if (iss >> word && back(word) == ';')
 			{
-<<<<<<< HEAD
 				location->setRoot(word);
 				//std::cout << "root: " << location->root << std::endl;
-=======
-				location->root = word;
->>>>>>> 552918df5dc814cab7a3dde0e03a8b3b8ed60904
 			}
 			else
 			{
@@ -100,14 +96,14 @@ int read_location(t_location *location, std::istringstream &iss)
 		}
 		else if (word == "index")
 		{
-			if (check_duplicated(location->index))
+			if (check_duplicated(location->getIndex()))
 			{
 				std::cout << "Error reading config file (location), duplicated: index" << std::endl;
 				return 0;
 			}
 			if (iss >> word && back(word) == ';')
 			{
-				location->index = word;
+				location->setIndex(word);
 			}
 			else
 			{
@@ -124,12 +120,8 @@ int read_location(t_location *location, std::istringstream &iss)
 			}
 			if (iss >> word && back(word) == ';')
 			{
-<<<<<<< HEAD
 				location->setAutoindex(word);
 				//std::cout << "autoindex: " << location->autoindex << std::endl;
-=======
-				location->autoindex = word;
->>>>>>> 552918df5dc814cab7a3dde0e03a8b3b8ed60904
 			}
 			else
 			{
@@ -146,12 +138,8 @@ int read_location(t_location *location, std::istringstream &iss)
 			}
 			if (iss >> word && back(word) == ';')
 			{
-<<<<<<< HEAD
 				location->setMethods(word);
 				//std::cout << "methods: " << location->methods << std::endl;
-=======
-				location->methods = word;
->>>>>>> 552918df5dc814cab7a3dde0e03a8b3b8ed60904
 			}
 			else
 			{
