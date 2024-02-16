@@ -10,9 +10,33 @@
 class Server
 {
 	public:
+	// Constructors and destructor
 		Server();
 		Server(const Server & src);
 		~Server();
+
+	// Setters and getters
+		void setPort(int port);
+		void setHost(const std::string & host);
+		void setRoot(const std::string & root);
+		void setErrorPage(const std::string & errorPage);
+		void setIndex(const std::string & index);
+		void setServerName(const std::string & serverName);
+		void setMaxBody(int maxBody);
+		void addLocation(const t_location & location);
+
+		int getPort(void) const;
+		const std::string& getServerName(void) const;
+		const std::string& getHost(void) const;
+		const std::string& getRoot(void) const;
+		const std::string& getErrorPage(void) const;
+		const std::string& getIndex(void) const;
+		std::vector<t_location> getLocations(void) const;
+		int getMaxBody(void) const;
+
+	// Member functions
+
+	// Operator overloads
 		Server & operator=(const Server & rhs);
 	protected:
 	private:
@@ -27,23 +51,6 @@ class Server
     	std::string index;
 		std::vector<t_location> locations;
     	int max_body;
-	public:
-		int getPort(void) const;
-		void setPort(int port);
-		std::string getServerName(void) const;
-		void setServerName(const std::string & serverName);
-		std::string getHost(void) const;
-		void setHost(const std::string & host);
-		std::string getRoot(void) const;
-		void setRoot(const std::string & root);
-		std::string getErrorPage(void) const;
-		void setErrorPage(const std::string & errorPage);
-		std::string getIndex(void) const;
-		void setIndex(const std::string & index);
-		std::vector<t_location> getLocations(void) const;
-		int getMaxBody(void) const;
-		void setMaxBody(int maxBody);
-		void addLocation(const t_location & location);
 		
 	friend std::ostream &operator<<(std::ostream &os, const Server &obj);
 };
