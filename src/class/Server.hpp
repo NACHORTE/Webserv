@@ -4,6 +4,7 @@
 #include "HttpResponse.hpp"
 #include "Locations.hpp"
 #include <map>
+#include "t_location.hpp"
 #include "set_config.hpp"
 
 class Server

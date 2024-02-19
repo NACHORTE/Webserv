@@ -57,7 +57,7 @@ int read_location(t_location *location, std::istringstream &iss)
 
 	if (iss >> word && word[0] == '/')
 	{
-		location->path = word;
+		location->setPath(word);
 	}
 	else
 	{
@@ -78,14 +78,15 @@ int read_location(t_location *location, std::istringstream &iss)
 		}
 		else if (word == "root")
 		{
-			if (check_duplicated(location->root))
+			if (check_duplicated(location->getRoot()))
 			{
 				std::cout << "Error reading config file (location), duplicated: root" << std::endl;
 				return 0;
 			}
 			if (iss >> word && back(word) == ';')
 			{
-				location->root = word;
+				location->setRoot(word);
+				//std::cout << "root: " << location->root << std::endl;
 			}
 			else
 			{
@@ -95,14 +96,14 @@ int read_location(t_location *location, std::istringstream &iss)
 		}
 		else if (word == "index")
 		{
-			if (check_duplicated(location->index))
+			if (check_duplicated(location->getIndex()))
 			{
 				std::cout << "Error reading config file (location), duplicated: index" << std::endl;
 				return 0;
 			}
 			if (iss >> word && back(word) == ';')
 			{
-				location->index = word;
+				location->setIndex(word);
 			}
 			else
 			{
@@ -112,14 +113,15 @@ int read_location(t_location *location, std::istringstream &iss)
 		}
 		else if (word == "autoindex")
 		{
-			if (check_duplicated(location->autoindex))
+			if (check_duplicated(location->getAutoindex()))
 			{
 				std::cout << "Error reading config file (location), duplicated: autoindex" << std::endl;
 				return 0;
 			}
 			if (iss >> word && back(word) == ';')
 			{
-				location->autoindex = word;
+				location->setAutoindex(word);
+				//std::cout << "autoindex: " << location->autoindex << std::endl;
 			}
 			else
 			{
@@ -129,14 +131,15 @@ int read_location(t_location *location, std::istringstream &iss)
 		}
 		else if (word == "methods")
 		{
-			if (check_duplicated(location->methods))
+			if (check_duplicated(location->getMethods()))
 			{
 				std::cout << "Error reading config file (location), duplicated: methods" << std::endl;
 				return 0;
 			}
 			if (iss >> word && back(word) == ';')
 			{
-				location->methods = word;
+				location->setMethods(word);
+				//std::cout << "methods: " << location->methods << std::endl;
 			}
 			else
 			{
