@@ -15,10 +15,15 @@ class Client
 
 	// Operator overloads
 		Client & operator=(const Client & rhs);
+
 	protected:
 	private:
+	// Member attributes
 
-	friend std::ostream &operator<<(std::ostream &os, const Client &obj);
+	// Private member functions
+
+	// Friends <3
+		friend std::ostream &operator<<(std::ostream &os, const Client &obj);
 };
 
 std::ostream &operator<<(std::ostream &os, const Client &obj);

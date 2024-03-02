@@ -73,9 +73,9 @@ int Server::getPort(void) const
 	return (port);
 }
 
-const std::string & Server::getServerName(void) const
+const std::set<std::string> & Server::getServerNames(void) const
 {
-	return (sv_name);
+	return (_serverNames);
 }
 
 void Server::setServerName(const std::string & serverName)
@@ -141,4 +141,15 @@ void Server::setMaxBody(int maxBody)
 void Server::addLocation(const t_location & location)
 {
 	locations.push_back(location);
+}
+
+void Server::loop()
+{
+
+}
+
+void Server::removeClient(Client * client)
+{
+	if (_clients.count(client) == 1)
+		_clients.erase(client);
 }

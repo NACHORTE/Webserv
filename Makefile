@@ -14,10 +14,13 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 # Source files without SRC_DIR
-SRC := src/class/HttpRequest.cpp\
+SRC := src/class/Client.cpp\
+	src/class/HttpRequest.cpp\
 	src/class/HttpResponse.cpp\
+	src/class/Listener.cpp\
 	src/class/Locations.cpp\
 	src/class/Server.cpp\
+	src/class/Webserv.cpp\
 	src/main.cpp\
 	src/methods/DELETE.cpp\
 	src/methods/GET.cpp\

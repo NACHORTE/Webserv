@@ -43,15 +43,20 @@ class HttpRequest {
 		HttpRequest & operator=(HttpRequest const & rhs);
 		std::string operator()() const; // equivalent to to_string()
 		std::vector<std::string> operator[](const std::string& key) const; // equivalent to getHeader(key)
+
 	protected:
 	private:
+	// Member attributes
 		std::string _method;	// GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS, TRACE, PATCH
 		std::string _path;	// /path/to/file
 		std::string _version;	// HTTP/1.1
 		std::vector<std::pair<std::string, std::string> > _headers;	// key-value pairs
 		std::string _body;	// body of the request
 	
-	friend std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs);
+	// Private member functions
+
+	// Friends <3
+		friend std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs);
 };
 
 // prints the request using to_string and trimming the body if it is too long

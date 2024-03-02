@@ -101,7 +101,7 @@ void HttpRequest::parse(const std::string& msg)
 	std::istringstream iss_line(line);
 	iss_line >> _method >> _path >> _version;
 	// Check if line is valid
-	if (iss_line.fail()) // NOTE check if there is no more words in iss_line
+	if (iss_line.fail() || !iss_line.eof())
 		return (this->clear());
 
 	// Get headers

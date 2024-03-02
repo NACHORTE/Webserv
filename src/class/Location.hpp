@@ -46,8 +46,8 @@ class Location
 		std::string _index;
 		// Rename the path of the uri to the alias
 		std::string _alias;
-// TODO	// Return redirect to the client
-// TODO	std::pair<int, std::string> _return;
+		// Return redirect to the client
+		std::pair<int, std::string> _return;
 		// List of allowed methods for the location
 		std::vector<std::string> _allowMethods;
 

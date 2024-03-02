@@ -1,39 +1,46 @@
 #pragma once
 #include <iostream>
-#include "HttpRequest.hpp"
-#include "HttpResponse.hpp"
-#include "Locations.hpp"
 #include <map>
-#include "t_location.hpp"
-#include "set_config.hpp"
+#include "Location.hpp"
+#include "Client.hpp"
+#include <list>
+#include <set>
 
 class Server
 {
 	public:
 	// Constructors and destructor
+
 		Server();
 		Server(const Server & src);
 		~Server();
 
 	// Setters and getters
+
 		void setPort(int port);
 		void setClientMaxBodySize(int clientMaxBodySize);
 		void setIndex(const std::string & index);
 		void setRoot(const std::string & root);
+		void setServerNames(const std::vector<std::string> & serverNames);
+		void setLocations(const std::vector<Location> & locations);
+		void setErrorPages(const std::vector<std::string> & errorPages);
 
 		void addServerName(const std::string & serverName);
-		void addLocation(const t_location & location);
+		void addLocation(const Location & location);
 		void addErrorPage(const std::string & errorPage);
 
 		const int & getPort() const;
 		const int & getClientMaxBodySize() const;
 		const std::string & getIndex() const;
 		const std::string & getRoot() const;
-		const std::vector<std::string> & getServerNames() const;
-		const std::vector<t_location> & getLocations() const;
+		const std::set<std::string> & getServerNames() const;
+		const std::vector<Location> & getLocations() const;
 		const std::vector<std::string> & getErrorPages() const;
 
 	// Member functions
+
+		void loop();
+		void removeClient(Client * client);
 
 	// Operator overloads
 		Server & operator=(const Server & rhs);
@@ -41,6 +48,7 @@ class Server
 	protected:
 	private:
 	// Member attributes
+
 		// Port number that the server will listen to
 		int _port;
 		// Maximum body size that the server will accept
@@ -50,11 +58,13 @@ class Server
 		// Root directory for the server
     	std::string _root;
 		// List of server names that the server will respond to (host header in the request must match one of these names)
-    	std::vector<std::string> _serverNames;
+    	std::set<std::string> _serverNames;
 		// List of locations for the server
-		std::vector<t_location> _locations;
+		std::vector<Location> _locations;
 		// List of error pages for the server
 		std::vector<std::string> _errorPages;
+		// List of clients the server is generating a response for
+		std::set<Client *> _clients;
 
 	// Private member functions
 
@@ -63,5 +73,3 @@ class Server
 };
 
 std::ostream &operator<<(std::ostream &os, const Server &obj);
-
-std::vector<Server> read_config(const std::string& config_file); //NOTE: MOVER A LA VERGA

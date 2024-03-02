@@ -1,32 +1,10 @@
 #include "Webserv.hpp"
 
 Webserv::Webserv(void)
-{
-}
-
-Webserv::Webserv(const Webserv & src)
-{
-	*this = src;
-}
+{}
 
 Webserv::~Webserv()
-{
-}
-
-Webserv &Webserv::operator=(const Webserv &rhs)
-{
-	if (this != &rhs)
-	{
-		// copy
-	}
-	return (*this);
-}
-
-std::ostream &operator<<(std::ostream &os, const Webserv &obj)
-{
-	(void)obj;
-	return (os);
-}
+{}
 
 void Webserv::init(const std::string &configFile)
 {
@@ -37,7 +15,6 @@ void Webserv::init(const std::string &configFile)
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++)
 		addServer(*it);
 }
-
 
 void Webserv::loop(void)
 {
@@ -61,4 +38,10 @@ void Webserv::addServer(const Server &server)
 	Listener listener(server.getPort());
 	listener.addServer(server);
 	_listeners.push_back(listener);
+}
+
+std::ostream &operator<<(std::ostream &os, const Webserv &obj)
+{
+	(void)obj;
+	return (os);
 }

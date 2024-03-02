@@ -9,7 +9,6 @@
 class HttpResponse {
 	public:
 	// Constructor, destructor, copy constructor
-
 		HttpResponse();
 		HttpResponse(HttpResponse const & src);
 		HttpResponse(
@@ -19,7 +18,6 @@ class HttpResponse {
 		~HttpResponse();
 
 	// getters, setters
-
 		void setStatus(int code, const std::string& phrase = "");
 		void setHeader(const std::string& key, const std::string& value);
 		void unsetHeader(const std::string& key);
@@ -32,7 +30,6 @@ class HttpResponse {
 		const std::string & getBody() const;
 
 	// member functions
-
 		void clear();
 		bool empty() const;
 		std::string to_string() const;
@@ -46,18 +43,21 @@ class HttpResponse {
 			const std::string & msg = "");
 	
 	// operator overloads
-
 		HttpResponse & operator=(HttpResponse const & rhs);
 		std::string operator()() const;
 
 	protected:
 	private:
+	// Member attributes
 		std::string _status_code;
 		std::string _status_phrase;
 		std::vector<std::pair<std::string, std::string> > _headers;
 		std::string _body;
 
-	friend std::ostream & operator<<(std::ostream & o, HttpResponse const & rhs);
+	// Private member functions
+
+	// Friends <3
+		friend std::ostream & operator<<(std::ostream & o, HttpResponse const & rhs);
 };
 
 std::ostream & operator<<(std::ostream & o, HttpResponse const & rhs);
