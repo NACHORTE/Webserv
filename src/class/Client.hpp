@@ -17,18 +17,18 @@ class Client
 		
 		const std::string & getHost(void) const;
 		const std::string & getResponse();
-		// Returns part of the response and removes it from the client
-		const std::string popResponse(size_t length = -1) const;
 
 	// Member functions
 
-		void addData(const std::string & data, size_t length);
+		void addData(const std::string & data);
 		bool requestReady(void) const;
 		bool responseReady(void) const;
 		bool isError(void) const;
 		void popRequest(void);
 		bool timeout(void) const;
 		bool keepAlive(void) const;
+		// Returns part of the response and removes it from the client
+		const std::string popResponse(size_t length = -1) const;
 
 	// Operator overloads
 		Client & operator=(const Client & rhs);

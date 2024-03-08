@@ -13,7 +13,7 @@ Client::Client(const Client & src)
 Client::~Client()
 {}
 
-void Client::addData(const std::string & data)
+void Client::addData(const std::string & data, size_t length)
 {
 	requestBuffer += data;
 

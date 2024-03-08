@@ -147,7 +147,7 @@ int Listener::readData(int fd, Client &client)
 	}
 
 	// Add the data to the client's buffer
-	client.addData(buffer, bytesRead);
+	client.addData(std::string(buffer,bytesRead));
 
 	// If the request is ready, send it to a server
 	if (client.requestReady())
