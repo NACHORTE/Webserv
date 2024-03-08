@@ -6,3 +6,5 @@
 #define BACKLOG 5
 #define POLL_TIMEOUT 10
 #define MAX_PRINT_LEN 10000 // max length of string to print
+#define MAX_HEADER_SIZE 1000000
+#define MAX_BODY_SIZE 1000000

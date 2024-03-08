@@ -28,6 +28,7 @@ class Server
 		void addServerName(const std::string & serverName);
 		void addLocation(const Location & location);
 		void addErrorPage(const std::string & errorPage);
+		void addClient(Client &client);
 
 		const int & getPort() const;
 		const int & getClientMaxBodySize() const;
@@ -37,10 +38,11 @@ class Server
 		const std::vector<Location> & getLocations() const;
 		const std::vector<std::string> & getErrorPages() const;
 
+		void removeClient(Client &client);
+
 	// Member functions
 
 		void loop();
-		void removeClient(Client * client);
 
 	// Operator overloads
 		Server & operator=(const Server & rhs);

@@ -39,7 +39,8 @@ Listener::Listener(int port) : _port(port)
 
 Listener::~Listener()
 {
-	closeListener();
+	for (size_t i = 0; i < _clients.size(); ++i)
+		close(_clients[i].first.fd);
 }
 
 void Listener::addServer(const Server & server)
@@ -87,88 +88,148 @@ void Listener::loop()
 				acceptConnection();
 			// If the client is ready to read, read the data
 			else if (_clients[i].first.revents & POLLIN)
-				readData(_clients[i].first.fd, _clients[i].second);
+				// if readData returns 1, the client is closed and the index is decremented
+				i -= readData(_clients[i].first.fd, _clients[i].second);
 			// Check if the file descriptor is ready to write
 			else if (_clients[i].first.revents & POLLOUT && _clients[i].second.responseReady())
-				sendData(_clients[i].first.fd, _clients[i].second);
+				// if sendData returns 1, the client is closed and the index is decremented
+				i -= sendData(_clients[i].first.fd, _clients[i].second);
 			// Check if the file descriptor has been closed
 			else if (_clients[i].first.revents & (POLLHUP | POLLERR))
-				closeConnection(i--);
+				closeConnection(_clients[i--].first.fd);
 		}
 	}
+
+	// Check if any clients have timed out
+	for (size_t i = 0; i < _clients.size(); ++i)
+		if (_clients[i].second.timeout())
+			closeConnection(i--); // NOTE return timeout error to client before closing
 
 	// Loop through the servers and call their loop function
 	for (size_t i = 0; i < _serverVector.size(); ++i)
 		_serverVector[i].loop();
 }
 
-void Listener::closeListener(void)
-{
-	for (size_t i = 0; i < _clients.size(); ++i)
-		close(_clients[i].first.fd);
-}
-
-void Listener::readData(int fd, Client &client)
-{
-	// Read the data from the client
-	char buffer[BUFSIZ];
-	int bytesRead = read(fd, buffer, BUFSIZ);
-	if (bytesRead < 0) // NOTE don't use throw, use std::cerr and disconect the client
-		throw std::runtime_error("[Listener::readData] Error reading data from client");
-
-	// Add the data to the client's buffer
-	client.addData(buffer, bytesRead);
-	std::string hostname = client.getHost();
-	if (!hostname.empty())
-	{
-		// Add the client to the server
-		if (_serverMap.count(client.getHost()) == 1)
-			_serverMap[hostname].addClient(&client);
-		else // TODO do something here
-			std::cerr << "[Listener::readData] Hostname not found: " << hostname << std::endl;
-	}
-}
-
-void Listener::sendData(int fd, Client &client)
-{
-	// Send the data to the client
-	int bytesSent = write(fd, client.getResponse().c_str(), client.getResponse().size());
-	if (bytesSent < 0) // NOTE don't use throw, use std::cerr and disconect the client
-		throw std::runtime_error("[Listener::sendData] Error sending data to client");
-
-	// Remove the data from the client's buffer
-	client.removeData(bytesSent);
-}
-
-void Listener::acceptConnection(void)
+int Listener::acceptConnection(void)
 {
 	// Accept the connection
 	int newClientFd = accept(_sockfd, NULL, NULL); // NOTE maybe use sockaddr_in instead of NULL for the address
-	if (newClientFd < 0) // NOTE don't use throw, use std::cerr
-		throw std::runtime_error("[Listener::acceptConnection] Error accepting connection");
+	if (newClientFd < 0)
+	{
+		std::cout << "[Listener::acceptConnection] Error accepting connection" << std::endl; // NOTE msg
+		return 1;
+	}
 
 	// Set the new client to non-blocking
 	if (fcntl(newClientFd, F_SETFL, O_NONBLOCK) < 0)
-		std::cout << "[Listener::acceptConnection] Error fcntl" << std::endl;
+		std::cout << "[Listener::acceptConnection] Error fcntl" << std::endl; // NOTE msg
 
 	// Add the new client to the list of clients
 	struct pollfd pfd;
 	pfd.fd = newClientFd;
 	pfd.events = POLLIN | POLLOUT | POLLHUP | POLLERR;
 	_clients.push_back(std::make_pair(pfd, Client()));
+
+	return 0;
 }
 
-void Listener::closeConnection(int clientIndex)
+int Listener::readData(int fd, Client &client)
 {
-	// Delete the pointer to the client from the server (try to delete from all just in case)
+	// Read the data from the client
+	char buffer[BUFSIZ];
+	int bytesRead = read(fd, buffer, BUFSIZ);
+	// If there is an error, close the connection
+	if (bytesRead < 0)
+	{
+		// NOTE send internal server error to client before closing
+		closeConnection(fd);
+		return 1;
+	}
+
+	// Add the data to the client's buffer
+	client.addData(buffer, bytesRead);
+
+	// If the request is ready, send it to a server
+	if (client.requestReady())
+		sendToServer(client);
+
+	return 0;
+}
+
+int Listener::sendData(int fd, Client &client)
+{
+	// NOTE send everything for now, maybe send in chunks later
+	// Get the response chunk from the client
+	std::string response = client.popResponse(/*NOTE BUFSIZ*/);
+	// Send the data to the client
+	int bytesSent = write(fd, response.c_str(), response.size());
+	if (bytesSent < 0)
+	{
+		std::cout << "[Listener::sendData] Error sending data" << std::endl; // NOTE msg
+		closeConnection(fd);
+		return 1;
+	}
+
+	// Pop the request if the whole response has been sent
+	if (client.getResponse().size() == 0)
+	{
+		// Close the connection if the client is not keep-alive
+		if (!client.keepAlive())
+		{
+			closeConnection(fd);
+			return 1;
+		}
+		// Else pop the request and wait for another one
+		else
+			client.popRequest();
+		// If there is another request ready, send it to a server
+		if (client.requestReady())
+			sendToServer(client);
+	}
+
+	return 0;
+}
+
+int Listener::closeConnection(int fd)
+{
+	// Find the client in the list of clients
+	size_t clientIndex = 0;
+	for (size_t i = 0; i < _clients.size(); ++i)
+	{
+		if (_clients[i].first.fd == fd)
+		{
+			clientIndex = i;
+			break;
+		}
+		if (i == _clients.size() - 1)
+		{
+			std::cout << "[Listener::closeConnection] Client not found" << std::endl; // NOTE msg
+			return 1;
+		}
+	}
+
+	// Delete the pointer to the client from the servers (try to delete from all just in case)
 	for (size_t i = 0; i < _serverVector.size(); ++i)
-		_serverVector[i].removeClient(&_clients[clientIndex].second);
+		_serverVector[i].removeClient(_clients[clientIndex].second);
 
 	// Close the connection
-	close(_clients[clientIndex].first.fd);
+	close(fd);
 
 	// Remove the client from the list of clients
 	_clients.erase(_clients.begin() + clientIndex);
+
+	return 0;
+}
+
+void Listener::sendToServer(Client &client)
+{
+	std::string hostname = client.getHost();
+	// If the server exists, add the client to the server
+	if (_serverMap.count(hostname) == 1)
+		_serverMap[hostname]->addClient(client);
+	// Else send it to the default server
+	else
+		_serverVector[0].addClient(client);
 }
 
 std::ostream &operator<<(std::ostream &os, const Listener &obj)

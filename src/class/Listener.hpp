@@ -22,8 +22,9 @@ class Listener
 		
 	// Member functions
 
+		// Main loop of the listener (accepts connections, reads data, sends data)
+		// Only runs once, to run it again, call it again
 		void loop(void);
-		void closeListener(void);
 
 	// Operator overloads
 
@@ -44,10 +45,12 @@ class Listener
 
 	// Private member functions
 
-		void readData(int fd, Client &client);
-		void sendData(int fd, Client &client);
-		void acceptConnection(void);
-		void closeConnection(int clientIndex);
+		int acceptConnection(void);
+		int readData(int fd, Client &client);
+		int sendData(int fd, Client &client);
+		int closeConnection(int clientIndex);
+
+		void sendToServer(Client &client);
 
 	// Friends <3
 		friend std::ostream &operator<<(std::ostream &os, const Listener &obj);

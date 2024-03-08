@@ -148,8 +148,13 @@ void Server::loop()
 
 }
 
-void Server::removeClient(Client * client)
+void Server::addClient(Client &client)
 {
-	if (_clients.count(client) == 1)
-		_clients.erase(client);
+	_clients.insert(&client);
+}
+
+void Server::removeClient(Client &client)
+{
+	if (_clients.count(&client) == 1)
+		_clients.erase(&client);
 }
