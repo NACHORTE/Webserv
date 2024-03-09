@@ -38,9 +38,6 @@ class Client
 	private:
 	// Member attributes
 
-		// Buffer for the http response being written to socket
-		std::string _responseBuffer;
-
 		bool _Error;
 		clock_t _lastEventTime;
 		// Queue of requests and responses (Most recent request is at the front of the list)
