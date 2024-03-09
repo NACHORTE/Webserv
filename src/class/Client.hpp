@@ -4,6 +4,7 @@
 #include <list>
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
+#include <ctime>
 
 class Client
 {
@@ -16,19 +17,19 @@ class Client
 	// Setters and getters
 		
 		const std::string & getHost(void) const;
-		const std::string & getResponse();
+		const std::string & getResponse() const;
 
 	// Member functions
 
 		void addData(const std::string & data);
 		bool requestReady(void) const;
 		bool responseReady(void) const;
-		bool isError(void) const;
-		void popRequest(void);
 		bool timeout(void) const;
 		bool keepAlive(void) const;
-		// Returns part of the response and removes it from the client
-		const std::string popResponse(size_t length = -1) const;
+		// Returns part from the begining of the  response and removes it from the client
+		const std::string popResponse(size_t length = -1);
+		// Deletes the last request and response from _requests
+		void popRequest(void);
 
 	// Operator overloads
 		Client & operator=(const Client & rhs);
@@ -37,27 +38,22 @@ class Client
 	private:
 	// Member attributes
 
-		// Buffer for the http request being read from socket
-		std::string requestBuffer;
 		// Buffer for the http response being written to socket
-		std::string responseBuffer;
-		std::string host;
-		size_t contentLength;
+		std::string _responseBuffer;
 
-		std::set<std::string> _flags;
-		bool requestReady;
-		bool responseReady;
-		bool isHeaderComplete;
-		bool chunked;
-		bool Error;
-		bool keepAlive;
-		bool timeout;
-
+		bool _Error;
+		clock_t _lastEventTime;
+		// Queue of requests and responses (Most recent request is at the front of the list)
 		std::list<std::pair<HttpRequest, HttpResponse> > _requests;
+		std::set<std::string> _flags;
+		size_t _contentLength;
+		bool _requestReady;
+		bool _responseReady;
+		bool _headerComplete;
+		bool _chunked;
+		bool _keepAlive;
 	// Private member functions
 
-		void setHost(void);
-		
 	// Friends <3
 		friend std::ostream &operator<<(std::ostream &os, const Client &obj);
 };

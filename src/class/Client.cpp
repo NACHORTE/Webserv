@@ -13,65 +13,87 @@ Client::Client(const Client & src)
 Client::~Client()
 {}
 
-void Client::addData(const std::string & data, size_t length)
+const std::string &Client::getHost(void) const
 {
-	requestBuffer += data;
+	if (_requests.empty())
+		return ("");
+	
+	std::vector<std::string> header = _requests.end()->first.getHeader("Host");
+	if (header.empty())
+		return ("");
+	return (header[0]);
+}
 
-	// If the header is not over, check if it is complete
-	if (!isHeaderComplete)
+const std::string &Client::getResponse() const
+{
+	if (_requests.empty())
+		return ("");
+	return (_requests.end()->second());
+}
+
+void Client::addData(const std::string & data)
+{
+	size_t bytesRead = 0;
+	while (bytesRead < data.size())
 	{
-		size_t headerEnd = requestBuffer.find("\r\n\r\n");
-
-		// Check if the header is too big
-		if (headerEnd == std::string::npos && requestBuffer.size() > MAX_HEADER_SIZE)
-			Error = true;
-
-		// Check if the header is complete
-		if (headerEnd != std::string::npos)
-		{
-			isHeaderComplete = true;
-			// Find the host and save it (if it exists)
-			setHost();
-			// Check if the body is chunked
-			checkBodyType();
-			// Check if the body is complete
-			if (chunked)
-				checkChunkedBody();
-			else
-				checkBody();
-		}
+		if (_requests.empty() || _requests.begin()->requestReady())
+			_requests.push_front(std::pair<HttpRequest, HttpResponse>());
+		bytesRead += _requests.begin()->addData(data.substr(bytesRead));
 	}
-	else
-	{
-		// Check if the body is too big
-		if (requestBuffer.size() > MAX_HEADER_SIZE + MAX_BODY_SIZE)
-			Error = true;
+}
 
-		// CHeck if the body is complete
-		if (chunked)
-			checkChunkedBody();
-		else
-			checkBody();
-	}
+bool Client::requestReady() const
+{
+	if (_requests.empty())
+		return (false);
+	return (_requests.begin()->first.requestReady());
+}
+
+bool Client::responseReady() const
+{
+	if (_requests.empty())
+		return (false);
+	return (_requests.begin()->second.responseReady());
+}
+
+bool Client::timeout() const
+{
+	// Calculate the time since the last event
+	double seconds = (double)(clock() - _lastEventTime) / CLOCKS_PER_SEC;
+	// Return true if the time since the last event is greater than the timeout
+	return (seconds > TIMEOUT);
+}
+
+bool Client::keepAlive() const
+{
+	if (_requests.empty())
+		return (false);
+	std::vector<std::string> header = _requests.begin()->first.getHeader("Connection");
+	if (header.empty())
+		return (false);
+	return (header[0] == "keep-alive");
+}
+
+const std::string Client::popResponse(size_t length)
+{
+	if (_requests.empty())
+		return ("");
+	return (_requests.begin()->second.popResponse(length));
+}
+
+void Client::popRequest()
+{
+	if (!_requests.empty())
+		_requests.pop_back();
 }
 
 Client &Client::operator=(const Client &rhs)
 {
 	if (this != &rhs)
 	{
-		// copy
+		// TODO copy
 	}
 	return (*this);
-}
-
-void Client::setHost(void)
-{
-	size_t hostStart = requestBuffer.find("Host:");
-	if (hostStart == std::string::npos)
-		return;
-	hostStart += 5;
-	size_t hostEnd = requestBuffer.find("\n", hostStart);
-	host = trim(requestBuffer.substr(hostStart, hostEnd - hostStart));
 }
 
 std::ostream &operator<<(std::ostream &os, const Client &obj)

@@ -41,7 +41,8 @@ class HttpResponse {
 			int code,
 			const std::string & phrase = "",
 			const std::string & msg = "");
-	
+		bool responseReady() const;
+		std::string popResponse(size_t length = -1);
 	// operator overloads
 		HttpResponse & operator=(HttpResponse const & rhs);
 		std::string operator()() const;

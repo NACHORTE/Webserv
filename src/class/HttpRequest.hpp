@@ -27,6 +27,9 @@ class HttpRequest {
 		void unsetHeader(const std::string& key);
 		void setBody(const std::string& body);
 
+		// Add data to the request buffer and return the number of bytes added
+		size_t addData(const std::string & data);
+
 		const std::string & get_method() const;
 		const std::string & get_path() const;
 		const std::string & get_version() const;
@@ -38,6 +41,7 @@ class HttpRequest {
 		std::string to_string() const; // convert an HttpRequest to a string
 		void clear(); // clear all fields
 		bool empty() const; // check if all fields are empty
+		bool requestReady() const; // check if the request is complete
 
 		// operator overloads
 		HttpRequest & operator=(HttpRequest const & rhs);
@@ -53,6 +57,8 @@ class HttpRequest {
 		std::vector<std::pair<std::string, std::string> > _headers;	// key-value pairs
 		std::string _body;	// body of the request
 	
+		std::set<std::string> _flags;
+		std::string _requestBuffer;
 	// Private member functions
 
 	// Friends <3

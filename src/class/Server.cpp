@@ -145,7 +145,10 @@ void Server::addLocation(const t_location & location)
 
 void Server::loop()
 {
-
+	for (auto &client : _clients)
+	{
+		client.generateResponse();
+	}
 }
 
 void Server::addClient(Client &client)
