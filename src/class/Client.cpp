@@ -36,9 +36,9 @@ void Client::addData(const std::string & data)
 	size_t bytesRead = 0;
 	while (bytesRead < data.size())
 	{
-		if (_requests.empty() || _requests.begin()->requestReady())
+		if (_requests.empty() || _requests.begin()->first.requestReady())
 			_requests.push_front(std::pair<HttpRequest, HttpResponse>());
-		bytesRead += _requests.begin()->addData(data.substr(bytesRead));
+		bytesRead += _requests.begin()->first.addData(data.substr(bytesRead));
 	}
 }
 

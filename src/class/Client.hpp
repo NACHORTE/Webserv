@@ -46,7 +46,7 @@ class Client
 		// Queue of requests and responses (Most recent request is at the front of the list)
 		std::list<std::pair<HttpRequest, HttpResponse> > _requests;
 		std::set<std::string> _flags;
-		size_t _contentLength;
+		size_t _contentLength; //TODO move all these flags into request and response classes
 		bool _requestReady;
 		bool _responseReady;
 		bool _headerComplete;
