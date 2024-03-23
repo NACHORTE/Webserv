@@ -59,9 +59,11 @@ class HttpRequest {
 		std::vector<std::pair<std::string, std::string> > _headers;	// key-value pairs
 		std::string _body;	// body of the request
 	
-		std::set<std::string> _flags;
-		std::string _requestBuffer;
-		size_t _contentLength;
+		bool _requestReady;
+		bool _headerReady;
+		bool _error;
+
+		std::string _buffer;
 
 	// Private member functions
 

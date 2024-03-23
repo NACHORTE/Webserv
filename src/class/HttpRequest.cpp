@@ -58,7 +58,78 @@ void HttpRequest::setBody(const std::string& body)
 
 size_t HttpRequest::addData(const std::string & data)
 {
-	
+	// If the request is ready, return 0 bytes read
+	if (_requestReady)
+		return 0;
+
+	// Create auxiliar variable with the buffer and data
+	std::string msg = _buffer + data;
+	// Variable to store the number of bytes read from data
+	size_t readBytes = 0;
+	// If the header has not been found yet, search for it
+	if (!_headerReady)
+	{
+		// Find the end of the header
+		size_t pos = msg.find("\r\n\r\n");
+		// If the end of the header is found, parse it
+		if (pos != std::string::npos)
+			parseHeader(msg.substr(0, pos + 4));
+		// Otherwise save the buffer and return that all data was read
+		else
+		{
+			_buffer = msg;
+			return data.size();
+		}
+		msg = msg.substr(pos + 4);
+		readBytes = pos + 4 - _buffer.size();
+		_headerReady = true;
+	}
+	// Parse the body if the header has been found already
+	// (Use if instead of else bc body can be parsed after parsing header)
+	if (_headerReady)
+	{
+		// Check if the message is chunked
+		bool isChunked = false;
+		std::vector<std::string> chunkedHeader = getHeader("Transfer-Encoding");
+		if (chunkedHeader.size() > 0 && chunkedHeader[0] == "chunked")
+			isChunked = true;
+
+		if (!isChunked)
+		{
+			// Get the content length
+			std::vector<std::string> contentLengthHeader = getHeader("Content-Length");
+			size_t contentLength = 0;
+			if (contentLengthHeader.size() > 0)
+			{
+				std::istringstream iss(contentLengthHeader[0]);
+				iss >> contentLength;
+				if (iss.fail() || !iss.eof())
+				{
+					_error = true;
+					return 0;
+				}
+			}
+
+			// Add the data to the body
+			_body += msg.substr(0, contentLength - _body.size());
+			msg = msg.substr(contentLength - _body.size());
+			readBytes += contentLength - _body.size();
+			// If the body is complete, set the request as ready
+			if (_body.size() == contentLength)
+			{
+				_requestReady = true;
+				return readBytes;
+			}
+		}
+		else
+		{
+			//is chunked
+		}
+	}
+
+	_buffer = msg;
+
+	return data.size(); 
 }
 
 const std::string & HttpRequest::get_method() const
@@ -129,6 +200,8 @@ void HttpRequest::parse(const std::string& msg)
 
 	// Get body
 	_body = iss.str().substr(iss.tellg());
+
+	requestReady = true;
 }
 
 std::string HttpRequest::to_string() const
@@ -150,6 +223,10 @@ void HttpRequest::clear()
 	_version.clear();
 	_headers.clear();
 	_body.clear();
+	_requestReady = false;
+	_headerReady = false;
+	_chunkedBody = false;
+	_error = false;
 }
 
 bool HttpRequest::empty() const
