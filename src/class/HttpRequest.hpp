@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <set>
 
 /*	HttpRequest
  *	Represents an HTTP request
@@ -35,6 +36,7 @@ class HttpRequest {
 		const std::string & get_version() const;
 		std::vector<std::string> getHeader(const std::string& key) const; // returns a vector of all headers with the given key
 		const std::string & getBody() const;
+		bool getFlag(const std::string & flag) const;
 
 		// member functions
 		void parse(const std::string& msg); // parse a string into an HttpRequest
@@ -59,7 +61,12 @@ class HttpRequest {
 	
 		std::set<std::string> _flags;
 		std::string _requestBuffer;
+		size_t _contentLength;
+
 	// Private member functions
+
+		int parseHeader(const std::string& header);
+		int parseBody(const std::string& body, bool isChunked = false);
 
 	// Friends <3
 		friend std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs);

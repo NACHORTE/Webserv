@@ -17,7 +17,7 @@ const std::string &Client::getHost(void) const
 {
 	if (_requests.empty())
 		return ("");
-	
+
 	std::vector<std::string> header = _requests.end()->first.getHeader("Host");
 	if (header.empty())
 		return ("");
@@ -33,6 +33,9 @@ const std::string &Client::getResponse() const
 
 void Client::addData(const std::string & data)
 {
+	// Update the last event time
+	_lastEventTime = clock();
+
 	size_t bytesRead = 0;
 	while (bytesRead < data.size())
 	{
@@ -76,6 +79,8 @@ bool Client::keepAlive() const
 
 const std::string Client::popResponse(size_t length)
 {
+	_lastEventTime = clock();
+
 	if (_requests.empty())
 		return ("");
 	return (_requests.begin()->second.popResponse(length));
@@ -83,6 +88,8 @@ const std::string Client::popResponse(size_t length)
 
 void Client::popRequest()
 {
+	_lastEventTime = clock();
+
 	if (!_requests.empty())
 		_requests.pop_back();
 }

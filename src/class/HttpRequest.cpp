@@ -56,6 +56,11 @@ void HttpRequest::setBody(const std::string& body)
 	this->_body = body;
 }
 
+size_t HttpRequest::addData(const std::string & data)
+{
+	
+}
+
 const std::string & HttpRequest::get_method() const
 {
 	return _method;
@@ -85,6 +90,11 @@ std::vector<std::string> HttpRequest::getHeader(const std::string& key) const
 const std::string & HttpRequest::getBody() const
 {
 	return _body;
+}
+
+bool HttpRequest::getFlag(const std::string & flag) const
+{
+	return _flags.count(flag) == 1;
 }
 
 void HttpRequest::parse(const std::string& msg)
@@ -172,6 +182,81 @@ std::string HttpRequest::operator()() const
 std::vector<std::string> HttpRequest::operator[](const std::string& key) const
 {
 	return getHeader(key);
+}
+
+int HttpRequest::parseHeader(const std::string& header)
+{
+	_headers.clear();
+
+	std::istringstream iss(header);
+
+	// Get first line
+	std::string line;
+	std::getline(iss, line);
+	std::istringstream iss_line(line);
+	iss_line >> _method >> _path >> _version;
+	// Check if line is valid
+	if (iss_line.fail() || !iss_line.eof())
+		return (_method.clear(), _path.clear(), _version.clear(), _headers.clear(), 1);
+
+	// Get headers
+	while (std::getline(iss, line) && line != "\r" && line != "")
+	{
+		// Check if line is vali
+		size_t index = line.find(':');
+		if (index == std::string::npos)
+			return (_method.clear(), _path.clear(), _version.clear(), _headers.clear(), 1);
+		// Parse line
+		std::string key = trim(line.substr(0, index));
+		std::string value = trim(line.substr(index + 1));
+		_headers.push_back(std::make_pair(key, value));
+	}
+
+	return 0;
+}
+
+int HttpRequest::parseBody(const std::string& body, bool isChunked = false)
+{
+	if (!isChunked)
+	{
+		_body = body;
+		if (getFlag("Content-Length"))
+		{
+			std::istringstream iss(getHeader("Content-Length")[0]);
+			iss >> _contentLength;
+			if (iss.fail() || !iss.eof())
+				return 1;
+		}
+		if (_contentLength != _body.size())
+			return 1;
+	}
+	else
+	{
+		_body = body;
+		/* TODO size_t begin = 0;
+		do
+		{
+			// Get the size of the chunk
+			size_t end = body.find("\r\n",begin);
+			if (end == std::string::npos)
+				return 1;
+			std::istringstream iss(body.substr(begin, end - begin));
+			size_t chunkSize;
+			iss >> std::hex >> chunkSize;
+			if (iss.fail() || !iss.eof())
+				return 1;
+			// Get the chunk
+			if (chunkSize == 0)
+				return 0;
+			begin = end + 2;
+			_body += body.substr(begin,chunkSize);
+			if (body[begin + chunkSize] != '\r' || body[begin + chunkSize + 1] != '\n')
+				return 1;
+			begin += chunkSize + 2;
+		} while (begin < body.size());		 */
+	}
+
+	return 0;
 }
 
 std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs)
