@@ -66,22 +66,28 @@ size_t HttpRequest::addData(const std::string & data)
 	std::string msg = _buffer + data;
 	// Variable to store the number of bytes read from data
 	size_t readBytes = 0;
+	// Save old length of buffer and empty it
+	size_t oldBuffLen = _buffer.size();
+	_buffer.clear();
 	// If the header has not been found yet, search for it
 	if (!_headerReady)
 	{
 		// Find the end of the header
 		size_t pos = msg.find("\r\n\r\n");
-		// If the end of the header is found, parse it
-		if (pos != std::string::npos)
-			parseHeader(msg.substr(0, pos + 4));
-		// Otherwise save the buffer and return that all data was read
-		else
+		// If end of header has not been found, save the buffer and return
+		if (pos == std::string::npos)
 		{
 			_buffer = msg;
 			return data.size();
 		}
+		// If the end of the header is found, parse it
+		if (parseHeader(msg.substr(0, pos + 4)))
+		{
+			_error = true;
+			return 0;
+		}
 		msg = msg.substr(pos + 4);
-		readBytes = pos + 4 - _buffer.size();
+		readBytes = pos + 4 - oldBuffLen;
 		_headerReady = true;
 	}
 	// Parse the body if the header has been found already
@@ -127,9 +133,7 @@ size_t HttpRequest::addData(const std::string & data)
 		}
 	}
 
-	_buffer = msg;
-
-	return data.size(); 
+	return readBytes; 
 }
 
 const std::string & HttpRequest::get_method() const
@@ -163,11 +167,6 @@ const std::string & HttpRequest::getBody() const
 	return _body;
 }
 
-bool HttpRequest::getFlag(const std::string & flag) const
-{
-	return _flags.count(flag) == 1;
-}
-
 void HttpRequest::parse(const std::string& msg)
 {
 	// Clear current request
@@ -179,7 +178,7 @@ void HttpRequest::parse(const std::string& msg)
 	// Get first line
 	std::string line;
 	std::getline(iss, line);
-	std::istringstream iss_line(line);
+	std::istringstream iss_line(trim(line));
 	iss_line >> _method >> _path >> _version;
 	// Check if line is valid
 	if (iss_line.fail() || !iss_line.eof())
@@ -201,7 +200,7 @@ void HttpRequest::parse(const std::string& msg)
 	// Get body
 	_body = iss.str().substr(iss.tellg());
 
-	requestReady = true;
+	_requestReady = true;
 }
 
 std::string HttpRequest::to_string() const
@@ -225,7 +224,6 @@ void HttpRequest::clear()
 	_body.clear();
 	_requestReady = false;
 	_headerReady = false;
-	_chunkedBody = false;
 	_error = false;
 }
 
@@ -238,6 +236,16 @@ bool HttpRequest::empty() const
 		&& _body.empty());
 }
 
+bool HttpRequest::requestReady() const
+{
+	return _requestReady;
+}
+
+bool HttpRequest::error() const
+{
+	return _error;
+}
+
 HttpRequest & HttpRequest::operator=(HttpRequest const & rhs)
 {
 	if (this != &rhs)
@@ -247,6 +255,10 @@ HttpRequest & HttpRequest::operator=(HttpRequest const & rhs)
 		this->_version = rhs._version;
 		this->_headers = rhs._headers;
 		this->_body = rhs._body;
+		this->_requestReady = rhs._requestReady;
+		this->_headerReady = rhs._headerReady;
+		this->_error = rhs._error;
+		this->_buffer = rhs._buffer;
 	}
 	return *this;
 }
@@ -261,6 +273,8 @@ std::vector<std::string> HttpRequest::operator[](const std::string& key) const
 	return getHeader(key);
 }
 
+#include <iostream>
+
 int HttpRequest::parseHeader(const std::string& header)
 {
 	_headers.clear();
@@ -270,7 +284,7 @@ int HttpRequest::parseHeader(const std::string& header)
 	// Get first line
 	std::string line;
 	std::getline(iss, line);
-	std::istringstream iss_line(line);
+	std::istringstream iss_line(trim(line));
 	iss_line >> _method >> _path >> _version;
 	// Check if line is valid
 	if (iss_line.fail() || !iss_line.eof())
@@ -287,50 +301,6 @@ int HttpRequest::parseHeader(const std::string& header)
 		std::string key = trim(line.substr(0, index));
 		std::string value = trim(line.substr(index + 1));
 		_headers.push_back(std::make_pair(key, value));
-	}
-
-	return 0;
-}
-
-int HttpRequest::parseBody(const std::string& body, bool isChunked = false)
-{
-	if (!isChunked)
-	{
-		_body = body;
-		if (getFlag("Content-Length"))
-		{
-			std::istringstream iss(getHeader("Content-Length")[0]);
-			iss >> _contentLength;
-			if (iss.fail() || !iss.eof())
-				return 1;
-		}
-		if (_contentLength != _body.size())
-			return 1;
-	}
-	else
-	{
-		_body = body;
-		/* TODO size_t begin = 0;
-		do
-		{
-			// Get the size of the chunk
-			size_t end = body.find("\r\n",begin);
-			if (end == std::string::npos)
-				return 1;
-			std::istringstream iss(body.substr(begin, end - begin));
-			size_t chunkSize;
-			iss >> std::hex >> chunkSize;
-			if (iss.fail() || !iss.eof())
-				return 1;
-			// Get the chunk
-			if (chunkSize == 0)
-				return 0;
-			begin = end + 2;
-			_body += body.substr(begin,chunkSize);
-			if (body[begin + chunkSize] != '\r' || body[begin + chunkSize + 1] != '\n')
-				return 1;
-			begin += chunkSize + 2;
-		} while (begin < body.size());		 */
 	}
 
 	return 0;

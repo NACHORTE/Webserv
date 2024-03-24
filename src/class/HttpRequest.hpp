@@ -15,12 +15,14 @@
 class HttpRequest {
 	public:
 		// constructors, destructor, copy constructor
+
 		HttpRequest();	// default constructor sets all fields to empty
 		HttpRequest(const std::string& msg); // parse a string into an HttpRequest
 		HttpRequest(HttpRequest const & src); // copy constructor
 		~HttpRequest(); // destructor does nothing
 
 		// getters, setters
+
 		void set_method(const std::string& method);
 		void set_path(const std::string& path);
 		void set_version(const std::string& version);
@@ -36,15 +38,15 @@ class HttpRequest {
 		const std::string & get_version() const;
 		std::vector<std::string> getHeader(const std::string& key) const; // returns a vector of all headers with the given key
 		const std::string & getBody() const;
-		bool getFlag(const std::string & flag) const;
 
 		// member functions
+
 		void parse(const std::string& msg); // parse a string into an HttpRequest
 		std::string to_string() const; // convert an HttpRequest to a string
 		void clear(); // clear all fields
 		bool empty() const; // check if all fields are empty
 		bool requestReady() const; // check if the request is complete
-
+		bool error() const; // check if the request is in an error state
 		// operator overloads
 		HttpRequest & operator=(HttpRequest const & rhs);
 		std::string operator()() const; // equivalent to to_string()
@@ -68,7 +70,6 @@ class HttpRequest {
 	// Private member functions
 
 		int parseHeader(const std::string& header);
-		int parseBody(const std::string& body, bool isChunked = false);
 
 	// Friends <3
 		friend std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs);
