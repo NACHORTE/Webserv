@@ -12,7 +12,8 @@ HttpRequest::HttpRequest(const std::string& msg)
 
 HttpRequest::HttpRequest(const HttpRequest& other):
 	_method(other._method), _path(other._path), _version(other._version),
-	_headers(other._headers), _body(other._body)
+	_headers(other._headers), _body(other._body), _requestReady(other._requestReady),
+	_headerReady(other._headerReady), _error(other._error), _buffer(other._buffer)
 {}
 
 HttpRequest::~HttpRequest()
@@ -81,11 +82,8 @@ size_t HttpRequest::addData(const std::string & data)
 			return data.size();
 		}
 		// If the end of the header is found, parse it
-		if (parseHeader(msg.substr(0, pos + 4)))
-		{
-			_error = true;
-			return 0;
-		}
+		if (parseHeader(msg.substr(0, pos + 4)) == 1)
+			return (_error = true, 0);
 		msg = msg.substr(pos + 4);
 		readBytes = pos + 4 - oldBuffLen;
 		_headerReady = true;
@@ -109,10 +107,7 @@ size_t HttpRequest::addData(const std::string & data)
 				std::istringstream iss(contentLengthHeader[0]);
 				iss >> contentLength;
 				if (iss.fail() || !iss.eof())
-				{
-					_error = true;
-					return 0;
-				}
+					return (_error = true, 0);
 			}
 
 			// Add the data to the body
@@ -181,7 +176,7 @@ void HttpRequest::parse(const std::string& msg)
 	iss_line >> _method >> _path >> _version;
 	// Check if line is valid
 	if (iss_line.fail() || !iss_line.eof())
-		return (this->clear());
+		return (_error = true, this->clear());
 
 	// Get headers
 	while (std::getline(iss, line) && line != "\r" && line != "")
@@ -189,7 +184,7 @@ void HttpRequest::parse(const std::string& msg)
 		// Check if line is vali
 		size_t index = line.find(':');
 		if (index == std::string::npos)
-			return (this->clear());
+			return (_error = true, this->clear());
 		// Parse line
 		std::string key = trim(line.substr(0, index));
 		std::string value = trim(line.substr(index + 1));
