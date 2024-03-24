@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <set>
-
+#include <iostream> // XXX
 /*	HttpRequest
  *	Represents an HTTP request
  *	Contains the following fields:

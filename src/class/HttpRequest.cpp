@@ -117,9 +117,9 @@ size_t HttpRequest::addData(const std::string & data)
 			}
 
 			// Add the data to the body
-			_body += msg.substr(0, contentLength - _body.size());
-			msg = msg.substr(contentLength - _body.size());
-			readBytes += contentLength - _body.size();
+			size_t oldBodySize = _body.size();
+			_body += msg.substr(0, contentLength - oldBodySize);
+			readBytes += contentLength - oldBodySize;
 			// If the body is complete, set the request as ready
 			if (_body.size() == contentLength)
 			{
@@ -272,8 +272,6 @@ std::vector<std::string> HttpRequest::operator[](const std::string& key) const
 {
 	return getHeader(key);
 }
-
-#include <iostream>
 
 int HttpRequest::parseHeader(const std::string& header)
 {
