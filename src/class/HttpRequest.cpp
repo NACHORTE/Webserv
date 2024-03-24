@@ -118,7 +118,7 @@ size_t HttpRequest::addData(const std::string & data)
 			// Add the data to the body
 			size_t oldBodySize = _body.size();
 			_body += msg.substr(0, contentLength - oldBodySize);
-			readBytes += contentLength - oldBodySize;
+			readBytes += (contentLength - oldBodySize > msg.size()) ? msg.size() : contentLength - oldBodySize;
 			// If the body is complete, set the request as ready
 			if (_body.size() == contentLength)
 			{
