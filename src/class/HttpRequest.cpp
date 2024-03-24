@@ -99,7 +99,6 @@ size_t HttpRequest::addData(const std::string & data)
 		std::vector<std::string> chunkedHeader = getHeader("Transfer-Encoding");
 		if (chunkedHeader.size() > 0 && chunkedHeader[0] == "chunked")
 			isChunked = true;
-
 		if (!isChunked)
 		{
 			// Get the content length
