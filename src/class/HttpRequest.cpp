@@ -3,7 +3,11 @@
 #include "utils.hpp"
 
 HttpRequest::HttpRequest()
-{}
+{
+	_requestReady = false;
+	_headerReady = false;
+	_error = false;
+}
 
 HttpRequest::HttpRequest(const std::string& msg)
 {

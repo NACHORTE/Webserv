@@ -1,6 +1,7 @@
 #include "Client.hpp"
 #include "defines.h"
 #include "utils.hpp"
+#include "colors.h"
 
 Client::Client(void)
 {}
@@ -105,6 +106,27 @@ Client &Client::operator=(const Client &rhs)
 
 std::ostream &operator<<(std::ostream &os, const Client &obj)
 {
-	(void)obj;
+	std::cout << CYAN << "_Error: "<< RESET << obj._Error << std::endl;
+	std::cout << CYAN << "_lastEventTime: "<< RESET << obj._lastEventTime << std::endl;
+	std::cout << CYAN << "_requests: "<< RESET << obj._requests.size() << std::endl;
+
+	std::list<std::pair<HttpRequest, HttpResponse> >::const_iterator it;
+	size_t i = 1;
+	for (it = obj._requests.begin(); it != obj._requests.end(); it++)
+	{
+		std::cout << (it->first.requestReady()?GREEN:RED);
+		std::cout << "Request " << i << (it->first.requestReady()?" ready":" not ready") << "\n[" << RESET;
+		std::cout << it->first;
+		std::cout << (it->first.requestReady()?GREEN:RED)<< "]" << RESET << std::endl;
+		std::cout << (it->second.responseReady()?GREEN:RED);
+		std::cout << "Response " << i << (it->second.responseReady()?" ready":" not ready") << "\n[" << RESET;
+		std::cout << it->second;
+		std::cout << (it->second.responseReady()?GREEN:RED)<< "]" << RESET << std::endl;
+		++i;
+	}
+	std::cout << CYAN << "_flags: " << RESET << obj._flags.size() << std::endl;
+	std::set<std::string>::const_iterator it2;
+	for (it2 = obj._flags.begin(); it2 != obj._flags.end(); it2++)
+		std::cout << *it2 << std::endl;
 	return (os);
 }
