@@ -1,6 +1,7 @@
 #include "HttpRequest.hpp"
 #include <sstream>
 #include "utils.hpp"
+#include "colors.h"
 
 HttpRequest::HttpRequest()
 {
@@ -203,7 +204,7 @@ void HttpRequest::parse(const std::string& msg)
 
 std::string HttpRequest::to_string() const
 {
-	if (this->empty())
+	if (!_requestReady)
 		return "";
 	std::string ret = _method + " " + _path + " " + _version + "\r\n";
 	size_t header_size = _headers.size();
@@ -304,6 +305,17 @@ int HttpRequest::parseHeader(const std::string& header)
 
 std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs)
 {
-	o << rhs.to_string();
+	o << CYAN << "_method: " << RESET << rhs._method << std::endl;
+	o << CYAN << "_path: " << RESET << rhs._path << std::endl;
+	o << CYAN << "_version: " << RESET << rhs._version << std::endl;
+	o << CYAN << "_headers: " << RESET << rhs._headers.size() << std::endl;
+	for (size_t i = 0; i < rhs._headers.size(); i++)
+		o << rhs._headers[i].first << ": " << rhs._headers[i].second << std::endl;
+	o << CYAN << "_body: " << RESET << rhs._body << std::endl;
+	o << CYAN << "_buffer: " << RESET << rhs._buffer << std::endl;
+
+	o << CYAN << "_requestReady: " << RESET << rhs._requestReady << std::endl;
+	o << CYAN << "_headerReady: " << RESET << rhs._headerReady << std::endl;
+	o << CYAN << "_error: " << RESET << rhs._error << std::endl;
 	return o;
 }
