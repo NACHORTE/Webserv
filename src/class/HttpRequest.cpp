@@ -305,6 +305,11 @@ int HttpRequest::parseHeader(const std::string& header)
 
 std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs)
 {
+	if (rhs._requestReady)
+	{
+		o << rhs.to_string();
+		return o;
+	}
 	o << CYAN << "_method: " << RESET << rhs._method << std::endl;
 	o << CYAN << "_path: " << RESET << rhs._path << std::endl;
 	o << CYAN << "_version: " << RESET << rhs._version << std::endl;
