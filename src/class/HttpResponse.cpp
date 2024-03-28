@@ -379,6 +379,38 @@ HttpResponse HttpResponse::error(	// generate a default error page
 }
 
 /**
+ * @brief Checks if the HttpResponse object has a response ready.
+ * 
+ * Determines whether the HttpResponse object has a response ready by checking the _responseReady flag.
+ * 
+ * @return true if the response is ready, false otherwise.
+ */
+bool HttpResponse::responseReady() const
+{
+	return _responseReady;
+}
+
+/**
+ * @brief Retrieves a portion of the response buffer.
+ * 
+ * This function retrieves a portion of the response buffer with a specified length.
+ * If the length is -1, it returns the entire response buffer.
+ * 
+ * @param length The length of the response buffer to retrieve.
+ * @return A string containing the specified portion of the response buffer.
+ */
+std::string HttpResponse::popResponse(size_t length)
+{
+	std::string ret;
+	ret = _responseBuffer.substr(0, length);
+	if ( length >= _responseBuffer.length() )
+		_responseBuffer.clear();
+	else
+		_responseBuffer = _responseBuffer.substr(length);
+	return ret;
+}
+
+/**
  * @brief Overloads the assignment operator for HttpResponse objects.
  * 
  * Overloads the assignment operator to copy the content of another HttpResponse object.

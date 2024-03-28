@@ -13,22 +13,22 @@ Client::Client(const Client & src)
 Client::~Client()
 {}
 
-const std::string &Client::getHost(void) const
+std::string Client::getHost(void) const
 {
 	if (_requests.empty())
 		return ("");
 
-	std::vector<std::string> header = _requests.end()->first.getHeader("Host");
+	std::vector<std::string> header = _requests.rbegin()->first.getHeader("Host");
 	if (header.empty())
 		return ("");
 	return (header[0]);
 }
 
-const std::string &Client::getResponse() const
+std::string Client::getResponse() const
 {
 	if (_requests.empty())
 		return ("");
-	return (_requests.end()->second());
+	return (_requests.rbegin()->second());
 }
 
 void Client::addData(const std::string & data)

@@ -18,10 +18,9 @@ class Server
 	// Setters and getters
 
 		void setPort(int port);
-		void setClientMaxBodySize(int clientMaxBodySize);
+		void setClientMaxBodySize(size_t clientMaxBodySize);
 		void setIndex(const std::string & index);
 		void setRoot(const std::string & root);
-		void setServerNames(const std::vector<std::string> & serverNames);
 		void setLocations(const std::vector<Location> & locations);
 		void setErrorPages(const std::vector<std::string> & errorPages);
 
@@ -30,8 +29,8 @@ class Server
 		void addErrorPage(const std::string & errorPage);
 		void addClient(Client &client);
 
-		const int & getPort() const;
-		const int & getClientMaxBodySize() const;
+		int getPort() const;
+		int getClientMaxBodySize() const;
 		const std::string & getIndex() const;
 		const std::string & getRoot() const;
 		const std::set<std::string> & getServerNames() const;
@@ -54,7 +53,7 @@ class Server
 		// Port number that the server will listen to
 		int _port;
 		// Maximum body size that the server will accept
-    	int _clientMaxBodySize;
+		size_t _clientMaxBodySize;
 		// Default file to serve when the request is for a directory
     	std::string _index;
 		// Root directory for the server

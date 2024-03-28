@@ -4,7 +4,7 @@
 
 Server::Server(void)
 {
-	_allowed_methods["GET"] = GET;
+/* 	_allowed_methods["GET"] = GET;
 	_allowed_methods["POST"] = POST;
 	_allowed_methods["DELETE"] = DELETE;
 
@@ -25,7 +25,7 @@ Server::Server(void)
 	location_allowed_methods.insert("GET");
 	location_allowed_methods.insert("POST");
 	_allowed_paths.addLocation("/upload", true, "", location_allowed_methods);
-	_allowed_paths.addLocation("/bin-cgi/", false, "", location_allowed_methods);
+	_allowed_paths.addLocation("/bin-cgi/", false, "", location_allowed_methods); */
 }
 
 Server::Server(const Server & src)
@@ -48,7 +48,7 @@ Server &Server::operator=(const Server &rhs)
 
 std::ostream &operator<<(std::ostream &os, const Server &obj)
 {
-	os << "port: " << obj.port << std::endl;
+/* 	os << "port: " << obj.port << std::endl;
 	os << "server_name: " << obj.sv_name<< std::endl;
 	os << "host: " << obj.host << std::endl;
 	os << "root: " << obj.root << std::endl;
@@ -60,17 +60,22 @@ std::ostream &operator<<(std::ostream &os, const Server &obj)
 		std::cout << "location " << i + 1 << ":" << std::endl;
 		std::cout << obj.locations[i] << std::endl;
 	}
-	return (os);
+	return (os); */
 }
 
 void Server::setPort(int port)
 {
-	this->port = port;
+	this->_port = port;
+}
+
+void Server::setClientMaxBodySize(size_t clientMaxBodySize)
+{
+	_clientMaxBodySize = clientMaxBodySize;
 }
 
 int Server::getPort(void) const
 {
-	return (port);
+	return (_port);
 }
 
 const std::set<std::string> & Server::getServerNames(void) const
@@ -78,14 +83,9 @@ const std::set<std::string> & Server::getServerNames(void) const
 	return (_serverNames);
 }
 
-void Server::setServerName(const std::string & serverName)
-{
-	sv_name = serverName;
-}
-
 const std::string & Server::getHost(void) const
 {
-	return (host);
+	return (_host);
 }
 
 void Server::setHost(const std::string & host)
@@ -145,10 +145,18 @@ void Server::addLocation(const t_location & location)
 
 void Server::loop()
 {
-	for (auto &client : _clients)
+	std::set<Client *>::iterator it;
+	for (it = _clients.begin(); it != _clients.end(); it++)
 	{
-		client.generateResponse();
+		Client &client = **it;
+		if (client.requestReady())
+		{
+			HttpResponse response;
+			response.generateResponse(client);
+			client.setResponseReady(true);
+		}
 	}
+	_clients.generateResponse();
 }
 
 void Server::addClient(Client &client)

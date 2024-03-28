@@ -16,8 +16,8 @@ class Client
 
 	// Setters and getters
 		
-		const std::string & getHost(void) const;
-		const std::string & getResponse() const;
+		std::string getHost(void) const;
+		std::string getResponse() const;
 
 	// Member functions
 
