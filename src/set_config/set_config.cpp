@@ -4,7 +4,6 @@
 #include "set_config.hpp"
 #include "Server.hpp"
 #include "utils.hpp"
-#include "Webserv.hpp"
 
 int check_duplicated(std::string var)
 {
@@ -133,11 +132,11 @@ int read_location(Location *location, std::istringstream &iss)
 		}
 		else if (word == "methods")
 		{
-/* 			if (check_duplicated(location->getAllowMethods()))
+ 			if (check_duplicated(location->getAllowMethods()[0]))
 			{
 				std::cout << "Error reading config file (location), duplicated: methods" << std::endl;
 				return 0;
-			} */
+			} 
 			if (iss >> word && back(word) == ';')
 			{
 				location->addAllowMethod(word);
@@ -158,7 +157,7 @@ int read_location(Location *location, std::istringstream &iss)
 	return 0;
 }
 
-std::vector<Server> Webserv::read_config(const std::string& config_file)
+std::vector<Server> read_config(const std::string& config_file)
 {
 	std::string input;
 	std::string word;

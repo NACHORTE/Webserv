@@ -34,14 +34,22 @@ Server::Server(const Server & src)
 }
 
 Server::~Server()
-{
-}
+{}
 
 Server &Server::operator=(const Server &rhs)
 {
 	if (this != &rhs)
 	{
-		// copy
+		_port = rhs._port;
+		_clientMaxBodySize = rhs._clientMaxBodySize;
+    	_index = rhs._index;
+    	_root = rhs._root;
+    	_serverNames = rhs._serverNames;
+		_locations = rhs._locations;
+		_errorPages = rhs._errorPages;
+		_clients = rhs._clients;
+		_allowed_methods = rhs._allowed_methods;
+		_allowed_paths = rhs._allowed_paths;
 	}
 	return (*this);
 }
@@ -61,7 +69,7 @@ std::ostream &operator<<(std::ostream &os, const Server &obj)
 
 void Server::setPort(int port)
 {
-	this->_port = port;
+	_port = port;
 }
 
 void Server::setClientMaxBodySize(size_t clientMaxBodySize)

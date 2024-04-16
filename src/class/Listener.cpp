@@ -7,7 +7,6 @@
 #include "utils.hpp"
 #include <unistd.h>
 #include <cstdio>
-#include "debug.hpp"
 
 Listener::Listener(int port) : _port(port)
 {
@@ -113,7 +112,6 @@ void Listener::loop()
 
 int Listener::acceptConnection(void)
 {
-	DEBUG("Accepting connection on port " + int_to_string(_port));
 	// Accept the connection
 	int newClientFd = accept(_sockfd, NULL, NULL); // NOTE maybe use sockaddr_in instead of NULL for the address
 	if (newClientFd < 0)
@@ -137,7 +135,6 @@ int Listener::acceptConnection(void)
 
 int Listener::readData(int fd, Client &client)
 {
-	DEBUG("Reading data from client on port " + int_to_string(_port));
 	// Read the data from the client
 	char buffer[BUFSIZ];
 	int bytesRead = read(fd, buffer, BUFSIZ);
@@ -227,7 +224,6 @@ int Listener::closeConnection(int fd)
 void Listener::sendToServer(Client &client)
 {
 	std::string hostname = client.getHost();
-	DEBUG ("Sending request to server" + hostname);
 	// If the server exists, add the client to the server
 	if (_serverMap.count(hostname) == 1)
 		_serverMap[hostname]->addClient(client);
@@ -243,7 +239,7 @@ std::ostream &operator<<(std::ostream &os, const Listener &obj)
 	// print all servers hostnames
 	for (size_t i = 0; i < obj._serverVector.size(); ++i)
 	{
-		os << "\t\tServer " << i++ << ":";
+		os << "\t\tServer " << i + 1 << ":";
 		std::set<std::string> serverNames = obj._serverVector[i].getServerNames();
 		for (std::set<std::string>::const_iterator it2 = serverNames.begin();
 			it2 != serverNames.end(); ++it2)
