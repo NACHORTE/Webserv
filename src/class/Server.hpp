@@ -67,6 +67,8 @@ class Server
 		// List of clients the server is generating a response for
 		std::set<Client *> _clients;
 
+		std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> _allowed_methods;
+		Locations _allowed_paths;
 	// Private member functions
 
 	// Friends <3

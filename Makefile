@@ -18,6 +18,7 @@ SRC := src/class/Client.cpp\
 	src/class/HttpRequest.cpp\
 	src/class/HttpResponse.cpp\
 	src/class/Listener.cpp\
+	src/class/Location.cpp\
 	src/class/Locations.cpp\
 	src/class/Server.cpp\
 	src/class/Webserv.cpp\

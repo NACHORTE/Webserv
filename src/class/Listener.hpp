@@ -4,6 +4,7 @@
 #include "Client.hpp"
 #include <vector>
 #include <map>
+#include <poll.h>
 
 class Listener
 {

@@ -14,6 +14,13 @@ Client::Client(const Client & src)
 Client::~Client()
 {}
 
+void Client::setResponse(const HttpResponse & response)
+{
+	if (_requests.empty())
+		return;
+	_requests.begin()->second = response;
+}
+
 std::string Client::getHost(void) const
 {
 	if (_requests.empty())
@@ -30,6 +37,13 @@ std::string Client::getResponse() const
 	if (_requests.empty())
 		return ("");
 	return (_requests.rbegin()->second());
+}
+
+const HttpRequest &Client::getRequest(void) //TODO hacer esto de otra forma
+{
+	if (_requests.empty())
+		throw std::runtime_error("No request available");
+	return (_requests.rbegin()->first);
 }
 
 void Client::addData(const std::string & data)

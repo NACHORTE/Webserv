@@ -15,9 +15,11 @@ class Client
 		~Client();
 
 	// Setters and getters
-		
+		void setResponse(const HttpResponse & response);
+
 		std::string getHost(void) const;
 		std::string getResponse() const;
+		const HttpRequest & getRequest(void);
 
 	// Member functions
 

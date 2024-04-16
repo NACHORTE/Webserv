@@ -26,7 +26,8 @@ static void initErrorPages()
  * 
  * Initializes an empty HttpResponse object.
  */
-HttpResponse::HttpResponse()
+HttpResponse::HttpResponse():
+	_responseReady(false)
 {}
 
 /**
@@ -40,7 +41,8 @@ HttpResponse::HttpResponse(const HttpResponse& other):
 	_status_code(other._status_code),
 	_status_phrase(other._status_phrase),
 	_headers(other._headers),
-	_body(other._body)
+	_body(other._body),
+	_responseReady(other._responseReady)
 {}
 
 /**

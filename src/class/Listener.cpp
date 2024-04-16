@@ -7,6 +7,7 @@
 #include "utils.hpp"
 #include <unistd.h>
 #include <cstdio>
+#include "debug.hpp"
 
 Listener::Listener(int port) : _port(port)
 {
@@ -52,7 +53,7 @@ void Listener::addServer(const Server & server)
 	for (std::set<std::string>::const_iterator it = serverNames.begin();
 		it != serverNames.end(); ++it)
 		if (_serverMap.count(*it) == 1)
-			throw std::runtime_error("[ERROR] Listener " + std::to_string(_port) + " has a duplicate hostname: " + *it);
+			throw std::runtime_error("[ERROR] Listener " + int_to_string(_port) + " has a duplicate hostname: " + *it);
 
 	// Add the server to the vector of servers
 	_serverVector.push_back(server);
@@ -112,6 +113,7 @@ void Listener::loop()
 
 int Listener::acceptConnection(void)
 {
+	DEBUG("Accepting connection on port " + int_to_string(_port));
 	// Accept the connection
 	int newClientFd = accept(_sockfd, NULL, NULL); // NOTE maybe use sockaddr_in instead of NULL for the address
 	if (newClientFd < 0)
@@ -135,6 +137,7 @@ int Listener::acceptConnection(void)
 
 int Listener::readData(int fd, Client &client)
 {
+	DEBUG("Reading data from client on port " + int_to_string(_port));
 	// Read the data from the client
 	char buffer[BUFSIZ];
 	int bytesRead = read(fd, buffer, BUFSIZ);
@@ -224,6 +227,7 @@ int Listener::closeConnection(int fd)
 void Listener::sendToServer(Client &client)
 {
 	std::string hostname = client.getHost();
+	DEBUG ("Sending request to server" + hostname);
 	// If the server exists, add the client to the server
 	if (_serverMap.count(hostname) == 1)
 		_serverMap[hostname]->addClient(client);

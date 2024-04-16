@@ -4,7 +4,7 @@
 
 Server::Server(void)
 {
-/* 	_allowed_methods["GET"] = GET;
+ 	_allowed_methods["GET"] = GET;
 	_allowed_methods["POST"] = POST;
 	_allowed_methods["DELETE"] = DELETE;
 
@@ -25,7 +25,7 @@ Server::Server(void)
 	location_allowed_methods.insert("GET");
 	location_allowed_methods.insert("POST");
 	_allowed_paths.addLocation("/upload", true, "", location_allowed_methods);
-	_allowed_paths.addLocation("/bin-cgi/", false, "", location_allowed_methods); */
+	_allowed_paths.addLocation("/bin-cgi/", false, "", location_allowed_methods);
 }
 
 Server::Server(const Server & src)
@@ -48,19 +48,15 @@ Server &Server::operator=(const Server &rhs)
 
 std::ostream &operator<<(std::ostream &os, const Server &obj)
 {
-/* 	os << "port: " << obj.port << std::endl;
-	os << "server_name: " << obj.sv_name<< std::endl;
-	os << "host: " << obj.host << std::endl;
-	os << "root: " << obj.root << std::endl;
-	os << "error_page: " << obj.error_page << std::endl;
-	os << "index: " << obj.index << std::endl;
-	os << "max_body: " << obj.max_body << std::endl;
-	for (size_t i = 0; i < obj.locations.size(); i++)
-	{
-		std::cout << "location " << i + 1 << ":" << std::endl;
-		std::cout << obj.locations[i] << std::endl;
-	}
-	return (os); */
+ 	os << "port: " << obj._port << std::endl;
+	os << "client_max_body_size: " << obj._clientMaxBodySize << std::endl;
+	os << "index: " << obj._index << std::endl;
+	os << "root: " << obj._root << std::endl;
+	os << "server_names: ";
+	for (std::set<std::string>::const_iterator it = obj._serverNames.begin(); it != obj._serverNames.end(); ++it)
+		os << *it << " ";
+	os << std::endl;
+	return (os);
 }
 
 void Server::setPort(int port)
@@ -83,64 +79,54 @@ const std::set<std::string> & Server::getServerNames(void) const
 	return (_serverNames);
 }
 
-const std::string & Server::getHost(void) const
-{
-	return (_host);
-}
-
-void Server::setHost(const std::string & host)
-{
-	this->host = host;
-}
-
 const std::string & Server::getRoot(void) const
 {
-	return (root);
+	return (_root);
 }
 
 void Server::setRoot(const std::string & root)
 {
-	this->root = root;
+	_root = root;
 }
 
-const std::string & Server::getErrorPage(void) const
+const std::vector<std::string> & Server::getErrorPages() const
 {
-	return (error_page);
+	return (_errorPages);
 }
 
-void Server::setErrorPage(const std::string & errorPage)
+void Server::setErrorPages(const std::vector<std::string> & errorPages)
 {
-	error_page = errorPage;
+	_errorPages = errorPages;
 }
 
 const std::string & Server::getIndex(void) const
 {
-	return (index);
+	return (_index);
 }
 
 void Server::setIndex(const std::string & index)
 {
-	this->index = index;
+	_index = index;
 }
 
-const std::vector<t_location> & Server::getLocations(void) const
+const std::vector<Location> & Server::getLocations(void) const
 {
-	return (locations);
+	return (_locations);
 }
 
-int Server::getMaxBody(void) const
+int Server::getClientMaxBodySize(void) const
 {
-	return (max_body);
+	return (_clientMaxBodySize);
 }
 
-void Server::setMaxBody(int maxBody)
+void Server::addLocation(const Location & location)
 {
-	max_body = maxBody;
+	_locations.push_back(location);
 }
 
-void Server::addLocation(const t_location & location)
+void Server::addServerName(const std::string & serverName)
 {
-	locations.push_back(location);
+	_serverNames.insert(serverName);
 }
 
 void Server::loop()
@@ -152,11 +138,10 @@ void Server::loop()
 		if (client.requestReady())
 		{
 			HttpResponse response;
-			response.generateResponse(client);
-			client.setResponseReady(true);
+			response.generate(client.getRequest(), _allowed_paths, _allowed_methods);
+			client.setResponse(response);
 		}
 	}
-	_clients.generateResponse();
 }
 
 void Server::addClient(Client &client)

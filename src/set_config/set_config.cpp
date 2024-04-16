@@ -3,6 +3,8 @@
 #include <sstream>
 #include "set_config.hpp"
 #include "Server.hpp"
+#include "utils.hpp"
+#include "Webserv.hpp"
 
 int check_duplicated(std::string var)
 {
@@ -18,32 +20,32 @@ int check_full_server(Server *server, int n_server)
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: port" << std::endl;
 		return 0;
 	}
-	if (server->getServerName() == "")
+	if (server->getServerNames().size() == 0)
 	{
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: server_name" << std::endl;
 		return 0;
 	}
-	if (server->getHost() == "")
+/* 	if (server->getHost() == "")
 	{
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: host" << std::endl;
 		return 0;
-	}
+	} */
 	if (server->getRoot() == "")
 	{
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: root" << std::endl;
 		return 0;
 	}
-	if (server->getErrorPage() == "")
+/* 	if (server->getErrorPage() == "")
 	{
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: error_page" << std::endl;
 		return 0;
-	}
+	} */
 	if (server->getIndex() == "")
 	{
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: index" << std::endl;
 		return 0;
 	}
-	if (server->getMaxBody() == 0)
+	if (server->getClientMaxBodySize() == 0)
 	{
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: max_body" << std::endl;
 		return 0;
@@ -51,7 +53,7 @@ int check_full_server(Server *server, int n_server)
 	return 1;
 }
 
-int read_location(t_location *location, std::istringstream &iss)
+int read_location(Location *location, std::istringstream &iss)
 {
 	std::string word;
 
@@ -131,14 +133,14 @@ int read_location(t_location *location, std::istringstream &iss)
 		}
 		else if (word == "methods")
 		{
-			if (check_duplicated(location->getMethods()))
+/* 			if (check_duplicated(location->getAllowMethods()))
 			{
 				std::cout << "Error reading config file (location), duplicated: methods" << std::endl;
 				return 0;
-			}
+			} */
 			if (iss >> word && back(word) == ';')
 			{
-				location->setMethods(word);
+				location->addAllowMethod(word);
 				//std::cout << "methods: " << location->methods << std::endl;
 			}
 			else
@@ -156,7 +158,7 @@ int read_location(t_location *location, std::istringstream &iss)
 	return 0;
 }
 
-std::vector<Server> read_config(const std::string& config_file)
+std::vector<Server> Webserv::read_config(const std::string& config_file)
 {
 	std::string input;
 	std::string word;
@@ -192,7 +194,7 @@ std::vector<Server> read_config(const std::string& config_file)
 		}
 		else if (in_server && word == "location")
 		{
-			t_location location;
+			Location location;
 			if (!read_location(&location, iss))
 				return std::vector<Server>();
 			servers[n_server].addLocation(location);
@@ -220,7 +222,7 @@ std::vector<Server> read_config(const std::string& config_file)
 		}
 		else if (in_server && word == "server_name")
 		{
-			if (check_duplicated(servers[n_server].getServerName()))
+			if (check_duplicated(*servers[n_server].getServerNames().begin()))
 			{
 				std::cout << "Error reading config file (server " << n_server + 1 << "), duplicated: server_name" << std::endl;
 				return std::vector<Server>();
@@ -228,7 +230,7 @@ std::vector<Server> read_config(const std::string& config_file)
 			if (iss >> word && back(word) == ';')
 			{
 				pop_back(word);
-				servers[n_server].setServerName(word);
+				servers[n_server].addServerName(word);
 			}
 			else
 			{
@@ -254,7 +256,7 @@ std::vector<Server> read_config(const std::string& config_file)
 				return std::vector<Server>();
 			}
 		}
-		else if (in_server && word == "host")
+/* 		else if (in_server && word == "host")
 		{
 			if (check_duplicated(servers[n_server].getHost()))
 			{
@@ -271,8 +273,8 @@ std::vector<Server> read_config(const std::string& config_file)
 				std::cout << "Error reading config file (server " << n_server + 1 << "), missing/error: host" << std::endl;
 				return std::vector<Server>();
 			}
-		}
-		else if (in_server && word == "error_page")
+		} */
+/* 		else if (in_server && word == "error_page")
 		{
 			if (check_duplicated(servers[n_server].getErrorPage()))
 			{
@@ -289,7 +291,7 @@ std::vector<Server> read_config(const std::string& config_file)
 				std::cout << "Error reading config file (server " << n_server + 1 << "), missing/error: error_page" << std::endl;
 				return std::vector<Server>();
 			}
-		}
+		} */
 		else if(in_server && word == "index")
 		{
 			if (check_duplicated(servers[n_server].getIndex()))
@@ -310,7 +312,7 @@ std::vector<Server> read_config(const std::string& config_file)
 		}
 		else if (in_server && word == "max_body")
 		{
-			if (check_duplicated(int_to_string(servers[n_server].getMaxBody())))
+			if (check_duplicated(int_to_string(servers[n_server].getClientMaxBodySize())))
 			{
 				std::cout << "Error reading config file (server " << n_server + 1 << "), duplicated: max_body" << std::endl;
 				return std::vector<Server>();
@@ -320,7 +322,7 @@ std::vector<Server> read_config(const std::string& config_file)
 				std::istringstream iss_num(word);
 				int max_body;
 				iss_num >> max_body;
-				servers[n_server].setMaxBody(max_body);
+				servers[n_server].setClientMaxBodySize(max_body);
 			}
 			else
 			{

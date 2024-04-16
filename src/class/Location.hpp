@@ -37,7 +37,7 @@ class Location
 	private:
 	// Member attributes
 		// if True, returns a list of files in the directory if no index file is found
-		bool _autoindex;
+		std::string _autoindex;
 		// Path to the location
 		std::string _uri;
 		// Root directory for the location

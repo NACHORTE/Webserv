@@ -23,7 +23,7 @@ class HttpResponse {
 		void unsetHeader(const std::string& key);
 		void setBody(const std::string& content_type, const std::string& body);
 		void setBody(const std::string& filename);
-	
+
 		const std::string & getStatusCode() const;
 		const std::string & getStatusPhrase() const;
 		std::vector<std::string> getHeader(const std::string& key) const;
