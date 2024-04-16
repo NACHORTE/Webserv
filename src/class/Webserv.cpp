@@ -40,15 +40,6 @@ void Webserv::addServer(const Server &server)
 	_listeners.push_back(listener);
 }
 
-std::ostream &operator<<(std::ostream &os, const Webserv &obj)
-{
-	os << "Listeners: " << obj._listeners.size() << std::endl;
-	for (size_t i = 0; i < obj._listeners.size(); i++)
-		os << i << ". =========\n" << obj._listeners[i];
-	return (os);
-}
-
-
 std::vector<Server> Webserv::read_config(const std::string& config_file) //XXX for test only
 {
 	(void)config_file;
@@ -73,4 +64,12 @@ std::vector<Server> Webserv::read_config(const std::string& config_file) //XXX f
 	servers.push_back(server);
 
 	return servers;
+}
+
+std::ostream &operator<<(std::ostream &os, const Webserv &obj)
+{
+	os << "Listeners: " << obj._listeners.size() << std::endl;
+	for (size_t i = 0; i < obj._listeners.size(); i++)
+		os << i << ". =========\n" << obj._listeners[i];
+	return (os);
 }

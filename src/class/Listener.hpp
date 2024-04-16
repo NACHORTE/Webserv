@@ -18,7 +18,7 @@ class Listener
 
 		void addServer(const Server & server);
 
-		Server & getServer(const std::string & hostname) const;
+		Server & getServer(const std::string & hostname) const; // XXX UNUSED ?
 		int getPort(void) const;
 		
 	// Member functions

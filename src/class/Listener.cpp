@@ -63,7 +63,7 @@ void Listener::addServer(const Server & server)
 		_serverMap[*it] = &_serverVector[_serverVector.size() - 1];
 }
 
-Server &Listener::getServer(const std::string &hostname) const
+Server &Listener::getServer(const std::string &hostname) const // XXX UNUSED ?
 {
 	if (_serverMap.count(hostname) == 1)
 		return (*_serverMap.at(hostname));
@@ -100,8 +100,8 @@ void Listener::loop()
 		}
 	}
 
-	// Check if any clients have timed out
-	for (size_t i = 0; i < _clients.size(); ++i)
+	// Check if any clients have timed out (skip the first client bc its the listener)
+	for (size_t i = 1; i < _clients.size(); ++i)
 		if (_clients[i].second.timeout())
 			closeConnection(i--); // NOTE return timeout error to client before closing
 
@@ -246,6 +246,6 @@ std::ostream &operator<<(std::ostream &os, const Listener &obj)
 			os << " " << *it2;
 		os << std::endl;
 	}
-	os << "\tAmount of clients: " << obj._clients.size() << std::endl;
+	os << "\tAmount of clients: " << obj._clients.size() - 1 << std::endl;
 	return (os);
 }
