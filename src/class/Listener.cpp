@@ -190,22 +190,13 @@ int Listener::sendData(int fd, Client &client)
 	return 0;
 }
 
-int Listener::closeConnection(int fd)
+int Listener::closeConnection(int clientIndex)
 {
-	// Find the client in the list of clients
-	size_t clientIndex = 0;
-	for (size_t i = 0; i < _clients.size(); ++i)
+	// Don't allow to remove the listener
+	if (clientIndex == 0)
 	{
-		if (_clients[i].first.fd == fd)
-		{
-			clientIndex = i;
-			break;
-		}
-		if (i == _clients.size() - 1)
-		{
-			std::cout << "[Listener::closeConnection] Client not found" << std::endl; // NOTE msg
-			return 1;
-		}
+		std::cout << "[Listener::closeConnection] Can't close client 0 (listener socket)" << std::endl;
+		return 1;
 	}
 
 	// Delete the pointer to the client from the servers (try to delete from all just in case)
@@ -213,7 +204,7 @@ int Listener::closeConnection(int fd)
 		_serverVector[i].removeClient(_clients[clientIndex].second);
 
 	// Close the connection
-	close(fd);
+	close(_clients[clientIndex].first.fd);
 
 	// Remove the client from the list of clients
 	_clients.erase(_clients.begin() + clientIndex);
