@@ -19,7 +19,8 @@ Listener::Listener(int port) : _port(port)
 	// Create the socket
 	if ((_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		throw std::runtime_error("[Listener::init_socket] Error creating socket with port" + int_to_string(_port));
-
+	std::cout << "Listener " << _port << " socket " << _sockfd << std::endl;
+	
 	// Enable the socket to begin listening
 	if (bind(_sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
 		throw std::runtime_error("[Listener::init_socket] Error binding socket with port" + int_to_string(_port));
@@ -37,11 +38,13 @@ Listener::Listener(int port) : _port(port)
 	_clients.push_back(std::make_pair(pfd, Client()));
 }
 
-Listener::~Listener()
+Listener::Listener(const Listener &src)
 {
-	for (size_t i = 0; i < _clients.size(); ++i)
-		close(_clients[i].first.fd);
+	*this = src;
 }
+
+Listener::~Listener()
+{}
 
 void Listener::addServer(const Server & server)
 {
@@ -110,8 +113,29 @@ void Listener::loop()
 		_serverVector[i].loop();
 }
 
+void Listener::closeFds()
+{
+	// Close all the clients
+	for (size_t i = 0; i < _clients.size(); ++i)
+		closeConnection(i);
+}
+
+Listener &Listener::operator=(const Listener &src)
+{
+	if (this != &src)
+	{
+		_port = src._port;
+		_sockfd = src._sockfd;
+		_serverVector = src._serverVector;
+		_serverMap = src._serverMap;
+		_clients = src._clients;
+	}
+	return (*this);
+}
+
 int Listener::acceptConnection(void)
 {
+	std::cout << "Accepting connection" << std::endl;
 	// Accept the connection
 	int newClientFd = accept(_sockfd, NULL, NULL); // NOTE maybe use sockaddr_in instead of NULL for the address
 	if (newClientFd < 0)
@@ -135,6 +159,7 @@ int Listener::acceptConnection(void)
 
 int Listener::readData(int fd, Client &client)
 {
+	std::cout << "Reading data" << std::endl;
 	// Read the data from the client
 	char buffer[BUFSIZ];
 	int bytesRead = read(fd, buffer, BUFSIZ);
@@ -158,6 +183,7 @@ int Listener::readData(int fd, Client &client)
 
 int Listener::sendData(int fd, Client &client)
 {
+	std::cout << "Sending data" << std::endl;
 	// NOTE send everything for now, maybe send in chunks later
 	// Get the response chunk from the client
 	std::string response = client.popResponse(/*NOTE BUFSIZ*/);
@@ -192,6 +218,7 @@ int Listener::sendData(int fd, Client &client)
 
 int Listener::closeConnection(int clientIndex)
 {
+	std::cout << "Closing connection" << std::endl;
 	// Don't allow to remove the listener
 	if (clientIndex == 0)
 	{
@@ -225,7 +252,7 @@ void Listener::sendToServer(Client &client)
 
 std::ostream &operator<<(std::ostream &os, const Listener &obj)
 {
-	os << "Listener port (" << obj._port << ")" << std::endl;
+	os << "Listener (port " << obj._port << ") (socket " << obj._sockfd << ")" << std::endl;
 	os << "\tAmount of servers: " << obj._serverVector.size() << std::endl;
 	// print all servers hostnames
 	for (size_t i = 0; i < obj._serverVector.size(); ++i)

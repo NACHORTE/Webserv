@@ -12,12 +12,13 @@ class Webserv
 		~Webserv();
 
 	// Setters and getters
+
+		void addServer(const Server &server);
 		
 	// Member functions
 
 		void init(const std::string &configFile);
-		void loop(void);
-		void addServer(const Server &server);
+		void loop();
 
 	// Operator overloads
 

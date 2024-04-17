@@ -12,6 +12,7 @@ class Listener
 	// Constructors and destructor
 
 		Listener(int port);
+		Listener(const Listener &src);
 		~Listener();
 
 	// Setters and getters
@@ -26,8 +27,11 @@ class Listener
 		// Main loop of the listener (accepts connections, reads data, sends data)
 		// Only runs once, to run it again, call it again
 		void loop(void);
+		void closeFds();
 
 	// Operator overloads
+		
+		Listener &operator=(const Listener &src);
 
 	protected:
 	private:

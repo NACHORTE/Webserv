@@ -4,7 +4,26 @@ Webserv::Webserv(void)
 {}
 
 Webserv::~Webserv()
-{}
+{
+	// Close all file descriptors
+	for (std::vector<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); it++)
+		it->closeFds();
+}
+
+void Webserv::addServer(const Server &server)
+{
+	for (std::vector<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); it++)
+	{
+		if (it->getPort() == server.getPort())
+		{
+			it->addServer(server);
+			return;
+		}
+	}
+	Listener listener(server.getPort());
+	listener.addServer(server);
+	_listeners.push_back(listener);
+}
 
 void Webserv::init(const std::string &configFile)
 {
@@ -23,21 +42,6 @@ void Webserv::loop(void)
 	std::vector<Listener>::iterator it;
 	for (it = _listeners.begin(); it != _listeners.end(); it++)
 		it->loop();
-}
-
-void Webserv::addServer(const Server &server)
-{
-	for (std::vector<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); it++)
-	{
-		if (it->getPort() == server.getPort())
-		{
-			it->addServer(server);
-			return;
-		}
-	}
-	Listener listener(server.getPort());
-	listener.addServer(server);
-	_listeners.push_back(listener);
 }
 
 std::vector<Server> Webserv::read_config(const std::string& config_file) //XXX for test only
@@ -70,6 +74,6 @@ std::ostream &operator<<(std::ostream &os, const Webserv &obj)
 {
 	os << "Listeners: " << obj._listeners.size() << std::endl;
 	for (size_t i = 0; i < obj._listeners.size(); i++)
-		os << i << ". =========\n" << obj._listeners[i];
+		os << i + 1 << ". =========\n" << obj._listeners[i];
 	return (os);
 }
