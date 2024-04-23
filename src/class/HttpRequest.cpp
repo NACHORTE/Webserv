@@ -9,7 +9,6 @@ HttpRequest::HttpRequest()
 	_requestReady = false;
 	_headerReady = false;
 	_error = false;
-	std::cout << "HttpRequest created" << std::endl; //XXX
 }
 
 HttpRequest::HttpRequest(const std::string& msg)
@@ -22,7 +21,6 @@ HttpRequest::HttpRequest(const std::string& msg)
 
 HttpRequest::HttpRequest(const HttpRequest& other)
 {
-	std::cout << "HttpRequest copy constructor" << std::endl; //XXX
 	*this = other;
 }
 
@@ -252,12 +250,8 @@ bool HttpRequest::error() const
 
 HttpRequest & HttpRequest::operator=(HttpRequest const & rhs)
 {
-	std::cout << "HttpRequest operator=" << std::endl;
 	if (this != &rhs)
 	{
-		std::cout << "HELLO1" << std::endl;
-		std::cout << "dir rhs: " << &rhs << std::endl; //NOTE cant read rhs._method
-		std::cout << "dir this: " << this << std::endl; //NOTE cant read rhs._method
 		this->_method = rhs._method;
 		this->_path = rhs._path;
 		this->_version = rhs._version;
