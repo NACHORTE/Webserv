@@ -12,6 +12,7 @@ Webserv::~Webserv()
 
 void Webserv::addServer(const Server &server)
 {
+	std::cout << "Adding server to listener" << std::endl;
 	for (std::vector<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); it++)
 	{
 		if (it->getPort() == server.getPort())

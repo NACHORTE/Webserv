@@ -4,7 +4,10 @@
 #include "colors.h"
 
 Client::Client(void)
-{}
+{
+	_Error = false;
+	_lastEventTime = clock();
+}
 
 Client::Client(const Client & src)
 {
@@ -113,7 +116,9 @@ Client &Client::operator=(const Client &rhs)
 {
 	if (this != &rhs)
 	{
-		// TODO copy
+		_Error = rhs._Error;
+		_lastEventTime = rhs._lastEventTime;
+		_requests = rhs._requests;
 	}
 	return (*this);
 }
@@ -138,9 +143,5 @@ std::ostream &operator<<(std::ostream &os, const Client &obj)
 		std::cout << (it->second.responseReady()?GREEN:RED)<< "]" << RESET << std::endl;
 		++i;
 	}
-	std::cout << CYAN << "_flags: " << RESET << obj._flags.size() << std::endl;
-	std::set<std::string>::const_iterator it2;
-	for (it2 = obj._flags.begin(); it2 != obj._flags.end(); it2++)
-		std::cout << *it2 << std::endl;
 	return (os);
 }

@@ -45,8 +45,9 @@ class Listener
 		std::vector<Server> _serverVector;
 		// Map of all the servers (key is the hostname, multiple hostanames can point to the same server)
 		std::map<std::string,Server *> _serverMap;
-		// Vector of clients (can't be list because poll needs random access)
-		std::vector<std::pair<struct pollfd, Client> > _clients;
+		// Vector of clients
+		std::vector<struct pollfd> _pollfds;
+		std::vector<Client> _clients;
 
 	// Private member functions
 

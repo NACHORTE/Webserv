@@ -44,7 +44,6 @@ class Client
 		clock_t _lastEventTime;
 		// Queue of requests and responses (Most recent request is at the front of the list)
 		std::list<std::pair<HttpRequest, HttpResponse> > _requests;
-		std::set<std::string> _flags;
 	// Private member functions
 
 	// Friends <3

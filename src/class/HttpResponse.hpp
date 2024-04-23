@@ -55,7 +55,6 @@ class HttpResponse {
 		std::vector<std::pair<std::string, std::string> > _headers;
 		std::string _body;
 
-		std::set<std::string> _flags;
 		std::string _responseBuffer;
 		bool _responseReady;
 

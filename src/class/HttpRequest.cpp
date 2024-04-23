@@ -2,24 +2,29 @@
 #include <sstream>
 #include "utils.hpp"
 #include "colors.h"
+#include <iostream> //XXX
 
 HttpRequest::HttpRequest()
 {
 	_requestReady = false;
 	_headerReady = false;
 	_error = false;
+	std::cout << "HttpRequest created" << std::endl; //XXX
 }
 
 HttpRequest::HttpRequest(const std::string& msg)
 {
+	_requestReady = false;
+	_headerReady = false;
+	_error = false;
 	parse(msg);
 }
 
-HttpRequest::HttpRequest(const HttpRequest& other):
-	_method(other._method), _path(other._path), _version(other._version),
-	_headers(other._headers), _body(other._body), _requestReady(other._requestReady),
-	_headerReady(other._headerReady), _error(other._error), _buffer(other._buffer)
-{}
+HttpRequest::HttpRequest(const HttpRequest& other)
+{
+	std::cout << "HttpRequest copy constructor" << std::endl; //XXX
+	*this = other;
+}
 
 HttpRequest::~HttpRequest()
 {}
@@ -247,8 +252,12 @@ bool HttpRequest::error() const
 
 HttpRequest & HttpRequest::operator=(HttpRequest const & rhs)
 {
+	std::cout << "HttpRequest operator=" << std::endl;
 	if (this != &rhs)
 	{
+		std::cout << "HELLO1" << std::endl;
+		std::cout << "dir rhs: " << &rhs << std::endl; //NOTE cant read rhs._method
+		std::cout << "dir this: " << this << std::endl; //NOTE cant read rhs._method
 		this->_method = rhs._method;
 		this->_path = rhs._path;
 		this->_version = rhs._version;

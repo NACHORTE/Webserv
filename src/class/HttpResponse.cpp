@@ -6,7 +6,7 @@
 #include "colors.h"
 
 std::map<int, std::string> _errorPages;
-
+extern int g_count;
 /**
  * @brief Initializes the static error pages map in the HttpResponse class.
  * 
@@ -21,29 +21,15 @@ static void initErrorPages()
 	_errorPages[500] = "./html/500.html";
 }
 
-/**
- * @brief Default constructor for HttpResponse objects.
- * 
- * Initializes an empty HttpResponse object.
- */
-HttpResponse::HttpResponse():
-	_responseReady(false)
-{}
+HttpResponse::HttpResponse()
+{
+	_responseReady = false;
+}
 
-/**
- * @brief Copy constructor for HttpResponse objects.
- * 
- * Initializes an HttpResponse object based on another HttpResponse object.
- * 
- * @param other The HttpResponse object to be copied.
- */
-HttpResponse::HttpResponse(const HttpResponse& other):
-	_status_code(other._status_code),
-	_status_phrase(other._status_phrase),
-	_headers(other._headers),
-	_body(other._body),
-	_responseReady(other._responseReady)
-{}
+HttpResponse::HttpResponse(const HttpResponse& other)
+{
+	*this = other;
+}
 
 /**
  * @brief
@@ -428,6 +414,8 @@ HttpResponse & HttpResponse::operator=(const HttpResponse& rhs)
 		this->_status_phrase = rhs._status_phrase;
 		this->_headers = rhs._headers;
 		this->_body = rhs._body;
+		this->_responseBuffer = rhs._responseBuffer;
+		this->_responseReady = rhs._responseReady;
 	}
 	return *this;
 }

@@ -35,7 +35,8 @@ Listener::Listener(int port) : _port(port)
 	struct pollfd pfd;
 	pfd.fd = _sockfd;
 	pfd.events = POLLIN;
-	_clients.push_back(std::make_pair(pfd, Client()));
+	_pollfds.push_back(pfd);
+	_clients.push_back(Client());
 }
 
 Listener::Listener(const Listener &src)
@@ -81,31 +82,31 @@ int Listener::getPort(void) const
 void Listener::loop()
 {
 	// Check if there are any file descriptors ready to read or write
-	if (poll(&_clients[0].first, _clients.size(), POLL_TIMEOUT) > 0)
+	if (poll(&_pollfds[0], _pollfds.size(), POLL_TIMEOUT) > 0)
 	{
 		// Find the file descriptors that are ready
 		for (size_t i = 0; i < _clients.size(); ++i)
 		{
 			// If the server is ready to read, accept the connection
-			if (_clients[i].first.revents & POLLIN && _clients[i].first.fd == _sockfd)
+			if (_pollfds[i].revents & POLLIN && _pollfds[i].fd == _sockfd)
 				acceptConnection();
 			// If the client is ready to read, read the data
-			else if (_clients[i].first.revents & POLLIN)
+			else if (_pollfds[i].revents & POLLIN)
 				// if readData returns 1, the client is closed and the index is decremented
-				i -= readData(_clients[i].first.fd, _clients[i].second);
+				i -= readData(_pollfds[i].fd, _clients[i]);
 			// Check if the file descriptor is ready to write
-			else if (_clients[i].first.revents & POLLOUT && _clients[i].second.responseReady())
+			else if (_pollfds[i].revents & POLLOUT && _clients[i].responseReady())
 				// if sendData returns 1, the client is closed and the index is decremented
-				i -= sendData(_clients[i].first.fd, _clients[i].second);
+				i -= sendData(_pollfds[i].fd, _clients[i]);
 			// Check if the file descriptor has been closed
-			else if (_clients[i].first.revents & (POLLHUP | POLLERR))
-				closeConnection(_clients[i--].first.fd);
+			else if (_pollfds[i].revents & (POLLHUP | POLLERR))
+				closeConnection(_pollfds[i--].fd);
 		}
 	}
 
 	// Check if any clients have timed out (skip the first client bc its the listener)
 	for (size_t i = 1; i < _clients.size(); ++i)
-		if (_clients[i].second.timeout())
+		if (_clients[i].timeout())
 			closeConnection(i--); // NOTE return timeout error to client before closing
 
 	// Loop through the servers and call their loop function
@@ -128,6 +129,7 @@ Listener &Listener::operator=(const Listener &src)
 		_sockfd = src._sockfd;
 		_serverVector = src._serverVector;
 		_serverMap = src._serverMap;
+		_pollfds = src._pollfds;
 		_clients = src._clients;
 	}
 	return (*this);
@@ -135,7 +137,7 @@ Listener &Listener::operator=(const Listener &src)
 
 int Listener::acceptConnection(void)
 {
-	std::cout << "Accepting connection" << std::endl;
+	std::cout << "Accepting connection" << std::endl; //XXX
 	// Accept the connection
 	int newClientFd = accept(_sockfd, NULL, NULL); // NOTE maybe use sockaddr_in instead of NULL for the address
 	if (newClientFd < 0)
@@ -152,7 +154,8 @@ int Listener::acceptConnection(void)
 	struct pollfd pfd;
 	pfd.fd = newClientFd;
 	pfd.events = POLLIN | POLLOUT | POLLHUP | POLLERR;
-	_clients.push_back(std::make_pair(pfd, Client()));
+	_pollfds.push_back(pfd);
+	_clients.push_back(Client());
 
 	return 0;
 }
@@ -160,6 +163,7 @@ int Listener::acceptConnection(void)
 int Listener::readData(int fd, Client &client)
 {
 	std::cout << "Reading data" << std::endl;
+	std::cout << *this << std::endl;
 	// Read the data from the client
 	char buffer[BUFSIZ];
 	int bytesRead = read(fd, buffer, BUFSIZ);
@@ -184,6 +188,7 @@ int Listener::readData(int fd, Client &client)
 int Listener::sendData(int fd, Client &client)
 {
 	std::cout << "Sending data" << std::endl;
+	std::cout << *this << std::endl;
 	// NOTE send everything for now, maybe send in chunks later
 	// Get the response chunk from the client
 	std::string response = client.popResponse(/*NOTE BUFSIZ*/);
@@ -219,6 +224,7 @@ int Listener::sendData(int fd, Client &client)
 int Listener::closeConnection(int clientIndex)
 {
 	std::cout << "Closing connection" << std::endl;
+	std::cout << *this << std::endl;
 	// Don't allow to remove the listener
 	if (clientIndex == 0)
 	{
@@ -228,12 +234,13 @@ int Listener::closeConnection(int clientIndex)
 
 	// Delete the pointer to the client from the servers (try to delete from all just in case)
 	for (size_t i = 0; i < _serverVector.size(); ++i)
-		_serverVector[i].removeClient(_clients[clientIndex].second);
+		_serverVector[i].removeClient(_clients[clientIndex]);
 
 	// Close the connection
-	close(_clients[clientIndex].first.fd);
+	close(_pollfds[clientIndex].fd);
 
 	// Remove the client from the list of clients
+	_pollfds.erase(_pollfds.begin() + clientIndex);
 	_clients.erase(_clients.begin() + clientIndex);
 
 	return 0;
