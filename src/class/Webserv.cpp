@@ -55,18 +55,18 @@ std::vector<Server> Webserv::read_config(const std::string& config_file) //XXX f
 	server.addServerName("localhost1");
 	server.addServerName("feo1");
 	servers.push_back(server);
-	server= Server();
+/* 	server= Server();
 	server.setPort(8080);
 	server.setRoot("/var/www/html");
 	server.addServerName("server2");
-	servers.push_back(server);
-	server= Server();
+	servers.push_back(server); */
+/* 	server= Server();
 	server.setPort(8081);
 	server.setRoot("/var/www/html");
 	server.addServerName("server3");
 	server.addServerName("server3_1");
 	server.addServerName("server3_2");
-	servers.push_back(server);
+	servers.push_back(server); */
 
 	return servers;
 }

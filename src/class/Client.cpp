@@ -3,10 +3,12 @@
 #include "utils.hpp"
 #include "colors.h"
 
-Client::Client(void)
+Client::Client(std::string IP, int port)
 {
 	_Error = false;
 	_lastEventTime = clock();
+	_IP = IP;
+	_port = port;
 }
 
 Client::Client(const Client & src)
@@ -22,6 +24,16 @@ void Client::setResponse(const HttpResponse & response)
 	if (_requests.empty())
 		return;
 	_requests.begin()->second = response;
+}
+
+std::string Client::getIP() const
+{
+	return (_IP);
+}
+
+int Client::getPort() const
+{
+	return (_port);
 }
 
 std::string Client::getHost(void) const
@@ -47,6 +59,11 @@ const HttpRequest &Client::getRequest(void) //TODO hacer esto de otra forma
 	if (_requests.empty())
 		throw std::runtime_error("No request available");
 	return (_requests.rbegin()->first);
+}
+
+size_t Client::getRequestCount(void) const
+{
+	return (_requests.size());
 }
 
 void Client::addData(const std::string & data)
@@ -116,6 +133,8 @@ Client &Client::operator=(const Client &rhs)
 {
 	if (this != &rhs)
 	{
+		_IP = rhs._IP;
+		_port = rhs._port;
 		_Error = rhs._Error;
 		_lastEventTime = rhs._lastEventTime;
 		_requests = rhs._requests;
@@ -140,8 +159,10 @@ std::ostream &operator<<(std::ostream &os, const Client &obj)
 		std::cout << (it->second.responseReady()?GREEN:RED);
 		std::cout << "Response " << i << (it->second.responseReady()?" ready":" not ready") << "\n[" << RESET;
 		std::cout << it->second;
-		std::cout << (it->second.responseReady()?GREEN:RED)<< "]" << RESET << std::endl;
+		std::cout << (it->second.responseReady()?GREEN:RED)<< "]" << RESET;
 		++i;
 	}
+	if (obj._requests.size() == 0)
+		std::cout << RED << "No requests" << RESET;
 	return (os);
 }

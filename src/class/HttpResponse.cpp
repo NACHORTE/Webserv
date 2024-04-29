@@ -290,15 +290,15 @@ void HttpResponse::generate(
 
 	// If method is not valid, return 405 Method Not Allowed
 	if (valid_methods.count(req.get_method()) == 0)
-		return (void)(*this = error(405, "Method Not Allowed"));
+		return (void)(*this = error(405, "Method Not Allowed"), _responseReady = true);
 
 	// If path does not exist, return 404 Not Found
 	if (valid_paths.pathExists(req.get_path()) == false)
-		return (void)(*this = error(404, "Not Found"));
+		return (void)(*this = error(404, "Not Found"), _responseReady = true);
 
 	// If request is not valid, return 403 Forbidden
 	if (valid_paths.isPathAllowed(req.get_method(), req.get_path()) == false)
-		return (void)(*this = error(403, "Forbidden"));
+		return (void)(*this = error(403, "Forbidden"), _responseReady = true);
 
 	// Generate response with the appropriate method
 	try
@@ -309,6 +309,8 @@ void HttpResponse::generate(
 	{
 		*this = error(500, "Internal Server Error", e.what());
 	}
+
+	_responseReady = true;
 }
 
 /**

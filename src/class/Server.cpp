@@ -140,14 +140,21 @@ void Server::addServerName(const std::string & serverName)
 void Server::loop()
 {
 	std::set<Client *>::iterator it;
+
+	std::cout << "Server::loop::clients:";
+	for (std::set<Client *>::iterator it2 = _clients.begin(); it2 != _clients.end(); it2++)
+		std::cout << " " << *it2;
+	std::cout << std::endl;
+	
 	for (it = _clients.begin(); it != _clients.end(); it++)
 	{
 		Client &client = **it;
-		if (client.requestReady())
+		if (client.requestReady() && !client.responseReady())
 		{
 			HttpResponse response;
 			response.generate(client.getRequest(), _allowed_paths, _allowed_methods);
 			client.setResponse(response);
+			std::cout << client << std::endl;
 		}
 	}
 }

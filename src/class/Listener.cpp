@@ -7,6 +7,7 @@
 #include "utils.hpp"
 #include <unistd.h>
 #include <cstdio>
+#include <arpa/inet.h>
 
 Listener::Listener(int port) : _port(port)
 {
@@ -109,6 +110,7 @@ void Listener::loop()
 		if (_clients[i].timeout())
 			closeConnection(i--); // NOTE return timeout error to client before closing
 
+
 	// Loop through the servers and call their loop function
 	for (size_t i = 0; i < _serverVector.size(); ++i)
 		_serverVector[i].loop();
@@ -139,7 +141,9 @@ int Listener::acceptConnection(void)
 {
 	std::cout << "Accepting connection" << std::endl; //XXX
 	// Accept the connection
-	int newClientFd = accept(_sockfd, NULL, NULL); // NOTE maybe use sockaddr_in instead of NULL for the address
+	sockaddr_in clientAddr;
+	socklen_t clientAddrLen = sizeof(clientAddr);
+	int newClientFd = accept(_sockfd, reinterpret_cast<sockaddr*>(&clientAddr), &clientAddrLen); // NOTE maybe use sockaddr_in instead of NULL for the address
 	if (newClientFd < 0)
 	{
 		std::cout << "[Listener::acceptConnection] Error accepting connection" << std::endl; // NOTE msg
@@ -150,20 +154,25 @@ int Listener::acceptConnection(void)
 	if (fcntl(newClientFd, F_SETFL, O_NONBLOCK) < 0)
 		std::cout << "[Listener::acceptConnection] Error fcntl" << std::endl; // NOTE msg
 
+    char clientIP[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(clientAddr.sin_addr), clientIP, INET_ADDRSTRLEN);
+    int clientPort = ntohs(clientAddr.sin_port);
+
+    std::string clientIPAddress(clientIP); // Convertir a std::string
 	// Add the new client to the list of clients
 	struct pollfd pfd;
 	pfd.fd = newClientFd;
 	pfd.events = POLLIN | POLLOUT | POLLHUP | POLLERR;
 	_pollfds.push_back(pfd);
-	_clients.push_back(Client());
+	_clients.push_back(Client(clientIP, clientPort));
 
+	std::cout << *this << std::endl;
 	return 0;
 }
 
 int Listener::readData(int fd, Client &client)
 {
-	std::cout << "Reading data" << std::endl;
-	std::cout << *this << std::endl;
+	//std::cout << *this << std::endl;
 	// Read the data from the client
 	char buffer[BUFSIZ];
 	int bytesRead = read(fd, buffer, BUFSIZ);
@@ -174,14 +183,17 @@ int Listener::readData(int fd, Client &client)
 		closeConnection(fd);
 		return 1;
 	}
+	if ( bytesRead == 0) // NOTE fix POLLIN always true
+		return 0;
+
+	std::cout << "Reading data from " << client.getIP() << ":" << client.getPort() << std::endl; //XXX
+	std::cout << "Read " << bytesRead << " bytes" << std::endl; //XXX
 
 	// Add the data to the client's buffer
 	client.addData(std::string(buffer,bytesRead));
-
 	// If the request is ready, send it to a server
 	if (client.requestReady())
 		sendToServer(client);
-
 	return 0;
 }
 
@@ -223,7 +235,7 @@ int Listener::sendData(int fd, Client &client)
 
 int Listener::closeConnection(int clientIndex)
 {
-	std::cout << "Closing connection" << std::endl;
+	std::cout << "Closing connection at index "<< clientIndex << ", fd: " << _pollfds[clientIndex].fd << std::endl;
 	std::cout << *this << std::endl;
 	// Don't allow to remove the listener
 	if (clientIndex == 0)
@@ -272,5 +284,10 @@ std::ostream &operator<<(std::ostream &os, const Listener &obj)
 		os << std::endl;
 	}
 	os << "\tAmount of clients: " << obj._clients.size() - 1 << std::endl;
+	for (size_t i = 1; i < obj._clients.size(); ++i)
+	{
+		os << "\t\tClient " << i << " (IP " << obj._clients[i].getIP() << ":" << obj._clients[i].getPort();
+		os << ") (fd " << obj._pollfds[i].fd << ") (request count " << obj._clients[i].getRequestCount() << (obj._clients[i].requestReady()?" ready":" not ready")<< ")" << std::endl;
+	}
 	return (os);
 }

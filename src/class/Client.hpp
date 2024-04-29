@@ -10,16 +10,19 @@ class Client
 {
 	public:
 	// Constructors and destructor
-		Client(void);
+		Client(std::string IP = "", int port = 0);
 		Client(const Client & src);
 		~Client();
 
 	// Setters and getters
 		void setResponse(const HttpResponse & response);
 
+		std::string getIP() const;
+		int getPort() const;
 		std::string getHost(void) const;
 		std::string getResponse() const;
 		const HttpRequest & getRequest(void);
+		size_t getRequestCount(void) const;
 
 	// Member functions
 
@@ -39,6 +42,8 @@ class Client
 	protected:
 	private:
 	// Member attributes
+		std::string _IP; // NOTE info only
+		int _port; // NOTE info only
 
 		bool _Error;
 		clock_t _lastEventTime;

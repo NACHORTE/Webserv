@@ -42,9 +42,9 @@ class Listener
 		// File descriptor for the listener (also in _cliens[0]->first.fd)
 		int _sockfd;
 		// Vector of all the servers (_serverMap points to these servers)
-		std::vector<Server> _serverVector;
+		std::vector<Server> _serverVector; //NOTE Server class has a pointer to clients that stop working when the client vector reallocates 
 		// Map of all the servers (key is the hostname, multiple hostanames can point to the same server)
-		std::map<std::string,Server *> _serverMap;
+		std::map<std::string,Server *> _serverMap; //NOTE when _serverVector pushes new servers, it reallocates all servers so the pointers don't work anymore
 		// Vector of clients
 		std::vector<struct pollfd> _pollfds;
 		std::vector<Client> _clients;
