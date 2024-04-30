@@ -55,17 +55,18 @@ void Listener::addServer(const Server & server)
 
 	// Check if there is a server with the same hostname
 	for (std::set<std::string>::const_iterator it = serverNames.begin();
-		it != serverNames.end(); ++it)
+			it != serverNames.end(); ++it)
 		if (_serverMap.count(*it) == 1)
-			throw std::runtime_error("[ERROR] Listener " + int_to_string(_port) + " has a duplicate hostname: " + *it);
+			throw std::runtime_error("[ERROR] Listener " + int_to_string(_port)
+				+ " has a duplicate hostname: " + *it);
 
 	// Add the server to the vector of servers
-	_serverVector.push_back(server);
+	_serverList.push_back(server);
 
 	// Add the hostnames of the server to the map of servers
 	for (std::set<std::string>::const_iterator it = serverNames.begin();
 		it != serverNames.end(); ++it)
-		_serverMap[*it] = &_serverVector[_serverVector.size() - 1];
+		_serverMap[*it] = &_serverList.back();
 }
 
 Server &Listener::getServer(const std::string &hostname) const // XXX UNUSED ?
@@ -86,40 +87,57 @@ void Listener::loop()
 	if (poll(&_pollfds[0], _pollfds.size(), POLL_TIMEOUT) > 0)
 	{
 		// Find the file descriptors that are ready
-		for (size_t i = 0; i < _clients.size(); ++i)
+		std::list<Client>::iterator it = _clients.begin();
+		for (size_t i = 0; i < _clients.size(); ++i , ++it)
 		{
 			// If the server is ready to read, accept the connection
 			if (_pollfds[i].revents & POLLIN && _pollfds[i].fd == _sockfd)
 				acceptConnection();
 			// If the client is ready to read, read the data
 			else if (_pollfds[i].revents & POLLIN)
+			{
 				// if readData returns 1, the client is closed and the index is decremented
-				i -= readData(_pollfds[i].fd, _clients[i]);
+				if (readData(_pollfds[i].fd, *it))
+				{
+					--i;
+					--it;
+				}
+			}
 			// Check if the file descriptor is ready to write
-			else if (_pollfds[i].revents & POLLOUT && _clients[i].responseReady())
+			else if (_pollfds[i].revents & POLLOUT && it->responseReady())
+			{
 				// if sendData returns 1, the client is closed and the index is decremented
-				i -= sendData(_pollfds[i].fd, _clients[i]);
+				if(sendData(_pollfds[i].fd, *it))
+				{
+					--i;
+					--it;
+				}
+			}
 			// Check if the file descriptor has been closed
 			else if (_pollfds[i].revents & (POLLHUP | POLLERR))
+			{
 				closeConnection(_pollfds[i--].fd);
+				--it;
+			}
 		}
 	}
 
 	// Check if any clients have timed out (skip the first client bc its the listener)
-	for (size_t i = 1; i < _clients.size(); ++i)
-		if (_clients[i].timeout())
+	size_t i = 1;
+	for (std::list<Client>::iterator it = ++_clients.begin(); it != _clients.end(); ++it, ++i)
+		if (it->timeout())
 			closeConnection(i--); // NOTE return timeout error to client before closing
 
 
 	// Loop through the servers and call their loop function
-	for (size_t i = 0; i < _serverVector.size(); ++i)
-		_serverVector[i].loop();
+	for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
+		it->loop();
 }
 
 void Listener::closeFds()
 {
 	// Close all the clients
-	for (size_t i = 0; i < _clients.size(); ++i)
+	for (size_t i = 0; i < _pollfds.size(); ++i)
 		closeConnection(i);
 }
 
@@ -129,7 +147,7 @@ Listener &Listener::operator=(const Listener &src)
 	{
 		_port = src._port;
 		_sockfd = src._sockfd;
-		_serverVector = src._serverVector;
+		_serverList = src._serverList;
 		_serverMap = src._serverMap;
 		_pollfds = src._pollfds;
 		_clients = src._clients;
@@ -143,7 +161,7 @@ int Listener::acceptConnection(void)
 	// Accept the connection
 	sockaddr_in clientAddr;
 	socklen_t clientAddrLen = sizeof(clientAddr);
-	int newClientFd = accept(_sockfd, reinterpret_cast<sockaddr*>(&clientAddr), &clientAddrLen); // NOTE maybe use sockaddr_in instead of NULL for the address
+	int newClientFd = accept(_sockfd, reinterpret_cast<sockaddr*>(&clientAddr), &clientAddrLen);
 	if (newClientFd < 0)
 	{
 		std::cout << "[Listener::acceptConnection] Error accepting connection" << std::endl; // NOTE msg
@@ -236,7 +254,6 @@ int Listener::sendData(int fd, Client &client)
 int Listener::closeConnection(int clientIndex)
 {
 	std::cout << "Closing connection at index "<< clientIndex << ", fd: " << _pollfds[clientIndex].fd << std::endl;
-	std::cout << *this << std::endl;
 	// Don't allow to remove the listener
 	if (clientIndex == 0)
 	{
@@ -244,17 +261,22 @@ int Listener::closeConnection(int clientIndex)
 		return 1;
 	}
 
+	// Get the client from the list of clients
+	std::list<Client>::iterator clientIt = _clients.begin();
+	std::advance(clientIt, clientIndex);
+
 	// Delete the pointer to the client from the servers (try to delete from all just in case)
-	for (size_t i = 0; i < _serverVector.size(); ++i)
-		_serverVector[i].removeClient(_clients[clientIndex]);
+	for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
+		it->removeClient(*clientIt);
 
 	// Close the connection
 	close(_pollfds[clientIndex].fd);
 
 	// Remove the client from the list of clients
 	_pollfds.erase(_pollfds.begin() + clientIndex);
-	_clients.erase(_clients.begin() + clientIndex);
+	_clients.erase(clientIt);
 
+	std::cout << *this << std::endl;
 	return 0;
 }
 
@@ -266,28 +288,30 @@ void Listener::sendToServer(Client &client)
 		_serverMap[hostname]->addClient(client);
 	// Else send it to the default server
 	else
-		_serverVector[0].addClient(client);
+		_serverList.front().addClient(client);
 }
 
 std::ostream &operator<<(std::ostream &os, const Listener &obj)
 {
 	os << "Listener (port " << obj._port << ") (socket " << obj._sockfd << ")" << std::endl;
-	os << "\tAmount of servers: " << obj._serverVector.size() << std::endl;
+	os << "\tAmount of servers: " << obj._serverList.size() << std::endl;
 	// print all servers hostnames
-	for (size_t i = 0; i < obj._serverVector.size(); ++i)
+	size_t i = 0;
+	for (std::list<Server>::const_iterator it = obj._serverList.begin(); it != obj._serverList.end(); ++it)
 	{
-		os << "\t\tServer " << i + 1 << ":";
-		std::set<std::string> serverNames = obj._serverVector[i].getServerNames();
+		os << "\t\tServer " << ++i << ":";
+		std::set<std::string> serverNames = it->getServerNames();
 		for (std::set<std::string>::const_iterator it2 = serverNames.begin();
 			it2 != serverNames.end(); ++it2)
 			os << " " << *it2;
 		os << std::endl;
 	}
 	os << "\tAmount of clients: " << obj._clients.size() - 1 << std::endl;
-	for (size_t i = 1; i < obj._clients.size(); ++i)
+	i = 1;
+	for (std::list<Client>::const_iterator it = ++obj._clients.begin(); it != obj._clients.end(); ++i, ++it)
 	{
-		os << "\t\tClient " << i << " (IP " << obj._clients[i].getIP() << ":" << obj._clients[i].getPort();
-		os << ") (fd " << obj._pollfds[i].fd << ") (request count " << obj._clients[i].getRequestCount() << (obj._clients[i].requestReady()?" ready":" not ready")<< ")" << std::endl;
+		os << "\t\tClient " << i << " (IP " << it->getIP() << ":" << it->getPort();
+		os << ") (fd " << obj._pollfds[i].fd << ") (request count " << it->getRequestCount() << (it->requestReady()?" ready":" not ready")<< ")" << std::endl;
 	}
 	return (os);
 }

@@ -42,8 +42,8 @@ class Client
 	protected:
 	private:
 	// Member attributes
-		std::string _IP; // NOTE info only
-		int _port; // NOTE info only
+		std::string _IP;
+		int _port;
 
 		bool _Error;
 		clock_t _lastEventTime;

@@ -2,7 +2,6 @@
 #include <sstream>
 #include "utils.hpp"
 #include "colors.h"
-#include <iostream> //XXX
 
 HttpRequest::HttpRequest()
 {

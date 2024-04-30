@@ -139,13 +139,7 @@ void Server::addServerName(const std::string & serverName)
 
 void Server::loop()
 {
-	std::set<Client *>::iterator it;
-
-	std::cout << "Server::loop::clients:";
-	for (std::set<Client *>::iterator it2 = _clients.begin(); it2 != _clients.end(); it2++)
-		std::cout << " " << *it2;
-	std::cout << std::endl;
-	
+	std::set<Client *>::iterator it;	
 	for (it = _clients.begin(); it != _clients.end(); it++)
 	{
 		Client &client = **it;
