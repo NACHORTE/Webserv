@@ -76,7 +76,10 @@ void Client::addData(const std::string & data)
 	{
 		if (_requests.empty() || _requests.begin()->first.requestReady())
 			_requests.push_front(std::pair<HttpRequest, HttpResponse>());
-		bytesRead += _requests.begin()->first.addData(data.substr(bytesRead));
+		size_t read = _requests.begin()->first.addData(data.substr(bytesRead));
+		if (read == 0)
+			break;
+		bytesRead += read;
 	}
 }
 
@@ -110,15 +113,6 @@ bool Client::keepAlive() const
 	if (header.empty())
 		return (false);
 	return (header[0] == "keep-alive");
-}
-
-const std::string Client::popResponse(size_t length)
-{
-	_lastEventTime = clock();
-
-	if (_requests.empty())
-		return ("");
-	return (_requests.begin()->second.popResponse(length));
 }
 
 void Client::popRequest()

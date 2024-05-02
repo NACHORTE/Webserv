@@ -148,7 +148,6 @@ void Server::loop()
 			HttpResponse response;
 			response.generate(client.getRequest(), _allowed_paths, _allowed_methods);
 			client.setResponse(response);
-			std::cout << client << std::endl;
 		}
 	}
 }

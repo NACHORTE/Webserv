@@ -31,8 +31,6 @@ class Client
 		bool responseReady(void) const;
 		bool timeout(void) const;
 		bool keepAlive(void) const;
-		// Returns part from the begining of the  response and removes it from the client
-		const std::string popResponse(size_t length = -1);
 		// Deletes the last request and response from _requests
 		void popRequest(void);
 

@@ -121,7 +121,6 @@ void Listener::loop()
 			}
 		}
 	}
-
 	// Check if any clients have timed out (skip the first client bc its the listener)
 	size_t i = 1;
 	for (std::list<Client>::iterator it = ++_clients.begin(); it != _clients.end(); ++it, ++i)
@@ -157,7 +156,6 @@ Listener &Listener::operator=(const Listener &src)
 
 int Listener::acceptConnection(void)
 {
-	std::cout << "Accepting connection" << std::endl; //XXX
 	// Accept the connection
 	sockaddr_in clientAddr;
 	socklen_t clientAddrLen = sizeof(clientAddr);
@@ -184,13 +182,12 @@ int Listener::acceptConnection(void)
 	_pollfds.push_back(pfd);
 	_clients.push_back(Client(clientIP, clientPort));
 
-	std::cout << *this << std::endl;
+	std::cout << "Accepting connection from "<< _clients.back().getIP() << ":" << _clients.back().getPort() << std::endl; //NOTE msg
 	return 0;
 }
 
 int Listener::readData(int fd, Client &client)
 {
-	//std::cout << *this << std::endl;
 	// Read the data from the client
 	char buffer[BUFSIZ];
 	int bytesRead = read(fd, buffer, BUFSIZ);
@@ -204,24 +201,32 @@ int Listener::readData(int fd, Client &client)
 	if ( bytesRead == 0) // NOTE fix POLLIN always true
 		return 0;
 
-	std::cout << "Reading data from " << client.getIP() << ":" << client.getPort() << std::endl; //XXX
-	std::cout << "Read " << bytesRead << " bytes" << std::endl; //XXX
+	std::cout << "Reading " << bytesRead << " bytes from " << client.getIP() << ":" << client.getPort() << std::endl; //XXX
 
 	// Add the data to the client's buffer
 	client.addData(std::string(buffer,bytesRead));
+
 	// If the request is ready, send it to a server
 	if (client.requestReady())
+	{
+		std::cout << "Sending request from " << client.getIP() << ":" << client.getPort() << " to server " << client.getHost()<< std::endl; //XXX
 		sendToServer(client);
+	}
+
 	return 0;
 }
 
 int Listener::sendData(int fd, Client &client)
 {
-	std::cout << "Sending data" << std::endl;
-	std::cout << *this << std::endl;
 	// NOTE send everything for now, maybe send in chunks later
 	// Get the response chunk from the client
-	std::string response = client.popResponse(/*NOTE BUFSIZ*/);
+	if (!client.responseReady())
+	{
+		std::cout << "[Listener::sendData] No response ready" << std::endl; // NOTE msg
+		return 0;
+	}
+	std::string response = client.getResponse();
+
 	// Send the data to the client
 	int bytesSent = write(fd, response.c_str(), response.size());
 	if (bytesSent < 0)
@@ -230,30 +235,42 @@ int Listener::sendData(int fd, Client &client)
 		closeConnection(fd);
 		return 1;
 	}
+	std::cout << "Sending data to " << client.getIP() << ":" << client.getPort() << std::endl; // NOTE msg
 
-	// Pop the request if the whole response has been sent
-	if (client.getResponse().size() == 0)
+	// If keep-alive is set pop the request and wait for another one
+	if (client.keepAlive())
+		client.popRequest();
+	// Close the connection otherwise
+	else
 	{
-		// Close the connection if the client is not keep-alive
-		if (!client.keepAlive())
-		{
-			closeConnection(fd);
-			return 1;
-		}
-		// Else pop the request and wait for another one
-		else
-			client.popRequest();
-		// If there is another request ready, send it to a server
-		if (client.requestReady())
-			sendToServer(client);
+		closeConnection(fd);
+		return 1;
+	}
+
+	// If there is another request ready, send it to a server
+	if (client.requestReady())
+	{
+		std::cout << "Sending request from " << client.getIP() << ":" << client.getPort() << " to server " << client.getHost()<< std::endl; //XXX
+		sendToServer(client);
 	}
 
 	return 0;
 }
 
-int Listener::closeConnection(int clientIndex)
+int Listener::closeConnection(int fd)
 {
-	std::cout << "Closing connection at index "<< clientIndex << ", fd: " << _pollfds[clientIndex].fd << std::endl;
+	// Find the index of the client
+	size_t clientIndex = 0;
+	for (size_t i = 0; i < _pollfds.size(); ++i)
+		if (_pollfds[i].fd == fd)
+		{
+			clientIndex = i;
+			break;
+		}
+	// Get the client from the list of clients
+	std::list<Client>::iterator clientIt = _clients.begin();
+	std::advance(clientIt, clientIndex);
+
 	// Don't allow to remove the listener
 	if (clientIndex == 0)
 	{
@@ -261,10 +278,7 @@ int Listener::closeConnection(int clientIndex)
 		return 1;
 	}
 
-	// Get the client from the list of clients
-	std::list<Client>::iterator clientIt = _clients.begin();
-	std::advance(clientIt, clientIndex);
-
+	std::cout << "Closing connection " << clientIt->getIP()<< clientIt->getPort() << std::endl;
 	// Delete the pointer to the client from the servers (try to delete from all just in case)
 	for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
 		it->removeClient(*clientIt);
@@ -276,7 +290,6 @@ int Listener::closeConnection(int clientIndex)
 	_pollfds.erase(_pollfds.begin() + clientIndex);
 	_clients.erase(clientIt);
 
-	std::cout << *this << std::endl;
 	return 0;
 }
 

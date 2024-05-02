@@ -2,7 +2,7 @@
 #include <sstream>
 #include "utils.hpp"
 #include "colors.h"
-
+#include <iostream> // XXX
 HttpRequest::HttpRequest()
 {
 	_requestReady = false;
@@ -69,7 +69,6 @@ size_t HttpRequest::addData(const std::string & data)
 	// If the request is ready, return 0 bytes read
 	if (_requestReady)
 		return 0;
-
 	// Create auxiliar variable with the buffer and data
 	std::string msg = _buffer + data;
 	// Variable to store the number of bytes read from data
@@ -100,11 +99,8 @@ size_t HttpRequest::addData(const std::string & data)
 	if (_headerReady)
 	{
 		// Check if the message is chunked
-		bool isChunked = false;
 		std::vector<std::string> chunkedHeader = getHeader("Transfer-Encoding");
-		if (chunkedHeader.size() > 0 && chunkedHeader[0] == "chunked")
-			isChunked = true;
-		if (!isChunked)
+		if (chunkedHeader.size() == 0 || chunkedHeader[0] != "chunked")
 		{
 			// Get the content length
 			std::vector<std::string> contentLengthHeader = getHeader("Content-Length");
