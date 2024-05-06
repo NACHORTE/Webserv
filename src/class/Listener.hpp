@@ -4,7 +4,6 @@
 #include "Client.hpp"
 #include <vector>
 #include <map>
-#include <poll.h>
 #include <list>
 
 class Listener
@@ -48,7 +47,7 @@ class Listener
 		std::map<std::string,Server *> _serverMap;
 		// Vector of clients
 		std::vector<struct pollfd> _pollfds;
-		std::list<Client> _clients; // TODO fix client must be list so server doesn't have invalid pointers
+		std::list<Client> _clients;
 
 	// Private member functions
 

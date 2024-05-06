@@ -1,13 +1,13 @@
 #include "Listener.hpp"
-#include <fcntl.h>
-#include "poll.h"
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include "defines.h"
 #include "utils.hpp"
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <unistd.h>
 #include <cstdio>
 #include <arpa/inet.h>
+#include <poll.h>
 
 Listener::Listener(int port) : _port(port)
 {
@@ -51,11 +51,11 @@ Listener::~Listener()
 void Listener::addServer(const Server & server)
 {
 	// Get the hostnames of the new server
-	const std::set<std::string> serverNames = server.getServerNames();
+	const std::set<std::string> & serverNames = server.getServerNames();
 
 	// Check if there is a server with the same hostname
 	for (std::set<std::string>::const_iterator it = serverNames.begin();
-			it != serverNames.end(); ++it)
+			it != serverNames.end();++it)
 		if (_serverMap.count(*it) == 1)
 			throw std::runtime_error("[ERROR] Listener " + int_to_string(_port)
 				+ " has a duplicate hostname: " + *it);
@@ -65,7 +65,7 @@ void Listener::addServer(const Server & server)
 
 	// Add the hostnames of the server to the map of servers
 	for (std::set<std::string>::const_iterator it = serverNames.begin();
-		it != serverNames.end(); ++it)
+			it != serverNames.end(); ++it)
 		_serverMap[*it] = &_serverList.back();
 }
 
@@ -121,12 +121,12 @@ void Listener::loop()
 			}
 		}
 	}
+
 	// Check if any clients have timed out (skip the first client bc its the listener)
 	size_t i = 1;
 	for (std::list<Client>::iterator it = ++_clients.begin(); it != _clients.end(); ++it, ++i)
 		if (it->timeout())
-			closeConnection(i--); // NOTE return timeout error to client before closing
-
+			closeConnection(_pollfds[i--].fd); // NOTE return timeout error to client before closing
 
 	// Loop through the servers and call their loop function
 	for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
@@ -198,13 +198,13 @@ int Listener::readData(int fd, Client &client)
 		closeConnection(fd);
 		return 1;
 	}
-	if ( bytesRead == 0) // NOTE fix POLLIN always true
-		return 0;
+	//if ( bytesRead == 0) // NOTE fix POLLIN always true
+	//	return 0;
 
 	std::cout << "Reading " << bytesRead << " bytes from " << client.getIP() << ":" << client.getPort() << std::endl; //XXX
-
 	// Add the data to the client's buffer
 	client.addData(std::string(buffer,bytesRead));
+	std::cout << client.getIP() << ":" << client.getPort() << " number of requests: " << client.getRequestCount() << " request_ready: " << (client.requestReady()?"True":"False") << std::endl; //XXX
 
 	// If the request is ready, send it to a server
 	if (client.requestReady())
