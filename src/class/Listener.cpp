@@ -198,8 +198,8 @@ int Listener::readData(int fd, Client &client)
 		closeConnection(fd);
 		return 1;
 	}
-	//if ( bytesRead == 0) // NOTE fix POLLIN always true
-	//	return 0;
+	if ( bytesRead == 0) // NOTE fix POLLIN always true
+		return 0;
 
 	std::cout << "Reading " << bytesRead << " bytes from " << client.getIP() << ":" << client.getPort() << std::endl; //XXX
 	// Add the data to the client's buffer
@@ -209,7 +209,7 @@ int Listener::readData(int fd, Client &client)
 	// If the request is ready, send it to a server
 	if (client.requestReady())
 	{
-		std::cout << "Sending request from " << client.getIP() << ":" << client.getPort() << " to server " << client.getHost()<< std::endl; //XXX
+		std::cout << "Forwarding request from " << client.getIP() << ":" << client.getPort() << " to server " << client.getHost()<< std::endl; //XXX
 		sendToServer(client);
 	}
 
@@ -218,7 +218,6 @@ int Listener::readData(int fd, Client &client)
 
 int Listener::sendData(int fd, Client &client)
 {
-	// NOTE send everything for now, maybe send in chunks later
 	// Get the response chunk from the client
 	if (!client.responseReady())
 	{
@@ -278,7 +277,7 @@ int Listener::closeConnection(int fd)
 		return 1;
 	}
 
-	std::cout << "Closing connection " << clientIt->getIP()<< clientIt->getPort() << std::endl;
+	std::cout << "Closing connection " << clientIt->getIP() << ":"<< clientIt->getPort() << std::endl;
 	// Delete the pointer to the client from the servers (try to delete from all just in case)
 	for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
 		it->removeClient(*clientIt);
