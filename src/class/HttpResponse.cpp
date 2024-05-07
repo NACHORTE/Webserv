@@ -17,8 +17,8 @@ static void initErrorPages()
 {
 	if (_errorPages.size() > 0)
 		return;
-	_errorPages[404] = "./html/404.html";
-	_errorPages[500] = "./html/500.html";
+	_errorPages[404] = "./www/html/404.html";
+	_errorPages[500] = "./www/html/500.html";
 }
 
 HttpResponse::HttpResponse()
@@ -309,7 +309,7 @@ void HttpResponse::generate(
 	{
 		*this = error(500, "Internal Server Error", e.what());
 	}
-
+	std::cout << "Response generated: " << std::endl << *this << std::endl;
 	_responseReady = true;
 }
 

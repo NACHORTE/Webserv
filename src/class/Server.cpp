@@ -10,22 +10,22 @@ Server::Server(void)
 
 	std::set<std::string> location_allowed_methods;
 	location_allowed_methods.insert("GET");
-	_allowed_paths.addLocation("/", true, "/html/index.html", location_allowed_methods);
-	_allowed_paths.addLocation("/index.html", true, "/html/index.html", location_allowed_methods);
-	_allowed_paths.addLocation("/favicon.ico", true, "/img/favicon.ico", location_allowed_methods);
-	_allowed_paths.addLocation("/html/", false, "", location_allowed_methods);
-	_allowed_paths.addLocation("/img/", false, "", location_allowed_methods);
+	_allowed_paths.addLocation("/", true, "/www/html/index.html", location_allowed_methods);
+	_allowed_paths.addLocation("/index.html", true, "/www/html/index.html", location_allowed_methods);
+	_allowed_paths.addLocation("/favicon.ico", true, "/www/img/favicon.ico", location_allowed_methods);
+	_allowed_paths.addLocation("/www/html/", false, "", location_allowed_methods);
+	_allowed_paths.addLocation("/www/img/", false, "", location_allowed_methods);
 
 	location_allowed_methods.clear();
 	location_allowed_methods.insert("GET");
 	location_allowed_methods.insert("DELETE");
-	_allowed_paths.addLocation("/upload/", false, "", location_allowed_methods);
+	_allowed_paths.addLocation("/www/upload/", false, "", location_allowed_methods);
 
 	location_allowed_methods.clear();
 	location_allowed_methods.insert("GET");
 	location_allowed_methods.insert("POST");
-	_allowed_paths.addLocation("/upload", true, "", location_allowed_methods);
-	_allowed_paths.addLocation("/bin-cgi/", false, "", location_allowed_methods);
+	_allowed_paths.addLocation("/www/upload", true, "", location_allowed_methods);
+	_allowed_paths.addLocation("/www/bin-cgi/", false, "", location_allowed_methods);
 }
 
 Server::Server(const Server & src)

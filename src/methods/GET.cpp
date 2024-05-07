@@ -1,5 +1,6 @@
 #include "HttpMethods.hpp"
 #include "utils.hpp"
+#include <iostream>
 
 HttpResponse GET(const HttpRequest & req, const Locations & valid_paths)
 {
