@@ -309,7 +309,7 @@ void HttpResponse::generate(
 	{
 		*this = error(500, "Internal Server Error", e.what());
 	}
-	std::cout << "Response generated: " << std::endl << *this << std::endl;
+
 	_responseReady = true;
 }
 

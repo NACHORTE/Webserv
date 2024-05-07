@@ -209,7 +209,7 @@ int Listener::readData(int fd, Client &client)
 	// If the request is ready, send it to a server
 	if (client.requestReady())
 	{
-		std::cout << "Forwarding request from " << client.getIP() << ":" << client.getPort() << " to server " << client.getHost()<< std::endl; //XXX
+		std::cout << "Forwarding request from " << client.getIP() << ":" << client.getPort() << " to server " << (client.getHost().empty()?std::string("Default"):std::string(client.getHost())) << std::endl; //XXX
 		sendToServer(client);
 	}
 
@@ -297,7 +297,10 @@ void Listener::sendToServer(Client &client)
 	std::string hostname = client.getHost();
 	// If the server exists, add the client to the server
 	if (_serverMap.count(hostname) == 1)
+	{
+		
 		_serverMap[hostname]->addClient(client);
+	}
 	// Else send it to the default server
 	else
 		_serverList.front().addClient(client);
