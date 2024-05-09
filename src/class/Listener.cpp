@@ -208,10 +208,7 @@ int Listener::readData(int fd, Client &client)
 
 	// If the request is ready, send it to a server
 	if (client.requestReady())
-	{
-		std::cout << "Forwarding request from " << client.getIP() << ":" << client.getPort() << " to server " << (client.getHost().empty()?std::string("Default"):std::string(client.getHost())) << std::endl; //XXX
 		sendToServer(client);
-	}
 
 	return 0;
 }
@@ -248,10 +245,7 @@ int Listener::sendData(int fd, Client &client)
 
 	// If there is another request ready, send it to a server
 	if (client.requestReady())
-	{
-		std::cout << "Sending request from " << client.getIP() << ":" << client.getPort() << " to server " << client.getHost()<< std::endl; //XXX
 		sendToServer(client);
-	}
 
 	return 0;
 }
@@ -298,12 +292,15 @@ void Listener::sendToServer(Client &client)
 	// If the server exists, add the client to the server
 	if (_serverMap.count(hostname) == 1)
 	{
-		
+		std::cout << "Forwarding request from " << client.getIP() << ":" << client.getPort() << " to server " << client.getHost() << std::endl; //XXX
 		_serverMap[hostname]->addClient(client);
 	}
 	// Else send it to the default server
 	else
+	{
+		std::cout << "Forwarding request from " << client.getIP() << ":" << client.getPort() << " to default server" << std::endl; //XXX
 		_serverList.front().addClient(client);
+	}
 }
 
 std::ostream &operator<<(std::ostream &os, const Listener &obj)

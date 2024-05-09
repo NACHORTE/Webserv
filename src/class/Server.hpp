@@ -69,7 +69,27 @@ class Server
 
 		std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> _allowed_methods;
 		Locations _allowed_paths;
+
+		// _cgiClients holds the list of clients that are waiting for a CGI program to finish
+		struct ClientInfo
+		{
+			ClientInfo();
+			ClientInfo(const Client &client);
+			bool operator==(const ClientInfo &rhs) const;
+   			Client* _client;
+    		int _pid;
+   			int _pipeFd;
+		};
+		std::set<ClientInfo> _cgiClients;
+
 	// Private member functions
+
+		// check whether a request is for a CGI program
+		bool isCgi(const HttpRequest &request) const;
+		// start a CGI program (fork, execve, pipe, etc.)
+		void startCgi(const Client &client);
+		bool cgiReady(const ClientInfo &clientInfo) const;
+		HttpResponse cgiResponse(const ClientInfo &clientInfo) const;
 
 	// Friends <3
 		friend std::ostream &operator<<(std::ostream &os, const Server &obj);

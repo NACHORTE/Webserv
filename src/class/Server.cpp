@@ -139,15 +139,41 @@ void Server::addServerName(const std::string & serverName)
 
 void Server::loop()
 {
-	std::set<Client *>::iterator it;	
-	for (it = _clients.begin(); it != _clients.end(); it++)
+	// Generate response for clients that have the request ready
+	for (std::set<Client *>::iterator it = _clients.begin(); it != _clients.end(); it++)
 	{
 		Client &client = **it;
-		if (client.requestReady() && !client.responseReady())
+
+		// If the client has a response ready, remove it from the list of clients
+		if (client.responseReady())
+		{
+			_clients.erase(it--);
+			continue;
+		}
+
+		// If the client has a static request, generate a response from a file
+		if (client.requestReady() && !isCgi(client.getRequest()))
 		{
 			HttpResponse response;
 			response.generate(client.getRequest(), _allowed_paths, _allowed_methods);
 			client.setResponse(response);
+			_clients.erase(it--);
+		}
+		// If the client has a CGI request, start the CGI process
+		else if (_cgiClients.count(ClientInfo(client)) == 0
+				&& client.requestReady() && isCgi(client.getRequest()))
+			startCgi(client.getRequest());
+	}
+
+	// Check if any CGI processes have finished
+	for (std::set<ClientInfo>::iterator it = _cgiClients.begin(); it != _cgiClients.end(); ++it)
+	{
+		if (cgiReady(*it))
+		{
+			HttpResponse response;
+			response = cgiResponse(*it);
+			it->_client->setResponse(response);
+			_cgiClients.erase(it--);
 		}
 	}
 }
@@ -161,4 +187,43 @@ void Server::removeClient(Client &client)
 {
 	if (_clients.count(&client) == 1)
 		_clients.erase(&client);
+}
+
+Server::ClientInfo::ClientInfo()
+{
+	_client = nullptr;
+	_pid = -1;
+	_pipeFd = -1;
+}
+
+Server::ClientInfo::ClientInfo(const Client &client)
+{
+	_client = const_cast<Client *>(&client);
+	_pid = -1;
+	_pipeFd = -1;
+}
+
+bool Server::ClientInfo::operator==(const ClientInfo &rhs) const
+{
+	return (_client == rhs._client);
+}
+
+bool Server::isCgi(const HttpRequest &request) const
+{
+	// Check the _allowed_paths to see if the request path is a CGI program
+}
+
+void Server::startCgi(const Client &client)
+{
+
+}
+
+bool Server::cgiReady(const ClientInfo &clientInfo) const
+{
+
+}
+
+HttpResponse Server::cgiResponse(const ClientInfo &clientInfo) const
+{
+
 }
