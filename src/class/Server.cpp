@@ -162,7 +162,7 @@ void Server::loop()
 		// If the client has a CGI request, start the CGI process
 		else if (_cgiClients.count(ClientInfo(client)) == 0
 				&& client.requestReady() && isCgi(client.getRequest()))
-			startCgi(client.getRequest());
+			startCgi(client);
 	}
 
 	// Check if any CGI processes have finished
