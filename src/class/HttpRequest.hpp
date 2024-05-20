@@ -31,12 +31,14 @@ class HttpRequest {
 		void setBody(const std::string& body);
 
 		// Add data to the request buffer and return the number of bytes added
+
 		size_t addData(const std::string & data);
 
 		const std::string & get_method() const;
 		const std::string & get_path() const;
 		const std::string & get_version() const;
 		std::vector<std::string> getHeader(const std::string& key) const; // returns a vector of all headers with the given key
+		std::vector<std::pair<std::string, std::string> > getHeaders() const;
 		const std::string & getBody() const;
 
 		// member functions
@@ -47,7 +49,9 @@ class HttpRequest {
 		bool empty() const; // check if all fields are empty
 		bool requestReady() const; // check if the request is complete
 		bool error() const; // check if the request is in an error state
+
 		// operator overloads
+
 		HttpRequest & operator=(HttpRequest const & rhs);
 		std::string operator()() const; // equivalent to to_string()
 		std::vector<std::string> operator[](const std::string& key) const; // equivalent to getHeader(key)
@@ -55,6 +59,7 @@ class HttpRequest {
 	protected:
 	private:
 	// Member attributes
+
 		std::string _method;	// GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS, TRACE, PATCH
 		std::string _path;	// /path/to/file
 		std::string _version;	// HTTP/1.1

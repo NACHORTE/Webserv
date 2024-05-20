@@ -19,12 +19,12 @@ Listener::Listener(int port) : _port(port)
 
 	// Create the socket
 	if ((_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-		throw std::runtime_error("[Listener::init_socket] Error creating socket with port" + int_to_string(_port));
+		throw std::runtime_error("[Listener::init_socket] Error creating socket with port " + int_to_string(_port));
 	std::cout << "Listener " << _port << " socket " << _sockfd << std::endl;
 	
 	// Enable the socket to begin listening
 	if (bind(_sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
-		throw std::runtime_error("[Listener::init_socket] Error binding socket with port" + int_to_string(_port));
+		throw std::runtime_error("[Listener::init_socket] Error binding socket with port " + int_to_string(_port));
 	if (listen(_sockfd, BACKLOG) < 0)
 		throw std::runtime_error("[Listener::init_socket] Error listening socket with port " + int_to_string(_port));
 

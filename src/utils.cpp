@@ -370,3 +370,14 @@ std::string decodeURL(std::string str)
 
 	return str;
 }
+
+char *strdup(const std::string & str)
+{
+	char *ret = new char[str.size() + 1];
+	if (ret == NULL)
+		return NULL;
+	for (size_t i = 0; i < str.size(); ++i)
+		ret[i] = str[i];
+	ret[str.size()] = '\0';
+	return ret;
+}

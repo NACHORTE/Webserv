@@ -74,11 +74,13 @@ class Server
 		struct ClientInfo
 		{
 			ClientInfo();
-			ClientInfo(const Client &client);
+			ClientInfo(const Client &client, int pid = -1, int fdIn = -1, int fdOut = -1);
 			bool operator==(const ClientInfo &rhs) const;
+			bool operator<(const ClientInfo &rhs) const;
    			Client* _client;
     		int _pid;
-   			int _pipeFd;
+   			int _fdOut;
+   			int _fdIn;
 		};
 		std::set<ClientInfo> _cgiClients;
 
@@ -87,10 +89,12 @@ class Server
 		// check whether a request is for a CGI program
 		bool isCgi(const HttpRequest &request) const;
 		// start a CGI program (fork, execve, pipe, etc.)
-		void startCgi(const Client &client);
-		bool cgiReady(const ClientInfo &clientInfo) const;
+		int startCgi(const Client &client);
 		HttpResponse cgiResponse(const ClientInfo &clientInfo) const;
 
+		char **getPath(const HttpRequest & req);
+		char **getEnv(const HttpRequest & req);
+		
 	// Friends <3
 		friend std::ostream &operator<<(std::ostream &os, const Server &obj);
 };

@@ -54,7 +54,7 @@ std::string Client::getResponse() const
 	return (_requests.rbegin()->second());
 }
 
-const HttpRequest &Client::getRequest(void) //TODO hacer esto de otra forma
+const HttpRequest &Client::getRequest(void) const//TODO hacer esto de otra forma
 {
 	if (_requests.empty())
 		throw std::runtime_error("No request available");
