@@ -6,6 +6,7 @@
 #include <poll.h>
 #include <cstdlib>
 #include "colors.h" //XXX
+#include <fcntl.h>
 
 Server::Server(void)
 {
@@ -285,6 +286,8 @@ int Server::startCgi(const Client &client)
 	_cgiClients.insert(ClientInfo(client, pid, fdsIn[0], fdsOut[1]));
 	close(fdsIn[1]);
 	close(fdsOut[0]);
+	fcntl(fdsIn[0], F_SETFL, O_NONBLOCK);
+	fcntl(fdsOut[1], F_SETFL, O_NONBLOCK);
 
 	return (0);
 }
@@ -307,6 +310,7 @@ HttpResponse Server::cgiResponse(const ClientInfo &clientInfo) const
 		HttpResponse response;
 		response.setBody("text/html", body);
 		response.setStatus(200, "OK");
+		response.setReady(true);
 		return (response);
 	}
 	return (HttpResponse::error(500)); //TODO return error from _errorPages

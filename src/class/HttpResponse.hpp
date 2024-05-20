@@ -23,6 +23,7 @@ class HttpResponse {
 		void unsetHeader(const std::string& key);
 		void setBody(const std::string& content_type, const std::string& body);
 		void setBody(const std::string& filename);
+		void setReady(bool ready);
 
 		const std::string & getStatusCode() const;
 		const std::string & getStatusPhrase() const;
