@@ -192,6 +192,7 @@ int Listener::readData(int fd, Client &client)
 	if (bytesRead < 0)
 	{
 		// NOTE send internal server error to client before closing
+		std::cout << "[Listener::readData] Error reading data" << std::endl; // NOTE msg
 		closeConnection(fd);
 		return 1;
 	}
