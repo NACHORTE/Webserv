@@ -100,7 +100,7 @@ std::string trim(const std::string& str, const std::string & charset)
 {
     size_t first = str.find_first_not_of(charset);
     if (std::string::npos == first)
-        return str;
+        return "";
     size_t last = str.find_last_not_of(charset);
     return str.substr(first, (last - first + 1));
 }
