@@ -157,6 +157,11 @@ void HttpResponse::setBody(const std::string& filename)
 	setBody(extToMime(filename), readFile(filename, isBinaryFile(filename)));
 }
 
+void HttpResponse::setReady(bool ready)
+{
+	_responseReady = ready;
+}
+
 /**
  * @brief Gets the status code of the HttpResponse.
  * 

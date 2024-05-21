@@ -21,7 +21,7 @@ class Client
 		int getPort() const;
 		std::string getHost(void) const;
 		std::string getResponse() const;
-		const HttpRequest & getRequest(void);
+		const HttpRequest & getRequest(void) const;
 		size_t getRequestCount(void) const;
 
 	// Member functions

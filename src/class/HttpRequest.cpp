@@ -159,6 +159,11 @@ std::vector<std::string> HttpRequest::getHeader(const std::string& key) const
 	return output;
 }
 
+std::vector<std::pair<std::string, std::string> > HttpRequest::getHeaders() const
+{
+	return _headers;
+}
+
 const std::string & HttpRequest::getBody() const
 {
 	return _body;

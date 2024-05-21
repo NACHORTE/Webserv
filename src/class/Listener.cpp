@@ -19,15 +19,12 @@ Listener::Listener(int port) : _port(port)
 
 	// Create the socket
 	if ((_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-		throw std::runtime_error("[Listener::init_socket] Error creating socket with port" + int_to_string(_port));
-	std::cout << "Listener " << _port << " socket " << _sockfd << std::endl;
-	
+		throw std::runtime_error("[Listener::init_socket] Error creating socket with port " + int_to_string(_port));
 	// Enable the socket to begin listening
 	if (bind(_sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
-		throw std::runtime_error("[Listener::init_socket] Error binding socket with port" + int_to_string(_port));
+		throw std::runtime_error("[Listener::init_socket] Error binding socket with port " + int_to_string(_port));
 	if (listen(_sockfd, BACKLOG) < 0)
 		throw std::runtime_error("[Listener::init_socket] Error listening socket with port " + int_to_string(_port));
-
 	// Set the socket to non-blocking so accept will not block
 	if (fcntl(_sockfd, F_SETFL, O_NONBLOCK) < 0)
 		throw std::runtime_error("[Listener::init_socket] Error fcntl");
@@ -195,6 +192,7 @@ int Listener::readData(int fd, Client &client)
 	if (bytesRead < 0)
 	{
 		// NOTE send internal server error to client before closing
+		std::cout << "[Listener::readData] Error reading data" << std::endl; // NOTE msg
 		closeConnection(fd);
 		return 1;
 	}
@@ -208,10 +206,7 @@ int Listener::readData(int fd, Client &client)
 
 	// If the request is ready, send it to a server
 	if (client.requestReady())
-	{
-		std::cout << "Forwarding request from " << client.getIP() << ":" << client.getPort() << " to server " << (client.getHost().empty()?std::string("Default"):std::string(client.getHost())) << std::endl; //XXX
 		sendToServer(client);
-	}
 
 	return 0;
 }
@@ -238,7 +233,10 @@ int Listener::sendData(int fd, Client &client)
 
 	// If keep-alive is set pop the request and wait for another one
 	if (client.keepAlive())
+	{
+		std::cout << "Keeping connection alive with " << client.getIP() << ":" << client.getPort() << std::endl; // NOTE msg
 		client.popRequest();
+	}
 	// Close the connection otherwise
 	else
 	{
@@ -248,10 +246,7 @@ int Listener::sendData(int fd, Client &client)
 
 	// If there is another request ready, send it to a server
 	if (client.requestReady())
-	{
-		std::cout << "Sending request from " << client.getIP() << ":" << client.getPort() << " to server " << client.getHost()<< std::endl; //XXX
 		sendToServer(client);
-	}
 
 	return 0;
 }
@@ -259,13 +254,10 @@ int Listener::sendData(int fd, Client &client)
 int Listener::closeConnection(int fd)
 {
 	// Find the index of the client
-	size_t clientIndex = 0;
-	for (size_t i = 0; i < _pollfds.size(); ++i)
-		if (_pollfds[i].fd == fd)
-		{
-			clientIndex = i;
+	size_t clientIndex;
+	for (clientIndex = 0; clientIndex < _pollfds.size(); ++clientIndex)
+		if (_pollfds[clientIndex].fd == fd)
 			break;
-		}
 	// Get the client from the list of clients
 	std::list<Client>::iterator clientIt = _clients.begin();
 	std::advance(clientIt, clientIndex);
@@ -277,7 +269,8 @@ int Listener::closeConnection(int fd)
 		return 1;
 	}
 
-	std::cout << "Closing connection " << clientIt->getIP() << ":"<< clientIt->getPort() << std::endl;
+	std::cout << "Closing connection " << clientIt->getIP() << ":"<< clientIt->getPort() << " to port "<< _port << std::endl;
+
 	// Delete the pointer to the client from the servers (try to delete from all just in case)
 	for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
 		it->removeClient(*clientIt);
@@ -298,12 +291,15 @@ void Listener::sendToServer(Client &client)
 	// If the server exists, add the client to the server
 	if (_serverMap.count(hostname) == 1)
 	{
-		
+		std::cout << "Forwarding request from " << client.getIP() << ":" << client.getPort() << " to server " << client.getHost() << std::endl; //NOTE msg
 		_serverMap[hostname]->addClient(client);
 	}
 	// Else send it to the default server
 	else
+	{
+		std::cout << "Forwarding request from " << client.getIP() << ":" << client.getPort() << " to default server" << std::endl; //NOTE msg
 		_serverList.front().addClient(client);
+	}
 }
 
 std::ostream &operator<<(std::ostream &os, const Listener &obj)

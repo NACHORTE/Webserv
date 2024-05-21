@@ -97,7 +97,7 @@ bool Locations::addLocation(const Locations::Location & location)
 	return true;
 }
 
-bool Locations::addLocation(std::string path, bool isFile, std::string filename, std::set<std::string> allowedMethods)
+bool Locations::addLocation(std::string path, bool isFile, std::string filename, std::set<std::string> allowedMethods, bool isCgi)
 {
 	// check if location already exists
 	size_t len = _locations.size();
@@ -111,6 +111,7 @@ bool Locations::addLocation(std::string path, bool isFile, std::string filename,
 	location._isFile = isFile;
 	location._filename = filename;
 	location._allowedMethods = allowedMethods;
+	location._isCgi = isCgi;
 	_locations.push_back(location);
 	return true;
 }
@@ -135,6 +136,17 @@ bool Locations::pathExists(const std::string & path) const
 		if (!i->_isFile // if is folder
 			&& path.compare(0, i->_path.size(), i->_path) == 0	// if path starts with allowed path
 			&& path.size() > i->_path.size())	// if path is longer than allowed path (is a file in the directory)
+			return true;
+	}
+	return false;
+}
+
+bool Locations::isCgi(const std::string & path) const
+{
+	std::vector<Location>::const_iterator i;
+	for (i = _locations.begin(); i != _locations.end(); ++i)
+	{
+		if (i->isPathAllowed(path) && i->_isCgi)
 			return true;
 	}
 	return false;

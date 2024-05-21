@@ -19,6 +19,7 @@ class Locations
 				bool _isFile;
 				std::string _filename;
 				std::set<std::string> _allowedMethods;
+				bool _isCgi;
 			protected:
 			private:
 		};
@@ -33,10 +34,10 @@ class Locations
 
 		// Member functions
 		bool addLocation(const Locations::Location & location);
-		bool addLocation(std::string path, bool isFile, std::string filename, std::set<std::string> allowedMethods);
+		bool addLocation(std::string path, bool isFile, std::string filename, std::set<std::string> allowedMethods, bool isCgi = false);
 		bool isPathAllowed(const std::string & method, const std::string & path) const;
 		bool pathExists(const std::string & path) const;
-
+		bool isCgi(const std::string & path) const;
 		// Operator overloads
 		Locations & operator=(const Locations & rhs);
 		Locations::Location & operator[](size_t index);
