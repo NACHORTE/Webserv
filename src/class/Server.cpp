@@ -200,11 +200,16 @@ void Server::removeClient(Client &client)
 {
 	if (_cgiClients.count(ClientInfo(client)) == 1)
 	{
-		kill(_cgiClients.find(ClientInfo(client))->_pid, SIGKILL); //NOTE check if kill was succesful maybe
+		const ClientInfo & cgiClient = *(_cgiClients.find(ClientInfo(client)));
+		std::cout << "killing process  "<< cgiClient._pid << " from client " <<client.getIP()<<":"<<client.getPort() << std::endl; //XXX
+		kill(cgiClient._pid, SIGKILL); //NOTE check if kill was succesful maybe
 		_cgiClients.erase(ClientInfo(client));
 	}
 	if (_clients.count(&client) == 1)
+	{
+		std::cout << "Removing client " <<client.getIP()<<":"<<client.getPort()<<" from server "<< *_serverNames.begin() << std::endl; //XXX
 		_clients.erase(&client);
+	}
 }
 
 Server::ClientInfo::ClientInfo()
@@ -283,6 +288,7 @@ int Server::startCgi(const Client &client)
 	}
 	// Parent process
 	// Add the client to the list of clients waiting for the CGI program to finish
+	std::cout << RED << "new CGI pid " << pid << RESET << std::endl; //XXX
 	_cgiClients.insert(ClientInfo(client, pid, fdsIn[0], fdsOut[1]));
 	close(fdsIn[1]);
 	close(fdsOut[0]);
