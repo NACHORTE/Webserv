@@ -8,21 +8,7 @@ class Locations
 {
 	public:
 		// struct with location data
-		class Location
-		{
-			public:
-				bool isPathAllowed(const std::string & path) const;
-				bool isMethodAllowed(const std::string & method) const;
-
-				bool operator==(const Location & rhs) const;
-				std::string _path;
-				bool _isFile;
-				std::string _filename;
-				std::set<std::string> _allowedMethods;
-				bool _isCgi;
-			protected:
-			private:
-		};
+		class Location;
 
 		// Constructors and destructor
 		Locations(void);
@@ -34,7 +20,7 @@ class Locations
 
 		// Member functions
 		bool addLocation(const Locations::Location & location);
-		bool addLocation(std::string path, bool isFile, std::string filename, std::set<std::string> allowedMethods, bool isCgi = false);
+		bool addLocation(std::string path, bool isFile, std::string filename, std::set<std::string> allowedMethods, bool isCgi);
 		bool isPathAllowed(const std::string & method, const std::string & path) const;
 		bool pathExists(const std::string & path) const;
 		bool isCgi(const std::string & path) const;
@@ -49,3 +35,19 @@ class Locations
 };
 
 std::ostream &operator<<(std::ostream &os, const Locations &obj);
+
+
+class Locations::Location
+{
+	public:
+		bool isPathAllowed(const std::string & path) const;
+		bool isMethodAllowed(const std::string & method) const;
+		bool operator==(const Location & rhs) const;
+		std::string _path;
+		bool _isFile;
+		std::string _filename;
+		std::set<std::string> _allowedMethods;
+		bool _isCgi;
+	protected:
+	private:
+};

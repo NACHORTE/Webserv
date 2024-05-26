@@ -196,7 +196,7 @@ int Listener::readData(int fd, Client &client)
 		closeConnection(fd);
 		return 1;
 	}
-	if ( bytesRead == 0) // NOTE fix POLLIN always true
+	if (bytesRead == 0) // NOTE fix POLLIN always true
 		return 0;
 
 	std::cout << "Reading " << bytesRead << " bytes from " << client.getIP() << ":" << client.getPort() << std::endl; //XXX

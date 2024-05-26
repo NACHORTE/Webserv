@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include "set_config.hpp"
 #include "Server.hpp"
 #include "utils.hpp"
 
@@ -12,14 +11,14 @@ int check_duplicated(std::string var)
 	return 1;
 }
 
-int check_full_server(Server *server, int n_server)
+int check_full_server(const Server & server, int n_server)
 {
-	if (server->getPort() == 0)
+	if (server.getPort() == 0)
 	{
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: port" << std::endl;
 		return 0;
 	}
-	if (server->getServerNames().size() == 0)
+	if (server.getServerNames().size() == 0)
 	{
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: server_name" << std::endl;
 		return 0;
@@ -29,7 +28,7 @@ int check_full_server(Server *server, int n_server)
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: host" << std::endl;
 		return 0;
 	} */
-	if (server->getRoot() == "")
+	if (server.getRoot() == "")
 	{
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: root" << std::endl;
 		return 0;
@@ -39,12 +38,12 @@ int check_full_server(Server *server, int n_server)
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: error_page" << std::endl;
 		return 0;
 	} */
-	if (server->getIndex() == "")
+	if (server.getIndex() == "")
 	{
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: index" << std::endl;
 		return 0;
 	}
-	if (server->getClientMaxBodySize() == 0)
+	if (server.getClientMaxBodySize() == 0)
 	{
 		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: max_body" << std::endl;
 		return 0;
@@ -186,7 +185,7 @@ std::vector<Server> read_config(const std::string& config_file)
 		{
 			in_server = 0;
 			//if fails to check full server, return empty vector
-			if (!check_full_server(&servers[n_server], n_server))
+			if (!check_full_server(servers[n_server], n_server))
 				return std::vector<Server>();
 			n_server++;
 			continue;
@@ -321,7 +320,7 @@ std::vector<Server> read_config(const std::string& config_file)
 				std::istringstream iss_num(word);
 				int max_body;
 				iss_num >> max_body;
-				servers[n_server].setClientMaxBodySize(max_body);
+				servers[n_server].setMaxBodySize(max_body);
 			}
 			else
 			{

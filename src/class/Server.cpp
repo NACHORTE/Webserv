@@ -10,28 +10,29 @@
 
 Server::Server(void)
 {
- 	_allowed_methods["GET"] = GET;
-	_allowed_methods["POST"] = POST;
-	_allowed_methods["DELETE"] = DELETE;
+	_root = "/www/";
+ 	_methodsMap["GET"] = GET;
+	_methodsMap["POST"] = POST;
+	_methodsMap["DELETE"] = DELETE;
 
-	std::set<std::string> location_allowed_methods;
-	location_allowed_methods.insert("GET");
-	_allowed_paths.addLocation("/", true, "/www/html/index.html", location_allowed_methods);
-	_allowed_paths.addLocation("/index.html", true, "/www/html/index.html", location_allowed_methods);
-	_allowed_paths.addLocation("/favicon.ico", true, "/www/img/favicon.ico", location_allowed_methods);
-	_allowed_paths.addLocation("/www/html/", false, "", location_allowed_methods);
-	_allowed_paths.addLocation("/www/img/", false, "", location_allowed_methods);
+	std::set<std::string> location_methodsMap;
+	location_methodsMap.insert("GET");
+	_allowed_paths.addLocation("/", true, "/www/html/index.html", location_methodsMap, false);
+	_allowed_paths.addLocation("/index.html", true, "/www/html/index.html", location_methodsMap, false);
+	_allowed_paths.addLocation("/favicon.ico", true, "/www/img/favicon.ico", location_methodsMap, false);
+	_allowed_paths.addLocation("/www/html/", false, "", location_methodsMap, false);
+	_allowed_paths.addLocation("/www/img/", false, "", location_methodsMap, false);
 
-	location_allowed_methods.clear();
-	location_allowed_methods.insert("GET");
-	location_allowed_methods.insert("DELETE");
-	_allowed_paths.addLocation("/www/upload/", false, "", location_allowed_methods);
+	location_methodsMap.clear();
+	location_methodsMap.insert("GET");
+	location_methodsMap.insert("DELETE");
+	_allowed_paths.addLocation("/www/upload/", false, "", location_methodsMap, false);
 
-	location_allowed_methods.clear();
-	location_allowed_methods.insert("GET");
-	location_allowed_methods.insert("POST");
-	_allowed_paths.addLocation("/www/upload", true, "", location_allowed_methods);
-	_allowed_paths.addLocation("/www/bin-cgi/", false, "", location_allowed_methods, true);
+	location_methodsMap.clear();
+	location_methodsMap.insert("GET");
+	location_methodsMap.insert("POST");
+	_allowed_paths.addLocation("/www/upload", true, "", location_methodsMap, false);
+	_allowed_paths.addLocation("/www/bin-cgi/", false, "", location_methodsMap, true);
 }
 
 Server::Server(const Server & src)
@@ -47,14 +48,14 @@ Server &Server::operator=(const Server &rhs)
 	if (this != &rhs)
 	{
 		_port = rhs._port;
-		_clientMaxBodySize = rhs._clientMaxBodySize;
+		_maxBodySize = rhs._maxBodySize;
     	_index = rhs._index;
     	_root = rhs._root;
     	_serverNames = rhs._serverNames;
 		_locations = rhs._locations;
 		_errorPages = rhs._errorPages;
 		_clients = rhs._clients;
-		_allowed_methods = rhs._allowed_methods;
+		_methodsMap = rhs._methodsMap;
 		_allowed_paths = rhs._allowed_paths;
 	}
 	return (*this);
@@ -63,7 +64,7 @@ Server &Server::operator=(const Server &rhs)
 std::ostream &operator<<(std::ostream &os, const Server &obj)
 {
  	os << "port: " << obj._port << std::endl;
-	os << "client_max_body_size: " << obj._clientMaxBodySize << std::endl;
+	os << "client_max_body_size: " << obj._maxBodySize << std::endl;
 	os << "index: " << obj._index << std::endl;
 	os << "root: " << obj._root << std::endl;
 	os << "server_names: ";
@@ -78,9 +79,9 @@ void Server::setPort(int port)
 	_port = port;
 }
 
-void Server::setClientMaxBodySize(size_t clientMaxBodySize)
+void Server::setMaxBodySize(size_t clientMaxBodySize)
 {
-	_clientMaxBodySize = clientMaxBodySize;
+	_maxBodySize = clientMaxBodySize;
 }
 
 int Server::getPort(void) const
@@ -103,12 +104,12 @@ void Server::setRoot(const std::string & root)
 	_root = root;
 }
 
-const std::vector<std::string> & Server::getErrorPages() const
+const std::map<int, std::string> & Server::getErrorPages() const
 {
 	return (_errorPages);
 }
 
-void Server::setErrorPages(const std::vector<std::string> & errorPages)
+void Server::setErrorPages(const std::map<int, std::string> & errorPages)
 {
 	_errorPages = errorPages;
 }
@@ -130,7 +131,7 @@ const std::vector<Location> & Server::getLocations(void) const
 
 int Server::getClientMaxBodySize(void) const
 {
-	return (_clientMaxBodySize);
+	return (_maxBodySize);
 }
 
 void Server::addLocation(const Location & location)
@@ -161,7 +162,7 @@ void Server::loop()
 		if (client.requestReady() && !isCgi(client.getRequest()))
 		{
 			HttpResponse response;
-			response.generate(client.getRequest(), _allowed_paths, _allowed_methods);
+			response.generate(client.getRequest(), _allowed_paths, _methodsMap);
 			client.setResponse(response);
 			_clients.erase(it--);
 		}

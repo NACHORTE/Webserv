@@ -18,11 +18,11 @@ class Server
 	// Setters and getters
 
 		void setPort(int port);
-		void setClientMaxBodySize(size_t clientMaxBodySize);
+		void setMaxBodySize(size_t clientMaxBodySize);
 		void setIndex(const std::string & index);
 		void setRoot(const std::string & root);
 		void setLocations(const std::vector<Location> & locations);
-		void setErrorPages(const std::vector<std::string> & errorPages);
+		void setErrorPages(const std::map<int, std::string> & errorPages);
 
 		void addServerName(const std::string & serverName);
 		void addLocation(const Location & location);
@@ -35,7 +35,7 @@ class Server
 		const std::string & getRoot() const;
 		const std::set<std::string> & getServerNames() const;
 		const std::vector<Location> & getLocations() const;
-		const std::vector<std::string> & getErrorPages() const;
+		const std::map<int, std::string> & getErrorPages() const;
 
 		void removeClient(Client &client);
 
@@ -53,7 +53,7 @@ class Server
 		// Port number that the server will listen to
 		int _port;
 		// Maximum body size that the server will accept
-		size_t _clientMaxBodySize;
+		size_t _maxBodySize;
 		// Default file to serve when the request is for a directory
     	std::string _index;
 		// Root directory for the server
@@ -63,11 +63,11 @@ class Server
 		// List of locations for the server
 		std::vector<Location> _locations;
 		// List of error pages for the server
-		std::vector<std::string> _errorPages;
+		std::map<int, std::string> _errorPages;
 		// List of clients the server is generating a response for
 		std::set<Client *> _clients;
 
-		std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> _allowed_methods;
+		std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> _methodsMap;
 		Locations _allowed_paths;
 
 		// _cgiClients holds the list of clients that are waiting for a CGI program to finish
