@@ -2,7 +2,7 @@
 #include "utils.hpp"
 #include <iostream>
 
-HttpResponse GET(const HttpRequest & req, const Locations & valid_paths)
+HttpResponse GET(const HttpRequest & req, const LocationContainer & valid_paths)
 {
 	HttpResponse ret;
 
@@ -12,14 +12,6 @@ HttpResponse GET(const HttpRequest & req, const Locations & valid_paths)
 
 	// Get the path of the requested file
 	std::string filename = valid_paths.getFilename(path);
-
-	// If the file ends with ".cgi", run the file and return the output
-	if (getExtension(path) == "cgi")
-	{
-		//char **envp = getEnvp(req.get_path());
-		//something with fork and execve
-		return HttpResponse::error(501, "Not Implemented", "CGI is not implemented yet");
-	}
 
 	// The request was succesful
 	try

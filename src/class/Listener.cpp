@@ -19,12 +19,12 @@ Listener::Listener(int port) : _port(port)
 
 	// Create the socket
 	if ((_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-		throw std::runtime_error("[Listener::init_socket] Error creating socket with port " + int_to_string(_port));
+		throw std::runtime_error("[Listener::init_socket] Error creating socket with port " + intToString(_port));
 	// Enable the socket to begin listening
 	if (bind(_sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
-		throw std::runtime_error("[Listener::init_socket] Error binding socket with port " + int_to_string(_port));
+		throw std::runtime_error("[Listener::init_socket] Error binding socket with port " + intToString(_port));
 	if (listen(_sockfd, BACKLOG) < 0)
-		throw std::runtime_error("[Listener::init_socket] Error listening socket with port " + int_to_string(_port));
+		throw std::runtime_error("[Listener::init_socket] Error listening socket with port " + intToString(_port));
 	// Set the socket to non-blocking so accept will not block
 	if (fcntl(_sockfd, F_SETFL, O_NONBLOCK) < 0)
 		throw std::runtime_error("[Listener::init_socket] Error fcntl");
@@ -54,7 +54,7 @@ void Listener::addServer(const Server & server)
 	for (std::set<std::string>::const_iterator it = serverNames.begin();
 			it != serverNames.end();++it)
 		if (_serverMap.count(*it) == 1)
-			throw std::runtime_error("[ERROR] Listener " + int_to_string(_port)
+			throw std::runtime_error("[ERROR] Listener " + intToString(_port)
 				+ " has a duplicate hostname: " + *it);
 
 	// Add the server to the vector of servers

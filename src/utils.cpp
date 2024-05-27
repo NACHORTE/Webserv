@@ -40,10 +40,10 @@ static void initext_mime_map()
  * 
  * @example
  * int number = 42;
- * std::string result = int_to_string(number);
+ * std::string result = intToString(number);
  * // Expected result: "42"
  */
-std::string int_to_string(int n)
+std::string intToString(int n)
 {
 	std::stringstream ss;
 	ss << n;

@@ -21,7 +21,7 @@ class Server
 		void setMaxBodySize(size_t clientMaxBodySize);
 		void setIndex(const std::string & index);
 		void setRoot(const std::string & root);
-		void setLocations(const std::vector<Location> & locations);
+		void setLocationContainer(const std::vector<Location> & LocationContainer);
 		void setErrorPages(const std::map<int, std::string> & errorPages);
 
 		void addServerName(const std::string & serverName);
@@ -34,7 +34,7 @@ class Server
 		const std::string & getIndex() const;
 		const std::string & getRoot() const;
 		const std::set<std::string> & getServerNames() const;
-		const std::vector<Location> & getLocations() const;
+		const LocationContainer & getLocationContainer() const;
 		const std::map<int, std::string> & getErrorPages() const;
 
 		void removeClient(Client &client);
@@ -60,15 +60,12 @@ class Server
     	std::string _root;
 		// List of server names that the server will respond to (host header in the request must match one of these names)
     	std::set<std::string> _serverNames;
-		// List of locations for the server
-		std::vector<Location> _locations;
 		// List of error pages for the server
 		std::map<int, std::string> _errorPages;
 		// List of clients the server is generating a response for
 		std::set<Client *> _clients;
-
-		std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> _methodsMap;
-		Locations _allowed_paths;
+		LocationContainer _locations;
+		std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> _methodsMap;
 
 		// _cgiClients holds the list of clients that are waiting for a CGI program to finish
 		struct ClientInfo

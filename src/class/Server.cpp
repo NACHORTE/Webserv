@@ -17,22 +17,22 @@ Server::Server(void)
 
 	std::set<std::string> location_methodsMap;
 	location_methodsMap.insert("GET");
-	_allowed_paths.addLocation("/", true, "/www/html/index.html", location_methodsMap, false);
-	_allowed_paths.addLocation("/index.html", true, "/www/html/index.html", location_methodsMap, false);
-	_allowed_paths.addLocation("/favicon.ico", true, "/www/img/favicon.ico", location_methodsMap, false);
-	_allowed_paths.addLocation("/www/html/", false, "", location_methodsMap, false);
-	_allowed_paths.addLocation("/www/img/", false, "", location_methodsMap, false);
+	_locations.addLocation("/", true, "/www/html/index.html", location_methodsMap, false);
+	_locations.addLocation("/index.html", true, "/www/html/index.html", location_methodsMap, false);
+	_locations.addLocation("/favicon.ico", true, "/www/img/favicon.ico", location_methodsMap, false);
+	_locations.addLocation("/www/html/", false, "", location_methodsMap, false);
+	_locations.addLocation("/www/img/", false, "", location_methodsMap, false);
 
 	location_methodsMap.clear();
 	location_methodsMap.insert("GET");
 	location_methodsMap.insert("DELETE");
-	_allowed_paths.addLocation("/www/upload/", false, "", location_methodsMap, false);
+	_locations.addLocation("/www/upload/", false, "", location_methodsMap, false);
 
 	location_methodsMap.clear();
 	location_methodsMap.insert("GET");
 	location_methodsMap.insert("POST");
-	_allowed_paths.addLocation("/www/upload", true, "", location_methodsMap, false);
-	_allowed_paths.addLocation("/www/bin-cgi/", false, "", location_methodsMap, true);
+	_locations.addLocation("/www/upload", true, "", location_methodsMap, false);
+	_locations.addLocation("/www/bin-cgi/", false, "", location_methodsMap, true);
 }
 
 Server::Server(const Server & src)
@@ -56,7 +56,7 @@ Server &Server::operator=(const Server &rhs)
 		_errorPages = rhs._errorPages;
 		_clients = rhs._clients;
 		_methodsMap = rhs._methodsMap;
-		_allowed_paths = rhs._allowed_paths;
+		_locations = rhs._locations;
 	}
 	return (*this);
 }
@@ -124,7 +124,7 @@ void Server::setIndex(const std::string & index)
 	_index = index;
 }
 
-const std::vector<Location> & Server::getLocations(void) const
+const LocationContainer & Server::getLocationContainer(void) const
 {
 	return (_locations);
 }
@@ -136,7 +136,7 @@ int Server::getClientMaxBodySize(void) const
 
 void Server::addLocation(const Location & location)
 {
-	_locations.push_back(location);
+	_locations.addLocation(location);
 }
 
 void Server::addServerName(const std::string & serverName)
@@ -162,7 +162,7 @@ void Server::loop()
 		if (client.requestReady() && !isCgi(client.getRequest()))
 		{
 			HttpResponse response;
-			response.generate(client.getRequest(), _allowed_paths, _methodsMap);
+			response.generate(client.getRequest(), _locations, _methodsMap);
 			client.setResponse(response);
 			_clients.erase(it--);
 		}
@@ -243,7 +243,7 @@ bool Server::ClientInfo::operator<(const ClientInfo &rhs) const
 
 bool Server::isCgi(const HttpRequest &request) const
 {
-	return (_allowed_paths.isCgi(request.get_path()));
+	return (_locations.isCgi(request.get_path()));
 }
 
 int Server::startCgi(const Client &client)
@@ -329,7 +329,7 @@ char **Server::getPath(const HttpRequest & req)
 	char **output = new char*[2];
 	if (output == NULL)
 		return NULL;
-	std::string filename =_allowed_paths.getFilename(req.get_path());
+	std::string filename =_locations.getFilename(req.get_path());
 	if (filename.empty())
 	{
 		delete[] output;

@@ -2,7 +2,7 @@
 #include <string>
 #include <map>
 
-std::string int_to_string(int n);
+std::string intToString(int n);
 std::string readFile(const std::string& filePath, bool binary = false);
 std::string trim(const std::string& str, const std::string & charset = " \t\n\r\f\v");
 char back(std::string str);
