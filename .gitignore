@@ -23,8 +23,8 @@
 !imgs/**/*
 !upload/**/*
 !**/*.conf
-!**/*.cgi
-
+!www/**/*
+www/upload/*
 #ignore all object files and libraries
 **/*.o
 *.o
