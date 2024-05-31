@@ -13,25 +13,22 @@ LocationContainer::LocationContainer(const LocationContainer & src)
 LocationContainer::~LocationContainer()
 {}
 
-static std::string formatPath(const std::string & path)
+const Location &LocationContainer::getLocation(const std::string & path) const
 {
-	size_t len = path.size();
-	if (len >= 2 && path[0] == '.' && path[1] == '/')
-		return path;
-	if (len >= 1 && path[0] == '/')
-		return std::string (".") + path;
-	return std::string ("./") + path;
+	return operator[](path);
 }
 
 std::string LocationContainer::getFilename(const std::string & path) const
 {
-	for (size_t i = 0; i < _locations.size();++i)
-		if (_locations[i].isPathAllowed(path))
-		{
-			if (_locations[i]._filename == "")
-				return formatPath(path);
-			return formatPath(_locations[i]._filename);
-		}
+	try
+	{
+		const Location & loc = operator[](path);
+		return loc.getFilename(path);
+	}
+	catch (std::runtime_error & e)
+	{
+		return "";
+	}
 	return "";
 }
 
@@ -47,58 +44,11 @@ bool LocationContainer::addLocation(const Location & location)
 	return true;
 }
 
-bool LocationContainer::addLocation(std::string path, bool isFile, std::string filename, std::set<std::string> allowedMethods, bool isCgi)
-{
-	// check if location already exists
-	for (size_t i = 0; i < _locations.size(); ++i)
-		if (_locations[i] == path)
-			return false;
-
-	// add location
-	Location location;
-	location._URI = path;
-	location._isFile = isFile;
-	location._filename = filename;
-	location._allowedMethods = allowedMethods;
-	location._isCgi = isCgi;
-	//location._autoIndex = false; //TODO
-	_locations.push_back(location);
-	return true;
-}
-
-bool LocationContainer::isPathAllowed(const std::string & method, const std::string & path) const
+bool LocationContainer::matchesURI(const std::string & method, const std::string & path) const
 {
 	for (std::vector<Location>::const_iterator i = _locations.begin(); i != _locations.end(); ++i)
-		if (i->isPathAllowed(path) && i->isMethodAllowed(method))
+		if (i->matchesURI(path) && i->isAllowedMethod(method))
 			return true;
-	return false;
-}
-
-bool LocationContainer::pathExists(const std::string & path) const
-{
-	std::vector<Location>::const_iterator i;
-	for (i = _locations.begin(); i != _locations.end(); ++i)
-	{
-		// If is file and path perfectly matches, return true
-		if (i->_isFile && i->_URI == path)
-			return true;
-		// If is folder and path starts with i->_path, return true
-		if (!i->_isFile// if is folder
-			&& path.compare(0, i->_URI.size(), i->_URI) == 0	// if path starts with allowed path
-			&& path.size() > i->_URI.size())	// if path is longer than allowed path (is a file in the directory)
-			return true;
-	}
-	return false;
-}
-
-bool LocationContainer::isCgi(const std::string & path) const
-{
-	std::vector<Location>::const_iterator i;
-	for (i = _locations.begin(); i != _locations.end(); ++i)
-	{
-		if (i->isPathAllowed(path) && i->_isCgi)
-			return true;
-	}
 	return false;
 }
 
@@ -111,15 +61,27 @@ LocationContainer &LocationContainer::operator=(const LocationContainer &rhs)
 	return (*this);
 }
 
-Location &LocationContainer::operator[](const std::string & path)
+const Location &LocationContainer::operator[](const std::string & path) const
 {
-	for (size_t i = 0; i < _locations.size(); ++i)
-		if (_locations[i] == path)
-			return _locations[i];
-	throw std::out_of_range("Location not found for path: " + path);
+	const Location *bestMatch = NULL;
+
+	for (size_t i = 0; i < _locations.size();++i)
+	{
+		if (_locations[i].matchesURI(path))
+		{
+			if (!bestMatch)
+				bestMatch = &_locations[i];
+			else if (_locations[i].getURI().size() > bestMatch->getURI().size()
+				|| _locations[i].isFile())
+				bestMatch = &_locations[i];
+		}
+	}
+	if (!bestMatch)
+		throw std::runtime_error("No location found for path: " + path);
+	return *bestMatch;
 }
 
-Location & LocationContainer::operator[](size_t index)
+const Location & LocationContainer::operator[](size_t index) const
 {
 	return _locations[index];
 }

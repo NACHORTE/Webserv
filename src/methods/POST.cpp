@@ -116,7 +116,8 @@ static int createFile(const MultipartForm & form, const HttpRequest & req, const
 		return -1;
 
 	// Get the path of the file and open it
-	std::string filename = valid_paths.getFilename(req.get_path()) + "/" + form.filename;
+	std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find('?'))));
+	std::string filename = valid_paths.getFilename(path) + "/" + form.filename;
 	std::ofstream file(filename.c_str());
 	
 	// If the file couldn't be opened, return -1

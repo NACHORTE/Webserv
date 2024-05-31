@@ -3,9 +3,9 @@
 #include <vector>
 #include <iostream>
 #include "HttpRequest.hpp"
-#include "LocationContainer.hpp"
 #include <map>
 
+class LocationContainer;
 class HttpResponse {
 	public:
 	// Constructor, destructor, copy constructor

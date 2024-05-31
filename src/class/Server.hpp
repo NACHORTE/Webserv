@@ -1,10 +1,10 @@
 #pragma once
 #include <iostream>
 #include <map>
-#include "Location.hpp"
 #include "Client.hpp"
 #include <list>
 #include <set>
+#include "LocationContainer.hpp"
 
 class Server
 {
@@ -61,7 +61,7 @@ class Server
 		// List of server names that the server will respond to (host header in the request must match one of these names)
     	std::set<std::string> _serverNames;
 		// List of error pages for the server
-		std::map<int, std::string> _errorPages;
+		std::map<int, std::string> _errorPages; // TODO: Implement error pages
 		// List of clients the server is generating a response for
 		std::set<Client *> _clients;
 		LocationContainer _locations;
@@ -84,7 +84,7 @@ class Server
 	// Private member functions
 
 		// check whether a request is for a CGI program
-		bool isCgi(const HttpRequest &request) const;
+		bool isCgi(const HttpRequest &request);
 		// start a CGI program (fork, execve, pipe, etc.)
 		int startCgi(const Client &client);
 		HttpResponse cgiResponse(const ClientInfo &clientInfo) const;

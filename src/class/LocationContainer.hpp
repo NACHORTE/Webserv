@@ -16,22 +16,22 @@ class LocationContainer
 
 	// Setters and getters
 
-		std::string getFilename(const std::string & path) const; // returns the filename associated with the path. Returns empty string if no match is found
-
+		// Get the location that best matches the path (throws if no match is found) O(n)
+		const Location & getLocation(const std::string & path) const;
 	// Member functions
 
+		// returns the filename that best matches the path. Returns empty string if no match is found
+		std::string getFilename(const std::string & path) const; 
 		bool addLocation(const Location & location);
-		bool addLocation(std::string path, bool isFile, std::string filename, std::set<std::string> allowedMethods, bool isCgi);
-		bool isPathAllowed(const std::string & method, const std::string & path) const;
-		bool pathExists(const std::string & path) const;
-		bool isCgi(const std::string & path) const;
-		size_t count(const std::string & path) const;
+		bool matchesURI(const std::string & method, const std::string & path) const; // NOTE MAYBE NOT NEEDED, getFilename checks too
 
 	// Operator overloads
 
 		LocationContainer & operator=(const LocationContainer & rhs);
-		Location & operator[](const std::string & path);
-		Location & operator[](size_t index);
+		// Get the location that best matches the path (throws if no match is found) O(n)
+		const Location & operator[](const std::string & path) const;
+		// Get the location at index (throws if index is out of bounds) O(1)
+		const Location & operator[](size_t index) const;
 
 	protected:
 	private:

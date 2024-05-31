@@ -4,9 +4,10 @@
 #include <map>
 #include <fstream>
 #include "colors.h"
+#include "LocationContainer.hpp"
 
-std::map<int, std::string> _errorPages;
-extern int g_count;
+
+std::map<int, std::string> _errorPages; //XXX delete this
 /**
  * @brief Initializes the static error pages map in the HttpResponse class.
  * 
@@ -298,11 +299,21 @@ void HttpResponse::generate(
 		return (void)(*this = error(405, "Method Not Allowed"), _responseReady = true);
 
 	// If path does not exist, return 404 Not Found
-	if (valid_paths.pathExists(req.get_path()) == false)
+	std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find('?'))));
+	std::cout << "Path: " << path << std::endl; //XXX
+	Location loc;
+	try
+	{
+		loc = valid_paths[path];
+		std::cout << "Here" << std::endl; //XXX
+	}
+	catch(const std::exception& e)
+	{
 		return (void)(*this = error(404, "Not Found"), _responseReady = true);
-
+	}
+	
 	// If request is not valid, return 403 Forbidden
-	if (valid_paths.isPathAllowed(req.get_method(), req.get_path()) == false)
+	if (loc.isAllowedMethod(req.get_method()) == false)
 		return (void)(*this = error(403, "Forbidden"), _responseReady = true);
 
 	// Generate response with the appropriate method
