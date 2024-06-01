@@ -101,22 +101,23 @@ static std::vector<MultipartForm> parseMultipartForm(const std::string& body, st
  * @param form The MultipartForm structure containing the data to write to the
  *             file.
  * @param req The HttpRequest object containing the request data.
- * @param valid_paths The Locations object containing the valid paths.
+ * @param valid_paths The LocationContainer object containing the valid paths.
  *
  * @return 0 on success, -1 on failure.
  *
  * @see MultipartForm
  * @see HttpRequest
- * @see Locations
+ * @see LocationContainer
  */
-static int createFile(const MultipartForm & form, const HttpRequest & req, const Locations & valid_paths)
+static int createFile(const MultipartForm & form, const HttpRequest & req, const LocationContainer & valid_paths)
 {
 	// If the filename contains .., return -1
 	if (form.filename.find("..") != std::string::npos)
 		return -1;
 
 	// Get the path of the file and open it
-	std::string filename = valid_paths.getFilename(req.get_path()) + "/" + form.filename;
+	std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find('?'))));
+	std::string filename = valid_paths.getFilename(path) + "/" + form.filename;
 	std::ofstream file(filename.c_str());
 	
 	// If the file couldn't be opened, return -1
@@ -129,7 +130,7 @@ static int createFile(const MultipartForm & form, const HttpRequest & req, const
 	return 0;
 }
 
-HttpResponse POST(const HttpRequest & req, const Locations & valid_paths)
+HttpResponse POST(const HttpRequest & req, const LocationContainer & valid_paths)
 {
 	// TODO ADD extension to uploaded files
 	// TODO manage upload file size

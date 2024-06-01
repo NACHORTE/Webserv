@@ -17,7 +17,6 @@
 #include "defines.h"
 #include "colors.h"
 #include "utils.hpp"
-#include "set_config.hpp"
 #include "Webserv.hpp"
 
 #define DEFAULT_CONFIG_FILE "config/default.conf"

@@ -2,25 +2,21 @@
 #include "utils.hpp"
 #include <iostream>
 
-HttpResponse GET(const HttpRequest & req, const Locations & valid_paths)
+HttpResponse GET(const HttpRequest & req, const LocationContainer & valid_paths)
 {
 	HttpResponse ret;
 
 	// Get the path without the query string
 	std::string path = req.get_path();
-	path = path.substr(0, path.find('?'));
-
+	path = cleanPath(decodeURL(path.substr(0, path.find('?'))));
+	std::cout << "GET PATH: " << path << std::endl; //XXX
 	// Get the path of the requested file
 	std::string filename = valid_paths.getFilename(path);
-
-	// If the file ends with ".cgi", run the file and return the output
-	if (getExtension(path) == "cgi")
+	std::cout << "GET FILENAME: " << filename << std::endl; //XXX
+	if (filename.empty())
 	{
-		//char **envp = getEnvp(req.get_path());
-		//something with fork and execve
-		return HttpResponse::error(501, "Not Implemented", "CGI is not implemented yet");
+		return HttpResponse::error(404, "Not Found", "File not found");
 	}
-
 	// The request was succesful
 	try
 	{

@@ -4,9 +4,10 @@
 #include <map>
 #include <fstream>
 #include "colors.h"
+#include "LocationContainer.hpp"
 
-std::map<int, std::string> _errorPages;
-extern int g_count;
+
+std::map<int, std::string> _errorPages; //XXX delete this
 /**
  * @brief Initializes the static error pages map in the HttpResponse class.
  * 
@@ -37,15 +38,15 @@ HttpResponse::HttpResponse(const HttpResponse& other)
  * valid paths, and valid methods.
  * 
  * @param req The HttpRequest object representing the incoming request.
- * @param valid_paths The Locations object containing valid paths and their associated methods.
+ * @param valid_paths The LocationContainer object containing valid paths and their associated methods.
  * @param valid_methods A map of valid methods along with their corresponding functions.
  * 
  * @see generate
  */
 HttpResponse::HttpResponse(
 	const HttpRequest& req,
-	const Locations & valid_paths,
-	const std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> & valid_methods)
+	const LocationContainer & valid_paths,
+	const std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> & valid_methods)
 {
 	generate(req, valid_paths, valid_methods);
 }
@@ -63,7 +64,7 @@ HttpResponse::~HttpResponse()
  */
 void HttpResponse::setStatus(int code, const std::string& phrase)
 {
-	this->_status_code = int_to_string(code);
+	this->_status_code = intToString(code);
 	if (phrase.length() > 0)
 		this->_status_phrase = phrase;
 	else
@@ -123,7 +124,7 @@ void HttpResponse::unsetHeader(const std::string& key)
  * 
  * @see setHeader
  * @see unsetHeader
- * @see int_to_string
+ * @see intToString
  */
 void HttpResponse::setBody(const std::string& content_type, const std::string& body)
 {
@@ -133,7 +134,7 @@ void HttpResponse::setBody(const std::string& content_type, const std::string& b
 	if (_body.length() > 0)
 	{
 		setHeader("Content-Type", content_type);
-		setHeader("Content-Length", int_to_string(_body.length()));
+		setHeader("Content-Length", intToString(_body.length()));
 	}
 }
 
@@ -278,7 +279,7 @@ std::string HttpResponse::to_string() const
  * HTTP response with the corresponding error status code.
  * 
  * @param req The HttpRequest object representing the incoming request.
- * @param valid_paths The Locations object containing valid paths and their associated methods.
+ * @param valid_paths The LocationContainer object containing valid paths and their associated methods.
  * @param valid_methods A map of valid methods along with their corresponding functions.
  * 
  * @note The function relies on the error() function to generate error responses when necessary.
@@ -287,8 +288,8 @@ std::string HttpResponse::to_string() const
  */
 void HttpResponse::generate(
 	const HttpRequest & req,
-	const Locations & valid_paths,
-	const std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> & valid_methods)
+	const LocationContainer & valid_paths,
+	const std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> & valid_methods)
 {
 	// Empty everything
 	clear();
@@ -298,11 +299,21 @@ void HttpResponse::generate(
 		return (void)(*this = error(405, "Method Not Allowed"), _responseReady = true);
 
 	// If path does not exist, return 404 Not Found
-	if (valid_paths.pathExists(req.get_path()) == false)
+	std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find('?'))));
+	std::cout << "Path: " << path << std::endl; //XXX
+	Location loc;
+	try
+	{
+		loc = valid_paths[path];
+		std::cout << "Here" << std::endl; //XXX
+	}
+	catch(const std::exception& e)
+	{
 		return (void)(*this = error(404, "Not Found"), _responseReady = true);
-
+	}
+	
 	// If request is not valid, return 403 Forbidden
-	if (valid_paths.isPathAllowed(req.get_method(), req.get_path()) == false)
+	if (loc.isAllowedMethod(req.get_method()) == false)
 		return (void)(*this = error(403, "Forbidden"), _responseReady = true);
 
 	// Generate response with the appropriate method

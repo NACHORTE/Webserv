@@ -3,9 +3,9 @@
 #include <vector>
 #include <iostream>
 #include "HttpRequest.hpp"
-#include "Locations.hpp"
 #include <map>
 
+class LocationContainer;
 class HttpResponse {
 	public:
 	// Constructor, destructor, copy constructor
@@ -13,8 +13,8 @@ class HttpResponse {
 		HttpResponse(HttpResponse const & src);
 		HttpResponse(
 			HttpRequest const & req,
-			const Locations & valid_paths,
-			const std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> & valid_methods);
+			const LocationContainer & valid_paths,
+			const std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> & valid_methods);
 		~HttpResponse();
 
 	// getters, setters
@@ -36,8 +36,8 @@ class HttpResponse {
 		std::string to_string() const;
 		void generate(
 			const HttpRequest & req,
-			const Locations & valid_paths,
-			const std::map<std::string, HttpResponse (*)(const HttpRequest &, const Locations &)> & valid_methods);
+			const LocationContainer & valid_paths,
+			const std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> & valid_methods);
 		static HttpResponse error(
 			int code,
 			const std::string & phrase = "",

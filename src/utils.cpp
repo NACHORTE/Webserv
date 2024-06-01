@@ -5,6 +5,9 @@
 #include <vector>
 #include <map>
 #include <cctype>
+#include <list>
+#include <sys/stat.h>
+#include <dirent.h>
 
 static std::map<std::string, std::string> _ext_mime_map;
 
@@ -40,10 +43,10 @@ static void initext_mime_map()
  * 
  * @example
  * int number = 42;
- * std::string result = int_to_string(number);
+ * std::string result = intToString(number);
  * // Expected result: "42"
  */
-std::string int_to_string(int n)
+std::string intToString(int n)
 {
 	std::stringstream ss;
 	ss << n;
@@ -100,7 +103,7 @@ std::string trim(const std::string& str, const std::string & charset)
 {
     size_t first = str.find_first_not_of(charset);
     if (std::string::npos == first)
-        return str;
+        return "";
     size_t last = str.find_last_not_of(charset);
     return str.substr(first, (last - first + 1));
 }
@@ -371,6 +374,21 @@ std::string decodeURL(std::string str)
 	return str;
 }
 
+/**
+ * @brief Duplicates a string.
+ * 
+ * This function creates a copy of the input string on the heap and returns a pointer to it.
+ * 
+ * @param str The string to duplicate.
+ * @return A pointer to the duplicated string.
+ * 
+ * @note The caller is responsible for freeing the memory allocated by this function.
+ * 
+ * @example
+ * std::string str = "Hello, world!";
+ * char *dup = strdup(str);
+ * // dup now points to a copy of the string "Hello, world!"
+ */
 char *strdup(const std::string & str)
 {
 	char *ret = new char[str.size() + 1];
@@ -380,4 +398,127 @@ char *strdup(const std::string & str)
 		ret[i] = str[i];
 	ret[str.size()] = '\0';
 	return ret;
+}
+
+/* 
+ * Joins two paths together, removing any unnecessary slashes.
+ * 
+ * @param path1 The first path to join.
+ * @param path2 The second path to join.
+ * @return The combined path.
+ * 
+ * @example
+ * std::string path1 = "./hola//que tal/./bien/";
+ * std::string path2 = "////muy bien/../todo bien/";
+ * std::string result = joinPath(path1, path2);
+ * // Result: "hola/que tal/bien/todo bien"
+ */
+std::string joinPath(const std::string & path1, const std::string & path2)
+{
+	std::list<std::string> parts;
+
+	for (size_t i = 0; i< path1.size();)
+	{
+		if (path1[i] == '/')
+		{
+			i++;
+			continue;
+		}
+		size_t j = path1.find('/', i);
+		if (j == std::string::npos)
+		{
+			parts.push_back(path1.substr(i));
+			break;
+		}
+		parts.push_back(path1.substr(i, j - i));
+		i = j + 1;
+	}
+	for (size_t i = 0; i< path2.size();)
+	{
+		size_t j = path2.find('/', i);
+		if (j == std::string::npos)
+		{
+			parts.push_back(path2.substr(i));
+			break;
+		}
+		parts.push_back(path2.substr(i, j - i));
+		i = j + 1;
+	}
+	std::string result;
+	for (std::list<std::string>::iterator it = parts.begin(); it != parts.end(); ++it)
+	{
+		if (*it == "." || *it == "")
+			continue;
+		if (!result.empty())
+			result += '/';
+		result += *it;
+	}
+	if (path1.size() > 0 && path1[0] == '/')
+		return '/' + result;
+	return result;
+}
+
+/* 
+ * Cleans a path by removing any unnecessary slashes and ".".
+ * 
+ * @param path The path to clean.
+ * @return The cleaned path.
+ * 
+ * @example
+ * std::string path = "./hola//que tal/./bien/";
+ * std::string result = cleanPath(path);
+ * // Result: "hola/que tal/bien"
+ */
+std::string cleanPath(const std::string & path)
+{
+	std::list<std::string> parts;
+
+	for (size_t i = 0; i< path.size();)
+	{
+		if (path[i] == '/')
+		{
+			i++;
+			continue;
+		}
+		size_t j = path.find('/', i);
+		if (j == std::string::npos)
+		{
+			parts.push_back(path.substr(i));
+			break;
+		}
+		parts.push_back(path.substr(i, j - i));
+		i = j + 1;
+	}
+	std::string result;
+	for (std::list<std::string>::iterator it = parts.begin(); it != parts.end(); ++it)
+	{
+		if (*it == "." || *it == "")
+			continue;
+		if (!result.empty())
+			result += '/';
+		result += *it;
+	}
+	if (path.size() > 0 && path[0] == '/')
+		return '/' + result;
+	return result;
+}
+
+/* 
+ * Checks if a path is a directory.
+ * 
+ * @param path The path to check.
+ * @return True if the path is a directory, false otherwise.
+ * 
+ * @example
+ * std::string path = "./src/utils.cpp";
+ * if (isDir(path))
+ *     std::cout << "The path is a directory." << std::endl;
+ * else
+ *     std::cout << "The path is not a directory." << std::endl;
+ */
+bool isDir(const std::string& ruta) {
+    struct stat estado;
+    if (stat(ruta.c_str(), &estado) != 0)
+        return false;
+    return S_ISDIR(estado.st_mode);
 }
