@@ -53,22 +53,24 @@ class Server
 		// Port number that the server will listen to
 		int _port;
 		// Maximum body size that the server will accept
-		size_t _maxBodySize;
+		size_t _maxBodySize; // TODO No va aun
 		// Default file to serve when the request is for a directory
-    	std::string _index;
+    	std::string _index; //XXX FUERA DE AQUI (aunque debería funcionar)
 		// Root directory for the server
-    	std::string _root;
+    	std::string _root; // TODO No va aun
 		// List of server names that the server will respond to (host header in the request must match one of these names)
     	std::set<std::string> _serverNames;
 		// List of error pages for the server
 		std::map<int, std::string> _errorPages; // TODO: Implement error pages
 		// List of clients the server is generating a response for
 		std::set<Client *> _clients;
+		// List of locations that the server will serve
 		LocationContainer _locations;
+		// Map of the methods the server can handle (GET, POST, DELETE)
 		std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> _methodsMap;
 
 		// _cgiClients holds the list of clients that are waiting for a CGI program to finish
-		struct ClientInfo
+		struct ClientInfo //TODO esto a otra clase alomejor no se
 		{
 			ClientInfo();
 			ClientInfo(const Client &client, int pid = -1, int fdIn = -1, int fdOut = -1);
