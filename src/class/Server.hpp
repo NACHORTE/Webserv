@@ -25,7 +25,7 @@ class Server
 		void setErrorPages(const std::map<int, std::string> & errorPages);
 
 		void addServerName(const std::string & serverName);
-		void addLocation(const Location & location);
+		void addLocation(Location location);
 		void addErrorPage(const std::string & errorPage);
 		void addClient(Client &client);
 

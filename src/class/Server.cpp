@@ -20,33 +20,31 @@ Server::Server(void)
 
 	Location loc;
 	loc.setURI("/");
-	loc.setAlias("/www/html/index.html");
+	loc.setAlias("/html/index.html");
 	loc.setAllowedMethods(location_methodsMap);
-	_locations.addLocation(loc);
+	addLocation(loc);
 	loc.clear();
 
 	loc.setURI("/index.html");
-	loc.setAlias("/www/html/index.html");
+	loc.setAlias("/html/index.html");
 	loc.setAllowedMethods(location_methodsMap);
-	_locations.addLocation(loc);
+	addLocation(loc);
 	loc.clear();
 
 	loc.setURI("/favicon.ico");
-	loc.setRoot("/www/img/");
+	loc.setAlias("/img/favicon.ico");
 	loc.setAllowedMethods(location_methodsMap);
-	_locations.addLocation(loc);
+	addLocation(loc);
 	loc.clear();
 
 	loc.setURI("/html/");
-	loc.setRoot("/www/");
 	loc.setAllowedMethods(location_methodsMap);
-	_locations.addLocation(loc);
+	addLocation(loc);
 	loc.clear();
 
 	loc.setURI("/img/");
-	loc.setRoot("/www/");
 	loc.setAllowedMethods(location_methodsMap);
-	_locations.addLocation(loc);
+	addLocation(loc);
 	loc.clear();
 
 	location_methodsMap.clear();
@@ -54,9 +52,8 @@ Server::Server(void)
 	location_methodsMap.insert("DELETE");
 
 	loc.setURI("/upload/");
-	loc.setRoot("/www/");
 	loc.setAllowedMethods(location_methodsMap);
-	_locations.addLocation(loc);
+	addLocation(loc);
 	loc.clear();
 
 	location_methodsMap.clear();
@@ -64,16 +61,14 @@ Server::Server(void)
 	location_methodsMap.insert("POST");
 
 	loc.setURI("/upload/");
-	loc.setRoot("/www/");
 	loc.setAllowedMethods(location_methodsMap);
-	_locations.addLocation(loc);
+	addLocation(loc);
 	loc.clear();
 
 	loc.setURI("/bin-cgi/");
-	loc.setRoot("/www/");
 	loc.setAllowedMethods(location_methodsMap);
 	loc.isCgi(true);
-	_locations.addLocation(loc);
+	addLocation(loc);
 }
 
 Server::Server(const Server & src)
@@ -187,8 +182,17 @@ int Server::getClientMaxBodySize(void) const
 	return (_maxBodySize);
 }
 
-void Server::addLocation(const Location & location)
+void Server::addLocation(Location location)
 {
+	// If the server has a root, merge it with the location's root (this->_root + location->_root)
+	if (!_root.empty() && location.getAlias().empty())
+		location.setRoot(joinPath(_root, location.getRoot()));
+	// If the server has an alias add the root of the server to it
+	if (!_root.empty() && !location.getAlias().empty())
+		location.setAlias(joinPath(_root, location.getAlias()));
+	// If the server has an index and the location doesn't, set the index from the server 
+	if (!_index.empty() && location.getIndex().empty())
+		location.setIndex(joinPath(_root, location.getIndex()));
 	_locations.addLocation(location);
 }
 
@@ -256,7 +260,6 @@ void Server::removeClient(Client &client)
 	if (_cgiClients.count(ClientInfo(client)) == 1)
 	{
 		const ClientInfo & cgiClient = *(_cgiClients.find(ClientInfo(client)));
-		std::cout << "killing process  "<< cgiClient._pid << " from client " <<client.getIP()<<":"<<client.getPort() << std::endl; //XXX
 		kill(cgiClient._pid, SIGKILL);
 		close(cgiClient._fdOut);
 		close(cgiClient._fdIn);
