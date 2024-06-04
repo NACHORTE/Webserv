@@ -69,6 +69,17 @@ Server::Server(void)
 	loc.setAllowedMethods(location_methodsMap);
 	loc.isCgi(true);
 	addLocation(loc);
+	loc.clear();
+
+	loc.setURI("/google.com");
+	loc.setReturnValue(301, "https://www.google.com");
+	addLocation(loc);
+	loc.clear();
+
+	loc.setURI("/titer");
+	loc.setReturnValue(301,"https://x.com/");
+	addLocation(loc);
+	loc.clear();
 }
 
 Server::Server(const Server & src)
@@ -215,23 +226,49 @@ void Server::loop()
 			continue;
 		}
 
-		// If the client has a static request, generate a response from a file
-		if (client.requestReady() && !isCgi(client.getRequest()))
+		if (client.requestReady())
 		{
-			HttpResponse response;
-			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " URI " << client.getRequest().get_path() << std::endl; //XXX
-			response.generate(client.getRequest(), _locations, _methodsMap);
-			client.setResponse(response);
-			_clients.erase(it--);
-		}
-		// If the client has a CGI request, start the CGI process
-		else if (_cgiClients.count(ClientInfo(client)) == 0
-				&& client.requestReady() && isCgi(client.getRequest()))
-			if (startCgi(client) != 0)
+			std::string path = client.getRequest().get_path();
+			path = cleanPath(decodeURL(path.substr(0, path.find("?"))));
+
+			Location loc;
+			if (loc.matchesURI(path))
+				loc = _locations[path];
+			else
 			{
-				client.setResponse(HttpResponse::error(500)); //TODO return error from _errorPages
+				HttpResponse response = HttpResponse::error(404);
+				client.setResponse(response);
 				_clients.erase(it--);
+				continue;
 			}
+
+			if (loc.hasReturnValue())
+			{
+				std::cout << YELLOW << "RETURNING REDIRECTION" << RESET << std::endl; //XXX
+				client.setResponse(loc.getReturnResponse());
+				std::cout << GREEN << client.getResponse() << RESET << std::endl; //XXX
+				_clients.erase(it--);
+				std::cout << YELLOW << "RETURNED REDIRECTION" << RESET << std::endl; //XXX
+				continue;
+			}
+			if (!loc.isCgi())
+			{
+				HttpResponse response;
+				std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " URI " << client.getRequest().get_path() << std::endl; //XXX
+				response.generate(client.getRequest(), _locations, _methodsMap);
+				client.setResponse(response);
+				_clients.erase(it--);
+				continue;
+			}
+			else if (_cgiClients.count(ClientInfo(client)) == 0)
+			{
+				if (startCgi(client) != 0)
+				{
+					client.setResponse(HttpResponse::error(500));
+					_clients.erase(it--);
+				}
+			}
+		}
 	}
 
 	// Check if any CGI processes have finished

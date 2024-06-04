@@ -239,7 +239,11 @@ HttpResponse Location::getReturnResponse(void) const
 	if (_returnValue.first == -1)
 		return HttpResponse::error(500,"not_OK","Tried to redirect to a location with no return value");
 	response.setStatus(_returnValue.first);
-	response.setBody(_returnValue.second);
+	if (_returnValue.first == 301 || _returnValue.first == 302)
+		response.setHeader("Location",_returnValue.second);
+	else
+		response.setBody("text/plain",_returnValue.second);
+	response.setReady(true);
 	return response;
 }
 
