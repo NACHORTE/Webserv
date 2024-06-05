@@ -6,22 +6,6 @@
 #include "colors.h"
 #include "LocationContainer.hpp"
 
-
-std::map<int, std::string> _errorPages; //XXX delete this
-/**
- * @brief Initializes the static error pages map in the HttpResponse class.
- * 
- * Checks if the error pages map is already initialized. If not, populates it with
- * default error pages for HTTP status codes 404 and 500.
- */
-static void initErrorPages()
-{
-	if (_errorPages.size() > 0)
-		return;
-	_errorPages[404] = "./www/html/404.html";
-	_errorPages[500] = "./www/html/500.html";
-}
-
 HttpResponse::HttpResponse()
 {
 	_responseReady = false;
@@ -356,9 +340,6 @@ HttpResponse HttpResponse::error(	// generate a default error page
 {
 	HttpResponse ret;
 
-	// Initialize the error pages map
-	initErrorPages();
-
 	// Set the status code and phrase
 	ret.setStatus(code, phrase);
 	
@@ -378,7 +359,7 @@ HttpResponse HttpResponse::error(	// generate a default error page
 			ret.setBody("text/html", "<html><body><h1>" + ret.getStatusCode() + " "
 				+ ret.getStatusPhrase() + "</h1><p>" + msg + "</p></body></html>");
 	}
-
+	ret.setReady(true);
 	return ret;	
 }
 

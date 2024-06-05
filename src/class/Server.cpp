@@ -85,6 +85,14 @@ Server::Server(void)
 	loc.setReturnValue(301,"https://x.com/");
 	addLocation(loc);
 	loc.clear();
+
+	addErrorPage(403,"/error/403.html");
+
+	addErrorPage(404,"/error/404.html");
+	addErrorPage(404,"/error/404.htm");
+
+	addErrorPage(500,"/error/500.html");
+	addErrorPage(500,"/error/500.htm");
 }
 
 Server::Server(const Server & src)
@@ -168,14 +176,22 @@ void Server::setRoot(const std::string & root)
 		_root = root;
 }
 
-const std::map<int, std::list<std::string> > & Server::getErrorPages() const
+const std::map<int, std::set<std::string> > & Server::getErrorPages() const
 {
 	return (_errorPages);
 }
 
-void Server::setErrorPages(const std::map<int, std::list<std::string> > & errorPages)
+void Server::setErrorPages(const std::map<int, std::set<std::string> > & errorPages)
 {
 	_errorPages = errorPages;
+}
+
+void Server::addErrorPage(int error_code, const std::string & errorPage)
+{
+	if (_root.empty())
+		_errorPages[error_code].insert(errorPage);
+	else
+		_errorPages[error_code].insert(joinPath(_root, errorPage));
 }
 
 const std::string & Server::getIndex(void) const
@@ -236,7 +252,7 @@ void Server::loop()
 			// Get the path of the request
 			std::string path = client.getRequest().get_path();
 			path = cleanPath(decodeURL(path.substr(0, path.find("?"))));
-			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " URI " << client.getRequest().get_path() << std::endl; //XXX
+			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " URI " << path << std::endl; //XXX
 
 			// Check if the path matches a location, if not return a 404 error
 			Location loc;
@@ -244,8 +260,15 @@ void Server::loop()
 				loc = _locations[path];
 			else
 			{
-				HttpResponse response = HttpResponse::error(404); //TODO return error from _errorPages
-				client.setResponse(response);
+				client.setResponse(errorResponse(404));
+				_clients.erase(it--);
+				continue;
+			}
+			
+			// If the method is not allowed for the location, return a 405 error
+			if (loc.isAllowedMethod(client.getRequest().get_method()) == false)
+			{
+				client.setResponse(errorResponse(405));
 				_clients.erase(it--);
 				continue;
 			}
@@ -269,7 +292,7 @@ void Server::loop()
 			// Else is a CGI, start the cgi program
 			else if (startCgi(client) != 0)
 			{
-				client.setResponse(HttpResponse::error(500));
+				client.setResponse(errorResponse(500));
 				_clients.erase(it--);
 			}
 		}
@@ -343,7 +366,8 @@ bool Server::isCgi(const HttpRequest &request)
 {
 	std::string path = request.get_path().substr(0, request.get_path().find("?"));
 	path = cleanPath(decodeURL(path));
-	try{
+	try
+	{
 		const Location & loc = _locations[path];
 		return loc.isCgi();
 	}
@@ -496,4 +520,29 @@ char **Server::getEnv(const HttpRequest & req)
 	}
 
 	return output;
+}
+
+HttpResponse Server::errorResponse(int error) const
+{
+	// If there is no error page for the error, return the default error page
+	if (_errorPages.count(error) == 0)
+		return HttpResponse::error(error);
+
+	// Return the first page that matches a location
+	std::set<std::string> errorPages = _errorPages.at(error);
+	for (std::set<std::string>::iterator it = errorPages.begin(); it != errorPages.end(); ++it)
+	{
+		try
+		{
+			HttpResponse response;
+			std::string path = *it;
+			response.setStatus(error);
+			response.setBody(path);
+			response.setReady(true);
+			return response;
+		}
+		catch(const std::exception& e)
+		{}
+	}
+	return HttpResponse::error(error);
 }

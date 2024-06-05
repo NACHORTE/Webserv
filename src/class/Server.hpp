@@ -22,7 +22,8 @@ class Server
 		void setIndex(const std::string & index);
 		void setRoot(const std::string & root);
 		void setLocationContainer(const std::vector<Location> & LocationContainer);
-		void setErrorPages(const std::map<int, std::list<std::string> > & errorPages);
+		void setErrorPages(const std::map<int, std::set<std::string> > & errorPages);
+		void addErrorPage(int error_code, const std::string & errorPage);
 
 		void addServerName(const std::string & serverName);
 		void addLocation(Location l0ocation);
@@ -35,7 +36,7 @@ class Server
 		const std::string & getRoot() const;
 		const std::set<std::string> & getServerNames() const;
 		const LocationContainer & getLocationContainer() const;
-		const std::map<int, std::list<std::string> > & getErrorPages() const;
+		const std::map<int, std::set<std::string> > & getErrorPages() const;
 
 		void removeClient(Client &client);
 
@@ -61,7 +62,7 @@ class Server
 		// List of server names that the server will respond to (host header in the request must match one of these names)
     	std::set<std::string> _serverNames;
 		// List of error pages for the server
-		std::map<int, std::list<std::string> > _errorPages; // TODO: Implement error pages
+		std::map<int, std::set<std::string> > _errorPages; // TODO: Implement error pages
 		// List of clients the server is generating a response for
 		std::set<Client *> _clients;
 		// List of locations that the server will serve
@@ -90,6 +91,7 @@ class Server
 		// start a CGI program (fork, execve, pipe, etc.)
 		int startCgi(const Client &client);
 		HttpResponse cgiResponse(const ClientInfo &clientInfo) const;
+		HttpResponse errorResponse(int error_code) const;
 
 		char **getPath(const HttpRequest & req);
 		char **getEnv(const HttpRequest & req);
