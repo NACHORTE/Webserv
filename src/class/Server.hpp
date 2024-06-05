@@ -22,10 +22,10 @@ class Server
 		void setIndex(const std::string & index);
 		void setRoot(const std::string & root);
 		void setLocationContainer(const std::vector<Location> & LocationContainer);
-		void setErrorPages(const std::map<int, std::string> & errorPages);
+		void setErrorPages(const std::map<int, std::list<std::string> > & errorPages);
 
 		void addServerName(const std::string & serverName);
-		void addLocation(Location location);
+		void addLocation(Location l0ocation);
 		void addErrorPage(const std::string & errorPage);
 		void addClient(Client &client);
 
@@ -35,7 +35,7 @@ class Server
 		const std::string & getRoot() const;
 		const std::set<std::string> & getServerNames() const;
 		const LocationContainer & getLocationContainer() const;
-		const std::map<int, std::string> & getErrorPages() const;
+		const std::map<int, std::list<std::string> > & getErrorPages() const;
 
 		void removeClient(Client &client);
 
@@ -55,13 +55,13 @@ class Server
 		// Maximum body size that the server will accept
 		size_t _maxBodySize; // TODO No va aun
 		// Default file to serve when the request is for a directory
-    	std::string _index; //XXX FUERA DE AQUI (aunque debería funcionar)
+    	std::string _index;
 		// Root directory for the server
-    	std::string _root; // TODO No va aun
+    	std::string _root;
 		// List of server names that the server will respond to (host header in the request must match one of these names)
     	std::set<std::string> _serverNames;
 		// List of error pages for the server
-		std::map<int, std::string> _errorPages; // TODO: Implement error pages
+		std::map<int, std::list<std::string> > _errorPages; // TODO: Implement error pages
 		// List of clients the server is generating a response for
 		std::set<Client *> _clients;
 		// List of locations that the server will serve

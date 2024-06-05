@@ -300,12 +300,10 @@ void HttpResponse::generate(
 
 	// If path does not exist, return 404 Not Found
 	std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find('?'))));
-	std::cout << "Path: " << path << std::endl; //XXX
 	Location loc;
 	try
 	{
 		loc = valid_paths[path];
-		std::cout << "Here" << std::endl; //XXX
 	}
 	catch(const std::exception& e)
 	{

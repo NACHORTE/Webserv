@@ -4,27 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Display</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            text-align: center;
-        }
-
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-    </style>
+    <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
     <h1>El Rodek que no trabaja</h1>
     <img src="/img/goku.jpg" alt="Sample Image">
+    
     <form action="/upload" method="post" enctype="multipart/form-data">
         <input type="file" name="file" accept="image/*">
         <input type="text" name="data1">
         <input type="submit">
     </form>
+
+    <form action="/google.com" method="get">
+        <button type="submit">Nos vamos a Google</button>
+    </form>
+
+    <form action="/titer" method="get">
+        <button type="submit">Nos vamos a Titer</button>
+    </form>
+
+    <form id="postForm" method="post">
+        <input type="text" id="postPath" placeholder="Enter path" required>
+        <button type="button" onclick="submitPostForm()">Enviar POST</button>
+    </form>
+
+    <script>
+        function submitPostForm() {
+            const form = document.getElementById('postForm');
+            const path = document.getElementById('postPath').value;
+            form.action = path;
+            form.submit();
+        }
+    </script>
 </body>
 </html>
-

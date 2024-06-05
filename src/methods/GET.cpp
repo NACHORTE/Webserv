@@ -9,10 +9,8 @@ HttpResponse GET(const HttpRequest & req, const LocationContainer & valid_paths)
 	// Get the path without the query string
 	std::string path = req.get_path();
 	path = cleanPath(decodeURL(path.substr(0, path.find('?'))));
-	std::cout << "GET PATH: " << path << std::endl; //XXX
 	// Get the path of the requested file
 	std::string filename = valid_paths.getFilename(path);
-	std::cout << "GET FILENAME: " << filename << std::endl; //XXX
 	if (filename.empty())
 	{
 		return HttpResponse::error(404, "Not Found", "File not found");

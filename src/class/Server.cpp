@@ -47,6 +47,11 @@ Server::Server(void)
 	addLocation(loc);
 	loc.clear();
 
+	loc.setURI("/css/");
+	loc.setAllowedMethods(location_methodsMap);
+	addLocation(loc);
+	loc.clear();
+
 	location_methodsMap.clear();
 	location_methodsMap.insert("GET");
 	location_methodsMap.insert("DELETE");
@@ -99,11 +104,11 @@ Server &Server::operator=(const Server &rhs)
     	_index = rhs._index;
     	_root = rhs._root;
     	_serverNames = rhs._serverNames;
-		_locations = rhs._locations;
 		_errorPages = rhs._errorPages;
 		_clients = rhs._clients;
-		_methodsMap = rhs._methodsMap;
 		_locations = rhs._locations;
+		_methodsMap = rhs._methodsMap;
+		_cgiClients = rhs._cgiClients;
 	}
 	return (*this);
 }
@@ -163,12 +168,12 @@ void Server::setRoot(const std::string & root)
 		_root = root;
 }
 
-const std::map<int, std::string> & Server::getErrorPages() const
+const std::map<int, std::list<std::string> > & Server::getErrorPages() const
 {
 	return (_errorPages);
 }
 
-void Server::setErrorPages(const std::map<int, std::string> & errorPages)
+void Server::setErrorPages(const std::map<int, std::list<std::string> > & errorPages)
 {
 	_errorPages = errorPages;
 }
@@ -225,48 +230,47 @@ void Server::loop()
 			_clients.erase(it--);
 			continue;
 		}
-
-		if (client.requestReady())
+		// If the client has the request ready and it is not already generating a response from CGI, start generating the response
+		if (client.requestReady() && _cgiClients.count(ClientInfo(client)) == 0)
 		{
+			// Get the path of the request
 			std::string path = client.getRequest().get_path();
 			path = cleanPath(decodeURL(path.substr(0, path.find("?"))));
+			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " URI " << client.getRequest().get_path() << std::endl; //XXX
 
+			// Check if the path matches a location, if not return a 404 error
 			Location loc;
 			if (loc.matchesURI(path))
 				loc = _locations[path];
 			else
 			{
-				HttpResponse response = HttpResponse::error(404);
+				HttpResponse response = HttpResponse::error(404); //TODO return error from _errorPages
 				client.setResponse(response);
 				_clients.erase(it--);
 				continue;
 			}
 
+			// If the location has a redirection, return it
 			if (loc.hasReturnValue())
 			{
-				std::cout << YELLOW << "RETURNING REDIRECTION" << RESET << std::endl; //XXX
 				client.setResponse(loc.getReturnResponse());
-				std::cout << GREEN << client.getResponse() << RESET << std::endl; //XXX
 				_clients.erase(it--);
-				std::cout << YELLOW << "RETURNED REDIRECTION" << RESET << std::endl; //XXX
 				continue;
 			}
-			if (!loc.isCgi())
+			// If the location is not a cgi, return the response
+			if (loc.isCgi() == false)
 			{
 				HttpResponse response;
-				std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " URI " << client.getRequest().get_path() << std::endl; //XXX
 				response.generate(client.getRequest(), _locations, _methodsMap);
 				client.setResponse(response);
 				_clients.erase(it--);
 				continue;
 			}
-			else if (_cgiClients.count(ClientInfo(client)) == 0)
+			// Else is a CGI, start the cgi program
+			else if (startCgi(client) != 0)
 			{
-				if (startCgi(client) != 0)
-				{
-					client.setResponse(HttpResponse::error(500));
-					_clients.erase(it--);
-				}
+				client.setResponse(HttpResponse::error(500));
+				_clients.erase(it--);
 			}
 		}
 	}

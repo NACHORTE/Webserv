@@ -100,7 +100,7 @@ bool Client::responseReady() const
 bool Client::timeout() const
 {
 	// Calculate the time since the last event
-	double seconds = (double)(clock() - _lastEventTime) / CLOCKS_PER_SEC;
+	double seconds = (double)(clock() - _lastEventTime) / CLOCKS_PER_SEC; //TODO no está marcando bien el tiempo
 	// Return true if the time since the last event is greater than the timeout
 	return (seconds > TIMEOUT);
 }
