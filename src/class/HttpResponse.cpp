@@ -266,26 +266,11 @@ void HttpResponse::generate(
 	// Empty everything
 	clear();
 
-	// If method is not valid, return 405 Method Not Allowed
-	if (valid_methods.count(req.get_method()) == 0)
-		return (void)(*this = error(405, "Method Not Allowed"), _responseReady = true);
-
 	// If path does not exist, return 404 Not Found
 	std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find('?'))));
 	Location loc;
-	try
-	{
-		loc = valid_paths[path];
-	}
-	catch(const std::exception& e)
-	{
-		return (void)(*this = error(404, "Not Found"), _responseReady = true);
-	}
+	loc = valid_paths[path];
 	
-	// If request is not valid, return 403 Forbidden
-	if (loc.isAllowedMethod(req.get_method()) == false)
-		return (void)(*this = error(403, "Forbidden"), _responseReady = true);
-
 	// Generate response with the appropriate method
 	try
 	{

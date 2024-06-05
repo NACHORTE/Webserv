@@ -91,6 +91,8 @@ Server::Server(void)
 	addErrorPage(404,"/error/404.html");
 	addErrorPage(404,"/error/404.htm");
 
+	addErrorPage(405,"/error/405.html");
+
 	addErrorPage(500,"/error/500.html");
 	addErrorPage(500,"/error/500.htm");
 }
@@ -188,10 +190,15 @@ void Server::setErrorPages(const std::map<int, std::set<std::string> > & errorPa
 
 void Server::addErrorPage(int error_code, const std::string & errorPage)
 {
-	if (_root.empty())
-		_errorPages[error_code].insert(errorPage);
-	else
-		_errorPages[error_code].insert(joinPath(_root, errorPage));
+	if (errorPage.empty())
+		return;
+	std::string path = cleanPath(errorPage);
+	if (!_root.empty())
+		path = joinPath(_root, errorPage);
+	if (path[0] == '/')
+		path = path.substr(1);
+	_errorPages[error_code].insert(path);
+
 }
 
 const std::string & Server::getIndex(void) const
@@ -254,6 +261,14 @@ void Server::loop()
 			path = cleanPath(decodeURL(path.substr(0, path.find("?"))));
 			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " ("<< client.getRequest().get_method()<< " " << path << ")" << std::endl; //XXX
 
+			// Check if it's an allowed method
+			if (_methodsMap.count(client.getRequest().get_method()) == 0)
+			{
+				HttpResponse response = errorResponse(501, "Not implemented", "Method " + client.getRequest().get_method() + " is not allowed for this server");
+				client.setResponse(response);
+				_clients.erase(it--);
+				continue;
+			}
 			// Check if the path matches a location, if not return a 404 error
 			Location loc;
 			if (loc.matchesURI(path))
