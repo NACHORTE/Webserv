@@ -252,7 +252,7 @@ void Server::loop()
 			// Get the path of the request
 			std::string path = client.getRequest().get_path();
 			path = cleanPath(decodeURL(path.substr(0, path.find("?"))));
-			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " URI " << path << std::endl; //XXX
+			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " ("<< client.getRequest().get_method()<< " " << path << ")" << std::endl; //XXX
 
 			// Check if the path matches a location, if not return a 404 error
 			Location loc;
@@ -268,7 +268,8 @@ void Server::loop()
 			// If the method is not allowed for the location, return a 405 error
 			if (loc.isAllowedMethod(client.getRequest().get_method()) == false)
 			{
-				client.setResponse(errorResponse(405));
+				HttpResponse response = errorResponse(405, "Method Not Allowed", "Method " + client.getRequest().get_method() + " is not allowed for this location");
+				client.setResponse(response);
 				_clients.erase(it--);
 				continue;
 			}
@@ -522,11 +523,11 @@ char **Server::getEnv(const HttpRequest & req)
 	return output;
 }
 
-HttpResponse Server::errorResponse(int error) const
+HttpResponse Server::errorResponse(int error, const std::string & phrase, const std::string & msg) const
 {
 	// If there is no error page for the error, return the default error page
 	if (_errorPages.count(error) == 0)
-		return HttpResponse::error(error);
+		return HttpResponse::error(error, phrase, msg);
 
 	// Return the first page that matches a location
 	std::set<std::string> errorPages = _errorPages.at(error);
@@ -544,5 +545,5 @@ HttpResponse Server::errorResponse(int error) const
 		catch(const std::exception& e)
 		{}
 	}
-	return HttpResponse::error(error);
+	return HttpResponse::error(error, phrase, msg);
 }

@@ -48,20 +48,8 @@ HttpResponse::~HttpResponse()
  */
 void HttpResponse::setStatus(int code, const std::string& phrase)
 {
-	this->_status_code = intToString(code);
-	if (phrase.length() > 0)
-		this->_status_phrase = phrase;
-	else
-	{
-		if (code >= 200 && code < 300)
-			this->_status_phrase = "OK";
-		else if (code >=400 && code < 500)
-			this->_status_phrase = "Not Found";
-		else if (code >= 500)
-			this->_status_phrase = "Internal Server Error";
-		else
-			this->_status_phrase = "";
-	}
+	_status_code = intToString(code);
+	_status_phrase = phrase;
 }
 
 /**
@@ -342,24 +330,13 @@ HttpResponse HttpResponse::error(	// generate a default error page
 
 	// Set the status code and phrase
 	ret.setStatus(code, phrase);
-	
-	// try to get the error page first from the error pages map
-	try
-	{
-		std::string filename = _errorPages.at(code);
-		ret.setBody(extToMime(filename),readFile(filename, isBinaryFile(filename)));
-	}
-	// if it fails, return a generic error page
-	catch(const std::exception& e)
-	{
-		if (msg.length() == 0)
-			ret.setBody("text/html", "<html><body><h1>" + ret.getStatusCode() + " "
-				+ ret.getStatusPhrase() + "</h1></body></html>");
-		else
-			ret.setBody("text/html", "<html><body><h1>" + ret.getStatusCode() + " "
-				+ ret.getStatusPhrase() + "</h1><p>" + msg + "</p></body></html>");
-	}
-	ret.setReady(true);
+	if (msg.length() == 0)
+		ret.setBody("text/html", "<html><body><h1>" + ret.getStatusCode() + " "
+			+ ret.getStatusPhrase() + "</h1></body></html>");
+	else
+		ret.setBody("text/html", "<html><body><h1>" + ret.getStatusCode() + " "
+			+ ret.getStatusPhrase() + "</h1><p>" + msg + "</p></body></html>");
+	ret._responseReady = true;
 	return ret;	
 }
 

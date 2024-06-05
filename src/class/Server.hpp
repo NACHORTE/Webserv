@@ -91,7 +91,7 @@ class Server
 		// start a CGI program (fork, execve, pipe, etc.)
 		int startCgi(const Client &client);
 		HttpResponse cgiResponse(const ClientInfo &clientInfo) const;
-		HttpResponse errorResponse(int error_code) const;
+		HttpResponse errorResponse(int error_code, const std::string & phrase = "", const std::string & msg= "") const;
 
 		char **getPath(const HttpRequest & req);
 		char **getEnv(const HttpRequest & req);
