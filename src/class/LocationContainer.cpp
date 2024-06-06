@@ -77,7 +77,7 @@ const Location &LocationContainer::operator[](const std::string & path) const
 		}
 	}
 	if (!bestMatch)
-		throw std::runtime_error("No location found for path: " + path);
+		throw std::runtime_error("No location found for path: " + path); //TODO change this to pointer and return null
 	return *bestMatch;
 }
 

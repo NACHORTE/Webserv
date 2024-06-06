@@ -16,25 +16,6 @@ HttpResponse::HttpResponse(const HttpResponse& other)
 	*this = other;
 }
 
-/**
- * @brief
- * Initializes an HttpResponse object by generating a response using the provided HttpRequest,
- * valid paths, and valid methods.
- * 
- * @param req The HttpRequest object representing the incoming request.
- * @param valid_paths The LocationContainer object containing valid paths and their associated methods.
- * @param valid_methods A map of valid methods along with their corresponding functions.
- * 
- * @see generate
- */
-HttpResponse::HttpResponse(
-	const HttpRequest& req,
-	const LocationContainer & valid_paths,
-	const std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> & valid_methods)
-{
-	generate(req, valid_paths, valid_methods);
-}
-
 HttpResponse::~HttpResponse()
 {}
 
@@ -242,46 +223,6 @@ std::string HttpResponse::to_string() const
 		output += _headers[i].first + ": " + _headers[i].second + "\r\n";
 	output += "\r\n" + _body;
 	return (output);
-}
-
-/**
- * Generates an HttpResponse object by processing the given HttpRequest, validating
- * the request method and path against provided constraints. It utilizes a map of valid methods to
- * determine the appropriate action. If the request method or path is not valid, it returns an
- * HTTP response with the corresponding error status code.
- * 
- * @param req The HttpRequest object representing the incoming request.
- * @param valid_paths The LocationContainer object containing valid paths and their associated methods.
- * @param valid_methods A map of valid methods along with their corresponding functions.
- * 
- * @note The function relies on the error() function to generate error responses when necessary.
- * 
- * @see error
- */
-void HttpResponse::generate(
-	const HttpRequest & req,
-	const LocationContainer & valid_paths,
-	const std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> & valid_methods)
-{
-	// Empty everything
-	clear();
-
-	// If path does not exist, return 404 Not Found
-	std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find('?'))));
-	Location loc;
-	loc = valid_paths[path];
-	
-	// Generate response with the appropriate method
-	try
-	{
-		*this = valid_methods.at(req.get_method())(req, valid_paths);
-	}
-	catch (std::exception & e)
-	{
-		*this = error(500, "Internal Server Error", e.what());
-	}
-
-	_responseReady = true;
 }
 
 /**

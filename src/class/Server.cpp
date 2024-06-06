@@ -140,7 +140,7 @@ std::ostream &operator<<(std::ostream &os, const Server &obj)
 	os << std::endl;
 	os << "Locations: " << obj._locations << std::endl;
 	os << "Available methods: ";
-	for (std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)>::const_iterator it = obj._methodsMap.begin(); it != obj._methodsMap.end(); ++it)
+	for (std::map<std::string, HttpResponse (*)(const HttpRequest &, const Server &, const Location &)>::const_iterator it = obj._methodsMap.begin(); it != obj._methodsMap.end(); ++it)
 		os << it->first << " ";
 	os << std::endl;
 	return (os);
@@ -306,7 +306,8 @@ void Server::loop()
 			{
 				std::cout << "Location " << path << " is not a CGI" << std::endl; //XXX
 				HttpResponse response;
-				response.generate(req, _locations, _methodsMap);
+				response = _methodsMap[req.get_method()](req, *this, loc);
+				response.setReady(true);
 				client.setResponse(response);
 				_clients.erase(it--);
 				continue;

@@ -29,12 +29,35 @@
         <button type="button" onclick="submitPostForm()">Enviar POST</button>
     </form>
 
+    <!-- New form for DELETE -->
+    <form id="deleteForm" method="post">
+        <input type="text" id="deleteFileName" placeholder="Enter file name to delete" required>
+        <button type="button" onclick="submitDeleteForm()">Eliminar Archivo</button>
+    </form>
+
     <script>
         function submitPostForm() {
             const form = document.getElementById('postForm');
             const path = document.getElementById('postPath').value;
             form.action = path;
             form.submit();
+        }
+
+        function submitDeleteForm() {
+            const fileName = document.getElementById('deleteFileName').value;
+            const url = `/upload/${fileName}`;
+            fetch(url, {
+                method: 'DELETE'
+            }).then(response => {
+                if (response.ok) {
+                    alert('Archivo eliminado exitosamente.');
+                } else {
+                    alert('Error al eliminar el archivo.');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('Error al eliminar el archivo.');
+            });
         }
     </script>
 </body>

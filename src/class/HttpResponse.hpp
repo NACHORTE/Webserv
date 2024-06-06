@@ -34,10 +34,6 @@ class HttpResponse {
 		void clear();
 		bool empty() const;
 		std::string to_string() const;
-		void generate(
-			const HttpRequest & req,
-			const LocationContainer & valid_paths,
-			const std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> & valid_methods);
 		static HttpResponse error(
 			int code,
 			const std::string & phrase = "",

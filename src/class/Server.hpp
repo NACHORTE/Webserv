@@ -42,6 +42,7 @@ class Server
 
 	// Member functions
 
+		HttpResponse errorResponse(int error_code, const std::string & phrase = "", const std::string & msg= "") const;
 		void loop();
 
 	// Operator overloads
@@ -62,13 +63,13 @@ class Server
 		// List of server names that the server will respond to (host header in the request must match one of these names)
     	std::set<std::string> _serverNames;
 		// List of error pages for the server
-		std::map<int, std::set<std::string> > _errorPages; // TODO: Implement error pages
+		std::map<int, std::set<std::string> > _errorPages;
 		// List of clients the server is generating a response for
 		std::set<Client *> _clients;
 		// List of locations that the server will serve
 		LocationContainer _locations;
 		// Map of the methods the server can handle (GET, POST, DELETE)
-		std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> _methodsMap;
+		std::map<std::string, HttpResponse (*)(const HttpRequest &, const Server &,const Location &)> _methodsMap;
 
 		// _cgiClients holds the list of clients that are waiting for a CGI program to finish
 		struct ClientInfo //TODO esto a otra clase alomejor no se
@@ -91,7 +92,6 @@ class Server
 		// start a CGI program (fork, execve, pipe, etc.)
 		int startCgi(const Client &client);
 		HttpResponse cgiResponse(const ClientInfo &clientInfo) const;
-		HttpResponse errorResponse(int error_code, const std::string & phrase = "", const std::string & msg= "") const;
 
 		char **getPath(const HttpRequest & req);
 		char **getEnv(const HttpRequest & req);

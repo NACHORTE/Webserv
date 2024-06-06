@@ -132,6 +132,7 @@ bool Location::isFile() const
 	return (back(_URI) != '/');
 }
 
+#include "colors.h"
 bool Location::matchesURI(std::string path) const
 {
 	if (path.empty())
