@@ -54,6 +54,7 @@ Server::Server(void)
 
 	location_methodsMap.clear();
 	location_methodsMap.insert("GET");
+	location_methodsMap.insert("POST");
 	location_methodsMap.insert("DELETE");
 
 	loc.setURI("/upload/");
@@ -256,15 +257,16 @@ void Server::loop()
 		// If the client has the request ready and it is not already generating a response from CGI, start generating the response
 		if (client.requestReady() && _cgiClients.count(ClientInfo(client)) == 0)
 		{
+			const HttpRequest &req = client.getRequest();
 			// Get the path of the request
-			std::string path = client.getRequest().get_path();
-			path = cleanPath(decodeURL(path.substr(0, path.find("?"))));
-			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " ("<< client.getRequest().get_method()<< " " << path << ")" << std::endl; //XXX
+			std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find("?"))));
+			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " ("<< req.get_method()<< " " << path << ")" << std::endl; //XXX
 
 			// Check if it's an allowed method
-			if (_methodsMap.count(client.getRequest().get_method()) == 0)
+			if (_methodsMap.count(req.get_method()) == 0)
 			{
-				HttpResponse response = errorResponse(501, "Not implemented", "Method " + client.getRequest().get_method() + " is not allowed for this server");
+				std::cout << "Method " << req.get_method() << " is not allowed for this server" << std::endl; //XXX
+				HttpResponse response = errorResponse(501, "Not implemented", "Method " + req.get_method() + " is not allowed for this server");
 				client.setResponse(response);
 				_clients.erase(it--);
 				continue;
@@ -275,15 +277,17 @@ void Server::loop()
 				loc = _locations[path];
 			else
 			{
+				std::cout << "Location " << path << " not found" << std::endl; //XXX
 				client.setResponse(errorResponse(404));
 				_clients.erase(it--);
 				continue;
 			}
 			
 			// If the method is not allowed for the location, return a 405 error
-			if (loc.isAllowedMethod(client.getRequest().get_method()) == false)
+			if (loc.isAllowedMethod(req.get_method()) == false)
 			{
-				HttpResponse response = errorResponse(405, "Method Not Allowed", "Method " + client.getRequest().get_method() + " is not allowed for this location");
+				std::cout << "Method " << req.get_method() << " is not allowed for location " << path << std::endl; //XXX
+				HttpResponse response = errorResponse(405, "Method Not Allowed", "Method " + req.get_method() + " is not allowed for this location");
 				client.setResponse(response);
 				_clients.erase(it--);
 				continue;
@@ -292,6 +296,7 @@ void Server::loop()
 			// If the location has a redirection, return it
 			if (loc.hasReturnValue())
 			{
+				std::cout << "Location " << path << " has a redirection" << std::endl; //XXX
 				client.setResponse(loc.getReturnResponse());
 				_clients.erase(it--);
 				continue;
@@ -299,8 +304,9 @@ void Server::loop()
 			// If the location is not a cgi, return the response
 			if (loc.isCgi() == false)
 			{
+				std::cout << "Location " << path << " is not a CGI" << std::endl; //XXX
 				HttpResponse response;
-				response.generate(client.getRequest(), _locations, _methodsMap);
+				response.generate(req, _locations, _methodsMap);
 				client.setResponse(response);
 				_clients.erase(it--);
 				continue;
@@ -311,6 +317,7 @@ void Server::loop()
 				client.setResponse(errorResponse(500));
 				_clients.erase(it--);
 			}
+			std::cout << "Location " << path << " is a CGI" << std::endl; //XXX
 		}
 	}
 
