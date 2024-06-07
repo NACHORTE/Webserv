@@ -124,7 +124,6 @@ void Listener::loop()
 	for (std::list<Client>::iterator it = ++_clients.begin(); it != _clients.end(); ++it, ++i)
 		if (it->timeout())
 			closeConnection(_pollfds[i--].fd); // NOTE return timeout error to client before closing
-
 	// Loop through the servers and call their loop function
 	for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
 		it->loop();

@@ -38,7 +38,6 @@ void Webserv::init(const std::string &configFile)
 void Webserv::loop(void)
 {
 	// Loop through listeners
-	// NOTE try catch
 	std::vector<Listener>::iterator it;
 	for (it = _listeners.begin(); it != _listeners.end(); it++)
 		it->loop();
@@ -54,7 +53,7 @@ std::vector<Server> Webserv::read_config(const std::string& config_file) //XXX f
 	server.addServerName("localhost");
 	server.addServerName("feo1");
 	servers.push_back(server);
- 	server= Server();
+ 	/*server= Server();
 	server.setPort(8080);
 	server.setRoot("/var/www/html");
 	server.addServerName("server2");
@@ -66,7 +65,7 @@ std::vector<Server> Webserv::read_config(const std::string& config_file) //XXX f
 	server.addServerName("server3_1");
 	server.addServerName("server3_2");
 	servers.push_back(server);
-
+ */
 	return servers;
 }
 
@@ -74,6 +73,6 @@ std::ostream &operator<<(std::ostream &os, const Webserv &obj)
 {
 	os << "Listeners: " << obj._listeners.size() << std::endl;
 	for (size_t i = 0; i < obj._listeners.size(); i++)
-		os << i + 1 << ". =========\n" << obj._listeners[i];
+		os << i + 1 << ". " << obj._listeners[i];
 	return (os);
 }

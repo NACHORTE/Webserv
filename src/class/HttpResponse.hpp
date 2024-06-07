@@ -23,7 +23,7 @@ class HttpResponse {
 		void unsetHeader(const std::string& key);
 		void setBody(const std::string& content_type, const std::string& body);
 		void setBody(const std::string& filename);
-		void setReady(bool ready);
+		void setReady(bool ready); // TODO RENAME TO responseReady(bool ready)
 
 		const std::string & getStatusCode() const;
 		const std::string & getStatusPhrase() const;
@@ -34,10 +34,6 @@ class HttpResponse {
 		void clear();
 		bool empty() const;
 		std::string to_string() const;
-		void generate(
-			const HttpRequest & req,
-			const LocationContainer & valid_paths,
-			const std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> & valid_methods);
 		static HttpResponse error(
 			int code,
 			const std::string & phrase = "",

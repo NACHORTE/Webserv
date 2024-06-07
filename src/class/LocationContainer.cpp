@@ -13,23 +13,17 @@ LocationContainer::LocationContainer(const LocationContainer & src)
 LocationContainer::~LocationContainer()
 {}
 
-const Location &LocationContainer::getLocation(const std::string & path) const
+const Location * LocationContainer::getLocation(const std::string & path) const
 {
 	return operator[](path);
 }
 
 std::string LocationContainer::getFilename(const std::string & path) const
 {
-	try
-	{
-		const Location & loc = operator[](path);
-		return loc.getFilename(path);
-	}
-	catch (std::runtime_error & e)
-	{
+	const Location * loc = operator[](path);
+	if (!loc)
 		return "";
-	}
-	return "";
+	return loc->getFilename(path);
 }
 
 bool LocationContainer::addLocation(const Location & location)
@@ -61,7 +55,7 @@ LocationContainer &LocationContainer::operator=(const LocationContainer &rhs)
 	return (*this);
 }
 
-const Location &LocationContainer::operator[](const std::string & path) const
+const Location * LocationContainer::operator[](const std::string & path) const
 {
 	const Location *bestMatch = NULL;
 
@@ -76,14 +70,14 @@ const Location &LocationContainer::operator[](const std::string & path) const
 				bestMatch = &_locations[i];
 		}
 	}
-	if (!bestMatch)
-		throw std::runtime_error("No location found for path: " + path);
-	return *bestMatch;
+	return bestMatch;
 }
 
-const Location & LocationContainer::operator[](size_t index) const
+const Location * LocationContainer::operator[](size_t index) const
 {
-	return _locations[index];
+	if (index >= _locations.size())
+		return NULL;
+	return &_locations[index];
 }
 
 std::ostream &operator<<(std::ostream &os, const LocationContainer &obj)

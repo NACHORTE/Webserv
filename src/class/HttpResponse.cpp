@@ -6,22 +6,6 @@
 #include "colors.h"
 #include "LocationContainer.hpp"
 
-
-std::map<int, std::string> _errorPages; //XXX delete this
-/**
- * @brief Initializes the static error pages map in the HttpResponse class.
- * 
- * Checks if the error pages map is already initialized. If not, populates it with
- * default error pages for HTTP status codes 404 and 500.
- */
-static void initErrorPages()
-{
-	if (_errorPages.size() > 0)
-		return;
-	_errorPages[404] = "./www/html/404.html";
-	_errorPages[500] = "./www/html/500.html";
-}
-
 HttpResponse::HttpResponse()
 {
 	_responseReady = false;
@@ -30,25 +14,6 @@ HttpResponse::HttpResponse()
 HttpResponse::HttpResponse(const HttpResponse& other)
 {
 	*this = other;
-}
-
-/**
- * @brief
- * Initializes an HttpResponse object by generating a response using the provided HttpRequest,
- * valid paths, and valid methods.
- * 
- * @param req The HttpRequest object representing the incoming request.
- * @param valid_paths The LocationContainer object containing valid paths and their associated methods.
- * @param valid_methods A map of valid methods along with their corresponding functions.
- * 
- * @see generate
- */
-HttpResponse::HttpResponse(
-	const HttpRequest& req,
-	const LocationContainer & valid_paths,
-	const std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> & valid_methods)
-{
-	generate(req, valid_paths, valid_methods);
 }
 
 HttpResponse::~HttpResponse()
@@ -64,20 +29,8 @@ HttpResponse::~HttpResponse()
  */
 void HttpResponse::setStatus(int code, const std::string& phrase)
 {
-	this->_status_code = intToString(code);
-	if (phrase.length() > 0)
-		this->_status_phrase = phrase;
-	else
-	{
-		if (code >= 200 && code < 300)
-			this->_status_phrase = "OK";
-		else if (code >=400 && code < 500)
-			this->_status_phrase = "Not Found";
-		else if (code >= 500)
-			this->_status_phrase = "Internal Server Error";
-		else
-			this->_status_phrase = "";
-	}
+	_status_code = intToString(code);
+	_status_phrase = phrase;
 }
 
 /**
@@ -273,63 +226,6 @@ std::string HttpResponse::to_string() const
 }
 
 /**
- * Generates an HttpResponse object by processing the given HttpRequest, validating
- * the request method and path against provided constraints. It utilizes a map of valid methods to
- * determine the appropriate action. If the request method or path is not valid, it returns an
- * HTTP response with the corresponding error status code.
- * 
- * @param req The HttpRequest object representing the incoming request.
- * @param valid_paths The LocationContainer object containing valid paths and their associated methods.
- * @param valid_methods A map of valid methods along with their corresponding functions.
- * 
- * @note The function relies on the error() function to generate error responses when necessary.
- * 
- * @see error
- */
-void HttpResponse::generate(
-	const HttpRequest & req,
-	const LocationContainer & valid_paths,
-	const std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> & valid_methods)
-{
-	// Empty everything
-	clear();
-
-	// If method is not valid, return 405 Method Not Allowed
-	if (valid_methods.count(req.get_method()) == 0)
-		return (void)(*this = error(405, "Method Not Allowed"), _responseReady = true);
-
-	// If path does not exist, return 404 Not Found
-	std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find('?'))));
-	std::cout << "Path: " << path << std::endl; //XXX
-	Location loc;
-	try
-	{
-		loc = valid_paths[path];
-		std::cout << "Here" << std::endl; //XXX
-	}
-	catch(const std::exception& e)
-	{
-		return (void)(*this = error(404, "Not Found"), _responseReady = true);
-	}
-	
-	// If request is not valid, return 403 Forbidden
-	if (loc.isAllowedMethod(req.get_method()) == false)
-		return (void)(*this = error(403, "Forbidden"), _responseReady = true);
-
-	// Generate response with the appropriate method
-	try
-	{
-		*this = valid_methods.at(req.get_method())(req, valid_paths);
-	}
-	catch (std::exception & e)
-	{
-		*this = error(500, "Internal Server Error", e.what());
-	}
-
-	_responseReady = true;
-}
-
-/**
  * @brief Generates an HTTP response for a specified error code.
  * 
  * This function creates an HttpResponse object for a given error code. It attempts to retrieve
@@ -358,29 +254,15 @@ HttpResponse HttpResponse::error(	// generate a default error page
 {
 	HttpResponse ret;
 
-	// Initialize the error pages map
-	initErrorPages();
-
 	// Set the status code and phrase
 	ret.setStatus(code, phrase);
-	
-	// try to get the error page first from the error pages map
-	try
-	{
-		std::string filename = _errorPages.at(code);
-		ret.setBody(extToMime(filename),readFile(filename, isBinaryFile(filename)));
-	}
-	// if it fails, return a generic error page
-	catch(const std::exception& e)
-	{
-		if (msg.length() == 0)
-			ret.setBody("text/html", "<html><body><h1>" + ret.getStatusCode() + " "
-				+ ret.getStatusPhrase() + "</h1></body></html>");
-		else
-			ret.setBody("text/html", "<html><body><h1>" + ret.getStatusCode() + " "
-				+ ret.getStatusPhrase() + "</h1><p>" + msg + "</p></body></html>");
-	}
-
+	if (msg.length() == 0)
+		ret.setBody("text/html", "<html><body><h1>" + ret.getStatusCode() + " "
+			+ ret.getStatusPhrase() + "</h1></body></html>");
+	else
+		ret.setBody("text/html", "<html><body><h1>" + ret.getStatusCode() + " "
+			+ ret.getStatusPhrase() + "</h1><p>" + msg + "</p></body></html>");
+	ret._responseReady = true;
 	return ret;	
 }
 

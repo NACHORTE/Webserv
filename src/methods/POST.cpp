@@ -109,15 +109,17 @@ static std::vector<MultipartForm> parseMultipartForm(const std::string& body, st
  * @see HttpRequest
  * @see LocationContainer
  */
-static int createFile(const MultipartForm & form, const HttpRequest & req, const LocationContainer & valid_paths)
+static int createFile(const MultipartForm & form, const HttpRequest & req, const Location & loc)
 {
 	// If the filename contains .., return -1
 	if (form.filename.find("..") != std::string::npos)
 		return -1;
 
+	Location newLoc = loc;
+	newLoc.setURI(newLoc.getURI().substr(0, newLoc.getURI().find_last_of('/')));
 	// Get the path of the file and open it
 	std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find('?'))));
-	std::string filename = valid_paths.getFilename(path) + "/" + form.filename;
+	std::string filename = newLoc.getFilename(path) + "/" + form.filename;
 	std::ofstream file(filename.c_str());
 	
 	// If the file couldn't be opened, return -1
@@ -130,17 +132,14 @@ static int createFile(const MultipartForm & form, const HttpRequest & req, const
 	return 0;
 }
 
-HttpResponse POST(const HttpRequest & req, const LocationContainer & valid_paths)
+HttpResponse POST(const HttpRequest & req, const Server & serv, const Location & loc)
 {
-	// TODO ADD extension to uploaded files
-	// TODO manage upload file size
-	// NOTE only /upload allows to create a file
 	HttpResponse ret;
 
 	// Get the content of the content-type header
 	std::vector<std::string> contentTypeHeader = req["Content-Type"];
 	if (contentTypeHeader.size() != 1)
-		return HttpResponse::error(400, "Bad Request", "Content-Type header must be specified once");
+		return serv.errorResponse(400, "Bad Request", "Content-Type header must be specified once");
 
 	// Get the content-type name and parameters
 	std::string contentTypeName = contentTypeHeader[0].substr(0, contentTypeHeader[0].find(";"));
@@ -148,7 +147,7 @@ HttpResponse POST(const HttpRequest & req, const LocationContainer & valid_paths
 
 	// If there is a charset specified and it's not UTF-8, return 415 Unsupported Media Type
 	if (contentTypeParams.count("charset") == 1 && contentTypeParams["charset"] != "UTF-8")
-		return HttpResponse::error(415, "Unsupported Media Type", "Only UTF-8 charset is supported");
+		return serv.errorResponse(415, "Unsupported Media Type", "Only UTF-8 charset is supported");
 
 	// If the content type is multipart/form-data, parse the body
 	if (contentTypeName == "multipart/form-data")
@@ -156,9 +155,9 @@ HttpResponse POST(const HttpRequest & req, const LocationContainer & valid_paths
 		// If there is no boundary specified, return 400 Bad Request
 		if ((contentTypeParams.count("boundary") == 0
 			|| contentTypeParams["boundary"].length() == 0))
-			return HttpResponse::error(400, "Bad Request", "multipart/form-data requires a boundary");
+			return serv.errorResponse(400, "Bad Request", "multipart/form-data requires a boundary");
 
-		// 
+		// Parse the multipart form
 		std::vector<MultipartForm> forms = parseMultipartForm(req.getBody(), contentTypeParams["boundary"]);
 		std::vector<MultipartForm>::iterator form;
 		for (form = forms.begin(); form != forms.end(); form++)
@@ -166,8 +165,8 @@ HttpResponse POST(const HttpRequest & req, const LocationContainer & valid_paths
 			// If there is a filename, create a file and write the data to it
 			if (!form->filename.empty())
 			{
-				if (createFile(*form, req, valid_paths) != 0)
-					return HttpResponse::error(500, "Internal Server Error", "Failed to create file" + form->filename);
+				if (createFile(*form, req, loc) != 0)
+					return serv.errorResponse(500, "Internal Server Error", "Failed to create file" + form->filename);
 			}
 			else
 			{

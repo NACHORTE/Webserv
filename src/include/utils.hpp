@@ -18,3 +18,4 @@ char *strdup(const std::string & str);
 std::string joinPath(const std::string & path1, const std::string & path2);
 std::string cleanPath(const std::string & path);
 bool isDir(const std::string & path);
+bool endsWith(const std::string & str, const std::string & suffix);
