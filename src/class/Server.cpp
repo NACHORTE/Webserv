@@ -272,10 +272,8 @@ void Server::loop()
 				continue;
 			}
 			// Check if the path matches a location, if not return a 404 error
-			Location loc;
-			if (loc.matchesURI(path))
-				loc = _locations[path];
-			else
+			const Location * loc = _locations[path];
+			if (!loc)
 			{
 				std::cout << "Location " << path << " not found" << std::endl; //XXX
 				client.setResponse(errorResponse(404));
@@ -284,7 +282,7 @@ void Server::loop()
 			}
 			
 			// If the method is not allowed for the location, return a 405 error
-			if (loc.isAllowedMethod(req.get_method()) == false)
+			if (loc->isAllowedMethod(req.get_method()) == false)
 			{
 				std::cout << "Method " << req.get_method() << " is not allowed for location " << path << std::endl; //XXX
 				HttpResponse response = errorResponse(405, "Method Not Allowed", "Method " + req.get_method() + " is not allowed for this location");
@@ -294,19 +292,19 @@ void Server::loop()
 			}
 
 			// If the location has a redirection, return it
-			if (loc.hasReturnValue())
+			if (loc->hasReturnValue())
 			{
 				std::cout << "Location " << path << " has a redirection" << std::endl; //XXX
-				client.setResponse(loc.getReturnResponse());
+				client.setResponse(loc->getReturnResponse());
 				_clients.erase(it--);
 				continue;
 			}
 			// If the location is not a cgi, return the response
-			if (loc.isCgi() == false)
+			if (loc->isCgi() == false)
 			{
 				std::cout << "Location " << path << " is not a CGI" << std::endl; //XXX
 				HttpResponse response;
-				response = _methodsMap[req.get_method()](req, *this, loc);
+				response = _methodsMap[req.get_method()](req, *this, *loc);
 				response.setReady(true);
 				client.setResponse(response);
 				_clients.erase(it--);
@@ -397,16 +395,10 @@ bool Server::isCgi(const HttpRequest &request)
 {
 	std::string path = request.get_path().substr(0, request.get_path().find("?"));
 	path = cleanPath(decodeURL(path));
-	try
-	{
-		const Location & loc = _locations[path];
-		return loc.isCgi();
-	}
-	catch (std::exception & e)
-	{
+	const Location * loc = _locations[path];
+	if (!loc)
 		return false;
-	}
-	return false;
+	return loc->isCgi();
 }
 
 int Server::startCgi(const Client &client)
@@ -470,7 +462,7 @@ HttpResponse Server::cgiResponse(const ClientInfo &clientInfo) const
 	fds.fd = clientInfo._fdIn;
 	fds.events = POLLIN;
 	if (poll(&fds, 1, 0) == -1)
-		return (HttpResponse::error(500)); //TODO return error from _errorPages
+		return (errorResponse(500, "internal_server_error", "poll failed :("));
 	if (fds.revents & POLLIN)
 	{
 		std::string body;
@@ -484,7 +476,7 @@ HttpResponse Server::cgiResponse(const ClientInfo &clientInfo) const
 		response.setReady(true);
 		return (response);
 	}
-	return (HttpResponse::error(500)); //TODO return error from _errorPages
+	return (errorResponse(500, "internal_server_error", "couldn't get stdout from cgi Response"));
 }
 
 char **Server::getPath(const HttpRequest & req)

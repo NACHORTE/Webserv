@@ -38,7 +38,6 @@ void Webserv::init(const std::string &configFile)
 void Webserv::loop(void)
 {
 	// Loop through listeners
-	// NOTE try catch
 	std::vector<Listener>::iterator it;
 	for (it = _listeners.begin(); it != _listeners.end(); it++)
 		it->loop();

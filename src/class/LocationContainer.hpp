@@ -17,7 +17,7 @@ class LocationContainer
 	// Setters and getters
 
 		// Get the location that best matches the path (throws if no match is found) O(n)
-		const Location & getLocation(const std::string & path) const;
+		const Location * getLocation(const std::string & path) const;
 	// Member functions
 
 		// returns the filename that best matches the path. Returns empty string if no match is found
@@ -29,9 +29,9 @@ class LocationContainer
 
 		LocationContainer & operator=(const LocationContainer & rhs);
 		// Get the location that best matches the path (throws if no match is found) O(n)
-		const Location & operator[](const std::string & path) const;
+		const Location * operator[](const std::string & path) const;
 		// Get the location at index (throws if index is out of bounds) O(1)
-		const Location & operator[](size_t index) const;
+		const Location * operator[](size_t index) const;
 
 	protected:
 	private:
