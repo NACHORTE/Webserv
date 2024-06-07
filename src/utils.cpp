@@ -522,3 +522,24 @@ bool isDir(const std::string& ruta) {
         return false;
     return S_ISDIR(estado.st_mode);
 }
+
+/*
+ * Checks if a string ends with a specified suffix.
+ * 
+ * @param str The string to check.
+ * @param suffix The suffix to check for.
+ * @return True if the string ends with the suffix, false otherwise.
+ * 
+ * @example
+ * std::string str = "hello world";
+ * std::string suffix = "world";
+ * if (endsWith(str, suffix))
+ *     std::cout << "The string ends with the suffix." << std::endl;
+ * else
+ *     std::cout << "The string does not end with the suffix." << std::endl;
+ */
+bool endsWith(const std::string& str, const std::string& suffix) {
+    if (str.length() >= suffix.length())
+        return (0 == str.compare(str.length() - suffix.length(), suffix.length(), suffix));
+    return false;
+}

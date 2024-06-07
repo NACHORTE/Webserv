@@ -74,6 +74,6 @@ std::ostream &operator<<(std::ostream &os, const Webserv &obj)
 {
 	os << "Listeners: " << obj._listeners.size() << std::endl;
 	for (size_t i = 0; i < obj._listeners.size(); i++)
-		os << i + 1 << ". =========\n" << obj._listeners[i];
+		os << i + 1 << ". " << obj._listeners[i];
 	return (os);
 }

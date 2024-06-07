@@ -20,7 +20,7 @@ Server::Server(void)
 
 	Location loc;
 	loc.setURI("/");
-	loc.setAlias("/html/index.html");
+	loc.setIndex("/html/index.html");
 	loc.setAllowedMethods(location_methodsMap);
 	addLocation(loc);
 	loc.clear();
@@ -312,13 +312,20 @@ void Server::loop()
 				_clients.erase(it--);
 				continue;
 			}
+			std::cout << "Location " << path << " is a CGI" << std::endl; //XXX
+			// Check if location is another WebServer
+			if (endsWith(path, "webserv"))
+			{
+				client.setResponse(errorResponse(403, "Forbidden", "CGI execution of webserv is forbidden"));
+				_clients.erase(it--);
+				continue;
+			}
 			// Else is a CGI, start the cgi program
-			else if (startCgi(client) != 0)
+			if (startCgi(client) != 0)
 			{
 				client.setResponse(errorResponse(500));
 				_clients.erase(it--);
 			}
-			std::cout << "Location " << path << " is a CGI" << std::endl; //XXX
 		}
 	}
 
