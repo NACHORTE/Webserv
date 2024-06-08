@@ -481,16 +481,17 @@ HttpResponse Server::cgiResponse(const ClientInfo &clientInfo) const
 
 char **Server::getPath(const HttpRequest & req)
 {
+	std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find("?"))));
+	const Location * loc = _locations[path];
+	if (!loc)
+		return NULL;
+	std::string filename = loc->getFilename(path);
+	if (filename.empty())
+		return NULL;
+
 	char **output = new char*[2];
 	if (output == NULL)
 		return NULL;
-	std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find("?"))));
-	std::string filename =_locations.getFilename(path);
-	if (filename.empty())
-	{
-		delete[] output;
-		return NULL;
-	}
 	output[0] = strdup(filename.c_str());
 	output[1] = NULL;
 	return output;

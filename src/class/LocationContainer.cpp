@@ -13,19 +13,6 @@ LocationContainer::LocationContainer(const LocationContainer & src)
 LocationContainer::~LocationContainer()
 {}
 
-const Location * LocationContainer::getLocation(const std::string & path) const
-{
-	return operator[](path);
-}
-
-std::string LocationContainer::getFilename(const std::string & path) const
-{
-	const Location * loc = operator[](path);
-	if (!loc)
-		return "";
-	return loc->getFilename(path);
-}
-
 bool LocationContainer::addLocation(const Location & location)
 {
 	// check if location already exists
@@ -36,14 +23,6 @@ bool LocationContainer::addLocation(const Location & location)
 	// add location
 	_locations.push_back(location);
 	return true;
-}
-
-bool LocationContainer::matchesURI(const std::string & method, const std::string & path) const
-{
-	for (std::vector<Location>::const_iterator i = _locations.begin(); i != _locations.end(); ++i)
-		if (i->matchesURI(path) && i->isAllowedMethod(method))
-			return true;
-	return false;
 }
 
 LocationContainer &LocationContainer::operator=(const LocationContainer &rhs)
