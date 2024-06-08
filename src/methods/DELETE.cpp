@@ -7,7 +7,7 @@ HttpResponse DELETE(const HttpRequest & req, const Server & serv, const Location
 {
 	HttpResponse ret;
 
-	std::string filename = loc.getFilename(req.get_path());
+	std::string filename = loc.getFilename(req.getPath());
 
 	// If a file was not found, return 404
 	if (filename == "")

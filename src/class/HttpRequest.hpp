@@ -31,12 +31,11 @@ class HttpRequest {
 		void setBody(const std::string& body);
 
 		// Add data to the request buffer and return the number of bytes added
-
 		size_t addData(const std::string & data);
 
-		const std::string & get_method() const;
-		const std::string & get_path() const;
-		const std::string & get_version() const;
+		const std::string & getMethod() const;
+		const std::string & getPath() const;
+		const std::string & getVersion() const;
 		std::vector<std::string> getHeader(const std::string& key) const; // returns a vector of all headers with the given key
 		std::vector<std::pair<std::string, std::string> > getHeaders() const;
 		const std::string & getBody() const;

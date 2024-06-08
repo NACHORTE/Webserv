@@ -47,12 +47,13 @@ class Location
 
 	// Member functions
 
-		// Check if the location is for a file or a folder
-		bool isFile(void) const;
+		// Check if the location is for a folder
+		bool isDir(std::string path) const;
 		// Check if the URI matches this location
 		bool matchesURI(std::string path) const;
 		// Gets the file associated with the http path for this location
 		std::string getFilename(std::string path) const;
+		std::string getFilenameNoIndex(std::string path) const;
 		// Clears the location NOTE remove it
 		void clear(void);
 
