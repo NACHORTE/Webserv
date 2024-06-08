@@ -21,6 +21,7 @@ Server::Server(void)
 	Location loc;
 	loc.setURI("/");
 	loc.setIndex("/html/index.html");
+	loc.autoIndex(true);
 	loc.setAllowedMethods(location_methodsMap);
 	addLocation(loc);
 	loc.clear();
@@ -37,12 +38,13 @@ Server::Server(void)
 	addLocation(loc);
 	loc.clear();
 
-	loc.setURI("/html/");
+/* 	loc.setURI("/html/");
 	loc.setAllowedMethods(location_methodsMap);
 	addLocation(loc);
 	loc.clear();
 
 	loc.setURI("/img/");
+	loc.autoIndex(true);
 	loc.setAllowedMethods(location_methodsMap);
 	addLocation(loc);
 	loc.clear();
@@ -50,7 +52,7 @@ Server::Server(void)
 	loc.setURI("/css/");
 	loc.setAllowedMethods(location_methodsMap);
 	addLocation(loc);
-	loc.clear();
+	loc.clear();*/
 
 	location_methodsMap.clear();
 	location_methodsMap.insert("GET");
@@ -59,6 +61,7 @@ Server::Server(void)
 
 	loc.setURI("/upload/");
 	loc.setAllowedMethods(location_methodsMap);
+	loc.autoIndex(true);
 	addLocation(loc);
 	loc.clear();
 
@@ -259,14 +262,14 @@ void Server::loop()
 		{
 			const HttpRequest &req = client.getRequest();
 			// Get the path of the request
-			std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find("?"))));
-			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " ("<< req.get_method()<< " " << path << ")" << std::endl; //XXX
+			std::string path = cleanPath(decodeURL(req.getPath().substr(0, req.getPath().find("?"))));
+			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " ("<< req.getMethod()<< " " << path << ")" << std::endl; //XXX
 
 			// Check if it's an allowed method
-			if (_methodsMap.count(req.get_method()) == 0)
+			if (_methodsMap.count(req.getMethod()) == 0)
 			{
-				std::cout << "Method " << req.get_method() << " is not allowed for this server" << std::endl; //XXX
-				HttpResponse response = errorResponse(501, "Not implemented", "Method " + req.get_method() + " is not allowed for this server");
+				std::cout << "Method " << req.getMethod() << " is not allowed for this server" << std::endl; //XXX
+				HttpResponse response = errorResponse(501, "Not implemented", "Method " + req.getMethod() + " is not allowed for this server");
 				client.setResponse(response);
 				_clients.erase(it--);
 				continue;
@@ -282,10 +285,10 @@ void Server::loop()
 			}
 			
 			// If the method is not allowed for the location, return a 405 error
-			if (loc->isAllowedMethod(req.get_method()) == false)
+			if (loc->isAllowedMethod(req.getMethod()) == false)
 			{
-				std::cout << "Method " << req.get_method() << " is not allowed for location " << path << std::endl; //XXX
-				HttpResponse response = errorResponse(405, "Method Not Allowed", "Method " + req.get_method() + " is not allowed for this location");
+				std::cout << "Method " << req.getMethod() << " is not allowed for location " << path << std::endl; //XXX
+				HttpResponse response = errorResponse(405, "Method Not Allowed", "Method " + req.getMethod() + " is not allowed for this location");
 				client.setResponse(response);
 				_clients.erase(it--);
 				continue;
@@ -304,7 +307,7 @@ void Server::loop()
 			{
 				std::cout << "Location " << path << " is not a CGI" << std::endl; //XXX
 				HttpResponse response;
-				response = _methodsMap[req.get_method()](req, *this, *loc);
+				response = _methodsMap[req.getMethod()](req, *this, *loc);
 				response.setReady(true);
 				client.setResponse(response);
 				_clients.erase(it--);
@@ -393,7 +396,7 @@ bool Server::ClientInfo::operator<(const ClientInfo &rhs) const
 
 bool Server::isCgi(const HttpRequest &request)
 {
-	std::string path = request.get_path().substr(0, request.get_path().find("?"));
+	std::string path = request.getPath().substr(0, request.getPath().find("?"));
 	path = cleanPath(decodeURL(path));
 	const Location * loc = _locations[path];
 	if (!loc)
@@ -481,7 +484,7 @@ HttpResponse Server::cgiResponse(const ClientInfo &clientInfo) const
 
 char **Server::getPath(const HttpRequest & req)
 {
-	std::string path = cleanPath(decodeURL(req.get_path().substr(0, req.get_path().find("?"))));
+	std::string path = cleanPath(decodeURL(req.getPath().substr(0, req.getPath().find("?"))));
 	const Location * loc = _locations[path];
 	if (!loc)
 		return NULL;
@@ -500,14 +503,14 @@ char **Server::getPath(const HttpRequest & req)
 char **Server::getEnv(const HttpRequest & req)
 {
 	// Get the query string
-	size_t pos = req.get_path().find("?");
+	size_t pos = req.getPath().find("?");
 	std::string queryString ="QUERY_STRING=";
-	if (pos != std::string::npos && pos != req.get_path().size() - 1)
-		queryString += req.get_path().substr(pos + 1);
+	if (pos != std::string::npos && pos != req.getPath().size() - 1)
+		queryString += req.getPath().substr(pos + 1);
 
 	// Get the method and uri
-	std::string method = std::string("REQUEST_METHOD=") + req.get_method();
-	std::string uri = std::string("REQUEST_URI=") + req.get_path();
+	std::string method = std::string("REQUEST_METHOD=") + req.getMethod();
+	std::string uri = std::string("REQUEST_URI=") + req.getPath();
 	if (method.empty() || uri.empty())
 		return NULL;
 

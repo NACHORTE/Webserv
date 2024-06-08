@@ -133,17 +133,17 @@ size_t HttpRequest::addData(const std::string & data)
 	return readBytes; 
 }
 
-const std::string & HttpRequest::get_method() const
+const std::string & HttpRequest::getMethod() const
 {
 	return _method;
 }
 
-const std::string & HttpRequest::get_path() const
+const std::string & HttpRequest::getPath() const
 {
 	return _path;
 }
 
-const std::string & HttpRequest::get_version() const
+const std::string & HttpRequest::getVersion() const
 {
 	return _version;
 }

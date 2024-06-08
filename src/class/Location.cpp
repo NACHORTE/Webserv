@@ -42,7 +42,6 @@ const std::string &Location::getIndex(void) const
 
 void Location::setRoot(const std::string & root)
 {
-	_alias.clear();
 	if (root.size() > 0 && root[0] != '/')
 		_root = '/' + root;
 	else
@@ -56,7 +55,6 @@ const std::string &Location::getRoot(void) const
 
 void Location::setAlias(const std::string & alias)
 {
-	_root.clear();
 	if (alias.size() > 0 && alias[0] != '/')
 		_alias = '/' + alias;
 	else
@@ -127,12 +125,38 @@ bool Location::hasReturnValue(void) const
 	return (_returnValue.first != -1);
 }
 
-bool Location::isFile() const
+bool Location::isDir(std::string path) const
 {
-	return (back(_URI) != '/');
+	if (path.empty())
+		return false;
+
+	// If there is a file alias, check if the alias is a dir
+	if (_alias.size() > 0 && back(_alias) != '/')
+		return ::isDir(_alias.substr(1));
+
+	// If there is a folder alias, merge the alias with the path and check if it's a dir
+	if (_alias.size() > 0)
+	{
+		if (path[0] == '/')
+			path = path.substr(1);
+		path = joinPath(_alias, path.substr(trim(_URI,"/").size()));
+		if (path.size() == 0)
+			return false;
+		return ::isDir(path.substr(path[0] == '/', path.size() - (back(path) == '/')));
+	}
+
+	// Add the root to the path
+	path = joinPath(_root, path);
+	if (path.size() > 0 && path[0] == '/')
+		path = path.substr(1);
+
+	// if path is empty, it's ./ so it's a directory
+	if (path.empty())
+		return true;
+
+	return ::isDir(path);
 }
 
-#include "colors.h"
 bool Location::matchesURI(std::string path) const
 {
 	if (path.empty())
@@ -202,12 +226,53 @@ std::string Location::getFilename(std::string path) const
 		path = path.substr(1);
 
 	// If the path is a directory, add the index file
-	if (path.empty() || isDir(path) || trim(path) == trim(joinPath(_root, _URI)))
+	if (path.empty() || ::isDir(path))
 	{
 		if (_index.size() == 0)
 			return joinPath(path, "index.html");
 		return joinPath(path, _index);
 	}
+	// If the path is a file, return it
+	return path;
+}
+
+std::string Location::getFilenameNoIndex(std::string path) const
+{
+	if (path.empty())
+		return "";
+
+	// If there is a file alias, return it without the first slash
+	if (_alias.size() > 0 && back(_alias) != '/')
+		return _alias.substr(1);
+
+	// If there is a folder alias, return the path with the alias
+	if (_alias.size() > 0)
+	{
+		if (path[0] == '/')
+			path = path.substr(1);
+		path = joinPath(_alias, path.substr(trim(_URI,"/").size()));
+		if (path.size() == 0)
+			return "";
+		return path.substr(path[0] == '/', path.size() - (back(path) == '/'));
+	}
+	// If the location is a file, return the root + path
+	if (back(_URI) != '/')
+	{
+		if (_root.size() == 0)
+			return path;
+		if (_root[0] == '/')
+			return joinPath(_root, path).substr(1);
+		return joinPath(_root, path);
+	}
+	// Add the root to the path
+	path = joinPath(_root, path);
+	if (path.size() > 0 && path[0] == '/')
+		path = path.substr(1);
+
+	// If the path is a directory, add the index file
+	if (path.empty())
+		return ".";
+
 	// If the path is a file, return it
 	return path;
 }
