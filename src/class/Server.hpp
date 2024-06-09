@@ -26,7 +26,7 @@ class Server
 		void addErrorPage(int error_code, const std::string & errorPage);
 
 		void addServerName(const std::string & serverName);
-		void addLocation(Location l0ocation);
+		bool addLocation(Location location);
 		void addErrorPage(const std::string & errorPage);
 		void addClient(Client &client);
 

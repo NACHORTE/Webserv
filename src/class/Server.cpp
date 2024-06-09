@@ -53,6 +53,12 @@ Server::Server(void)
 	loc.setAllowedMethods(location_methodsMap);
 	addLocation(loc);
 	loc.clear();*/
+	loc.setURI("*.cgi");
+	loc.setAllowedMethods(location_methodsMap);
+	loc.isCgi(true);
+	if (!addLocation(loc))
+		std::cout << RED <<  "Failed to add location " << loc.getURI() << " ext: " <<loc.getExtension() << RESET << std::endl; //XXX
+	loc.clear();
 
 	location_methodsMap.clear();
 	location_methodsMap.insert("GET");
@@ -74,11 +80,6 @@ Server::Server(void)
 	addLocation(loc);
 	loc.clear();
 
-	loc.setURI("/bin-cgi/");
-	loc.setAllowedMethods(location_methodsMap);
-	loc.isCgi(true);
-	addLocation(loc);
-	loc.clear();
 
 	loc.setURI("/google.com");
 	loc.setReturnValue(301, "https://www.google.com");
@@ -225,7 +226,7 @@ int Server::getClientMaxBodySize(void) const
 	return (_maxBodySize);
 }
 
-void Server::addLocation(Location location)
+bool Server::addLocation(Location location)
 {
 	// If the server has a root, merge it with the location's root (this->_root + location->_root)
 	if (!_root.empty() && location.getAlias().empty())
@@ -236,7 +237,7 @@ void Server::addLocation(Location location)
 	// If the server has an index and the location doesn't, set the index from the server 
 	if (!_index.empty() && location.getIndex().empty())
 		location.setIndex(joinPath(_root, location.getIndex()));
-	_locations.addLocation(location);
+	return _locations.addLocation(location);
 }
 
 void Server::addServerName(const std::string & serverName)

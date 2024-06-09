@@ -44,8 +44,15 @@ const Location * LocationContainer::operator[](const std::string & path) const
 		{
 			if (!bestMatch)
 				bestMatch = &_locations[i];
-			else if (_locations[i].getURI().size() > bestMatch->getURI().size()
-				|| back(_locations[i].getURI()) != '/')
+			// if perfect match bc location is for file
+			else if (back(_locations[i].getURI()) != '/')
+			{
+				bestMatch = &_locations[i];
+				break;
+			}
+			// If new match has URI and extension longer than best match replace it
+			if (_locations[i].getURI().size() >= bestMatch->getURI().size()
+				and _locations[i].getExtension().size() >= bestMatch->getExtension().size())
 				bestMatch = &_locations[i];
 		}
 	}
