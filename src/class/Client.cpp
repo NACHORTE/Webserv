@@ -88,7 +88,10 @@ void Client::addData(const std::string & data)
 			_requests.push_front(std::pair<HttpRequest, HttpResponse>());
 		long long int read = _requests.begin()->first.addData(data.substr(bytesRead));
 		if (read == -1)
-			_error = true;
+		{
+			_error = 500;
+			return;
+		}
 		if (read == 0)
 			break;
 		bytesRead += read;

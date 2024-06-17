@@ -45,7 +45,7 @@ class Client
 		std::string _IP;
 		int _port;
 
-		bool _error;
+		int _error;
 		clock_t _lastEventTime;
 		// Queue of requests and responses (Most recent request is at the front of the list)
 		std::list<std::pair<HttpRequest, HttpResponse> > _requests;
