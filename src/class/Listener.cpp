@@ -199,9 +199,9 @@ int Listener::readData(int fd, Client &client)
 	client.addData(std::string(buffer,bytesRead));
 	std::cout << client.getIP() << ":" << client.getPort() << " number of requests: " << client.getRequestCount() << " request_ready: " << (client.requestReady()?"True":"False") << std::endl; //XXX
 	// If there is an error, generate an error response that will be sent in the next sendData
-	if (client.getError())
+	if (client.error())
 	{
-		client.setResponse(errorResponse(client, client.getError(), "Bad Request", "Error parsing request"));
+		client.setResponse(errorResponse(client, 400, "Bad Request", "Error parsing request"));
 		return 0;
 	}
 
@@ -233,7 +233,7 @@ int Listener::sendData(int fd, Client &client)
 	std::cout << "Sending data to " << client.getIP() << ":" << client.getPort() << std::endl; // NOTE msg
 
 	// If keep-alive is set pop the request and wait for another one
-	if (client.keepAlive() and not client.getError())
+	if (client.keepAlive() and not client.error())
 	{
 		std::cout << "Keeping connection alive with " << client.getIP() << ":" << client.getPort() << std::endl; // NOTE msg
 		client.popRequest();
@@ -331,7 +331,7 @@ std::ostream &operator<<(std::ostream &os, const Listener &obj)
 HttpResponse Listener::errorResponse(Client & client, int errorCode, const std::string & phrase, const std::string & msg)
 {
 	// Set the error code in the client so when the response is sent, the client is closed
-	client.setError(errorCode);
+	client.error(true);
 
 	// Get the host of the request if possible
 	if (client.getRequestCount() == 0)

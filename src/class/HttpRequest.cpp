@@ -105,7 +105,7 @@ long long int HttpRequest::addData(const std::string & data)
 			return data.size();
 		// If the end of the header is found, parse it
 		if (parseHeader(_buffer.substr(0, pos + 4)) == 1)
-			return (_error=true, -1); //TODO 400 error
+			return (_error=true, -1);
 		_buffer = _buffer.substr(pos + 4);
 		_headerReady = true;
 	}
@@ -125,11 +125,11 @@ long long int HttpRequest::addData(const std::string & data)
 				std::istringstream iss(contentLengthHeader[0]);
 				iss >> contentLength;
 				if (iss.fail() or not iss.eof())
-					return (_error=true, -1); //TODO 500 error
+					return (_error=true, -1);
 			}
 			// If no content length is found, or some weird error occurs, return
 			if (contentLength < _body.size())
-				return (_error=true, -1); // TODO 400 error
+				return (_error=true, -1);
 			// Add the data to the body
 			size_t len = (contentLength - _body.size() > _buffer.size()) ?
 				_buffer.size() : contentLength - _body.size();
@@ -160,7 +160,7 @@ long long int HttpRequest::addData(const std::string & data)
 			}
 			catch(const std::exception& e)
 			{
-				return (_error=true, -1); //TODO 400 error
+				return (_error=true, -1);
 			}
 		}
 	}

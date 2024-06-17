@@ -66,12 +66,12 @@ size_t Client::getRequestCount(void) const
 	return (_requests.size());
 }
 
-int Client::getError(void) const
+int Client::error(void) const
 {
 	return (_error);
 }
 
-void Client::setError(int error)
+void Client::error(bool error)
 {
 	_error = error;
 }
@@ -89,7 +89,7 @@ void Client::addData(const std::string & data)
 		long long int read = _requests.begin()->first.addData(data.substr(bytesRead));
 		if (read == -1)
 		{
-			_error = 500;
+			_error = true;
 			return;
 		}
 		if (read == 0)
