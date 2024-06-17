@@ -64,43 +64,58 @@ void HttpRequest::setBody(const std::string& body)
 	this->_body = body;
 }
 
-size_t HttpRequest::addData(const std::string & data)
+long long int getChunk(std::string & buf, std::string & body)
 {
-	// If the request is ready, return 0 bytes read
+	//get the length of the chunk
+	size_t chunkSize;
+	size_t pos = buf.find("\r\n");
+	if (pos == std::string::npos)
+		return -1;
+	std::istringstream iss(buf.substr(0, pos));
+	iss >> std::hex >> chunkSize;
+	if (iss.fail() or not iss.eof())
+		return -1;
+
+	// if the buffer is not long enough, return error
+	// hex size + \r\n + chunkSize + \r\n
+	if (pos + chunkSize + 4 > buf.size())
+		return -1;
+	
+	// add the chunk to the body and remove it from the buffer
+	body += buf.substr(pos + 2, chunkSize);
+	buf = buf.substr(pos + chunkSize + 4);
+
+	// return the read size
+	return pos + chunkSize + 4;
+}
+
+long long int HttpRequest::addData(const std::string & data)
+{
 	if (_requestReady)
 		return 0;
-	// Create auxiliar variable with the buffer and data
-	std::string msg = _buffer + data;
-	// Variable to store the number of bytes read from data
-	size_t readBytes = 0;
-	// Save old length of buffer and empty it
-	size_t oldBuffLen = _buffer.size();
-	_buffer.clear();
+
+	_buffer = _buffer + data;
 	// If the header has not been found yet, search for it
-	if (!_headerReady)
+	if (not _headerReady)
 	{
 		// Find the end of the header
-		size_t pos = msg.find("\r\n\r\n");
-		// If end of header has not been found, save the buffer and return
+		size_t pos = _buffer.find("\r\n\r\n");
+		// If the end of the header is not found, return the number of bytes read
 		if (pos == std::string::npos)
-		{
-			_buffer = msg;
 			return data.size();
-		}
 		// If the end of the header is found, parse it
-		if (parseHeader(msg.substr(0, pos + 4)) == 1)
-			return (_error = true, 0);
-		msg = msg.substr(pos + 4);
-		readBytes = pos + 4 - oldBuffLen;
+		if (parseHeader(_buffer.substr(0, pos + 4)) == 1)
+			return (_error=true, -1);
+		_buffer = _buffer.substr(pos + 4);
 		_headerReady = true;
 	}
 	// Parse the body if the header has been found already
 	// (Use if instead of else bc body can be parsed after parsing header)
 	if (_headerReady)
 	{
-		// Check if the message is chunked
 		std::vector<std::string> chunkedHeader = getHeader("Transfer-Encoding");
-		if (chunkedHeader.size() == 0 || chunkedHeader[0] != "chunked")
+		// not chunked
+		if (chunkedHeader.size() == 0 or chunkedHeader[0] != "chunked")
 		{
 			// Get the content length
 			std::vector<std::string> contentLengthHeader = getHeader("Content-Length");
@@ -109,46 +124,48 @@ size_t HttpRequest::addData(const std::string & data)
 			{
 				std::istringstream iss(contentLengthHeader[0]);
 				iss >> contentLength;
-				if (iss.fail() || !iss.eof())
-					return (_error = true, 0);
+				if (iss.fail() or not iss.eof())
+					return (_error=true, -1);
 			}
-
+			// If no content length is found, or some weird error occurs, return
+			if (contentLength < _body.size())
+				return (_error=true, -1);
 			// Add the data to the body
-			size_t oldBodySize = _body.size();
-			_body += msg.substr(0, contentLength - oldBodySize);
-			readBytes += (contentLength - oldBodySize > msg.size()) ? msg.size() : contentLength - oldBodySize;
+			size_t len = (contentLength - _body.size() > _buffer.size()) ?
+				_buffer.size() : contentLength - _body.size();
+			_body += _buffer.substr(0, len);
+			_buffer = _buffer.substr(len);
+
 			// If the body is complete, set the request as ready
 			if (_body.size() == contentLength)
-			{
 				_requestReady = true;
-				return readBytes;
-			}
 		}
+		//is chunked
 		else
 		{
-			//is chunked
-/* 			try
+ 			try
 			{
-				int chunkSize;
+				long long int chunkSize;
 				do
 				{
-					chunkSize=getChunk(msg);
-					if (chunkSize == 0)
+					chunkSize=getChunk(_buffer, _body);
+					// 0\r\n\r\n
+					if (chunkSize == 5)
 					{
 						_requestReady = true;
-						
+						unsetHeader("Transfer-Encoding");
+						setHeader("Content-Length", intToString(_body.size()));
 					}
-				} while (chunkSize > 0);
+				} while (chunkSize > 5);
 			}
 			catch(const std::exception& e)
 			{
-				return (_error = true, 0);
+				return (_error=true, -1);
 			}
-			 */
 		}
 	}
 
-	return readBytes; 
+	return data.size() - _buffer.size(); 
 }
 
 const std::string & HttpRequest::getMethod() const

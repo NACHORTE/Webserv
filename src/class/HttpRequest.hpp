@@ -31,7 +31,7 @@ class HttpRequest {
 		void setBody(const std::string& body);
 
 		// Add data to the request buffer and return the number of bytes added
-		size_t addData(const std::string & data);
+		long long int addData(const std::string & data);
 
 		const std::string & getMethod() const;
 		const std::string & getPath() const;
