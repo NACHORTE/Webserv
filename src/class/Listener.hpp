@@ -19,7 +19,6 @@ class Listener
 
 		void addServer(const Server & server);
 
-		Server & getServer(const std::string & hostname) const; // XXX UNUSED ?
 		int getPort(void) const;
 		
 	// Member functions
@@ -39,7 +38,7 @@ class Listener
 
 		// Port number that the listener listens to
 		int _port;
-		// File descriptor for the listener (also in _cliens[0]->first.fd)
+		// File descriptor for the listener (also in _clients[0]->first.fd)
 		int _sockfd;
 		// Vector of all the servers (_serverMap points to these servers)
 		std::list<Server> _serverList;
@@ -57,6 +56,7 @@ class Listener
 		int closeConnection(int clientIndex);
 
 		void sendToServer(Client &client);
+		HttpResponse errorResponse(Client & client, int errorCode, const std::string & phrase = "", const std::string & msg= "");
 
 	// Friends <3
 		friend std::ostream &operator<<(std::ostream &os, const Listener &obj);

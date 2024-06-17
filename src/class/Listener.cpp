@@ -66,13 +66,6 @@ void Listener::addServer(const Server & server)
 		_serverMap[*it] = &_serverList.back();
 }
 
-Server &Listener::getServer(const std::string &hostname) const // XXX UNUSED ?
-{
-	if (_serverMap.count(hostname) == 1)
-		return (*_serverMap.at(hostname));
-	throw std::runtime_error("[Listener::getServer] Server not found for hostname: " + hostname);
-}
-
 int Listener::getPort(void) const
 {
 	return (_port);
@@ -122,8 +115,13 @@ void Listener::loop()
 	// Check if any clients have timed out (skip the first client bc its the listener)
 	size_t i = 1;
 	for (std::list<Client>::iterator it = ++_clients.begin(); it != _clients.end(); ++it, ++i)
-		if (it->timeout())
-			closeConnection(_pollfds[i--].fd); // NOTE return timeout error to client before closing
+	{
+		if (it->timeout() and it->responseReady())
+			closeConnection(_pollfds[i--].fd);
+		else if (it->timeout() and not it->responseReady())
+			it->setResponse(errorResponse(*it, 408, "Request Timeout", "Client timed out"));
+	}
+
 	// Loop through the servers and call their loop function
 	for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
 		it->loop();
@@ -190,20 +188,24 @@ int Listener::readData(int fd, Client &client)
 	// If there is an error, close the connection
 	if (bytesRead < 0)
 	{
-		// NOTE send internal server error to client before closing
-		std::cout << "[Listener::readData] Error reading data" << std::endl; // NOTE msg
-		closeConnection(fd);
-		return 1;
+		client.setResponse(errorResponse(client, 500, "Internal_serv_error", "Couldn't read data from client"));
+		return 0;
 	}
-	if (bytesRead == 0) // NOTE fix POLLIN always true
+	if (bytesRead == 0) // TODO fix POLLIN always true
 		return 0;
 
 	std::cout << "Reading " << bytesRead << " bytes from " << client.getIP() << ":" << client.getPort() << std::endl; //XXX
 	// Add the data to the client's buffer
 	client.addData(std::string(buffer,bytesRead));
 	std::cout << client.getIP() << ":" << client.getPort() << " number of requests: " << client.getRequestCount() << " request_ready: " << (client.requestReady()?"True":"False") << std::endl; //XXX
+	// If there is an error, generate an error response that will be sent in the next sendData
+	if (client.getError())
+	{
+		client.setResponse(errorResponse(client, client.getError(), "Bad Request", "Error parsing request"));
+		return 0;
+	}
 
-	// If the request is ready, send it to a server
+	// send the client to a server if there is an error so it generates a response
 	if (client.requestReady())
 		sendToServer(client);
 
@@ -231,7 +233,7 @@ int Listener::sendData(int fd, Client &client)
 	std::cout << "Sending data to " << client.getIP() << ":" << client.getPort() << std::endl; // NOTE msg
 
 	// If keep-alive is set pop the request and wait for another one
-	if (client.keepAlive())
+	if (client.keepAlive() and not client.getError())
 	{
 		std::cout << "Keeping connection alive with " << client.getIP() << ":" << client.getPort() << std::endl; // NOTE msg
 		client.popRequest();
@@ -324,4 +326,22 @@ std::ostream &operator<<(std::ostream &os, const Listener &obj)
 		os << ") (fd " << obj._pollfds[i].fd << ") (request count " << it->getRequestCount() << (it->requestReady()?" ready":" not ready")<< ")" << std::endl;
 	}
 	return (os);
+}
+
+HttpResponse Listener::errorResponse(Client & client, int errorCode, const std::string & phrase, const std::string & msg)
+{
+	// Set the error code in the client so when the response is sent, the client is closed
+	client.setError(errorCode);
+
+	// Get the host of the request if possible
+	if (client.getRequestCount() == 0)
+		return _serverList.front().errorResponse(errorCode, phrase, msg);
+	std::vector<std::string> host = client.getRequest().getHeader("Host");
+	std::string hostname = host.size() > 0 ? host[0] : "";
+
+	// If the server exists, add the client to the server
+	if (_serverMap.count(hostname) == 1)
+		return _serverMap.at(hostname)->errorResponse(errorCode, phrase, msg);
+	// Else send it to the default server
+	return _serverList.front().errorResponse(errorCode, phrase, msg);
 }

@@ -5,7 +5,7 @@
 
 Client::Client(std::string IP, int port)
 {
-	_Error = false;
+	_error = false;
 	_lastEventTime = clock();
 	_IP = IP;
 	_port = port;
@@ -22,8 +22,8 @@ Client::~Client()
 void Client::setResponse(const HttpResponse & response)
 {
 	if (_requests.empty())
-		return;
-	_requests.begin()->second = response;
+		_requests.push_front(std::pair<HttpRequest, HttpResponse>());
+	_requests.rbegin()->second = response;
 }
 
 std::string Client::getIP() const
@@ -66,6 +66,16 @@ size_t Client::getRequestCount(void) const
 	return (_requests.size());
 }
 
+int Client::getError(void) const
+{
+	return (_error);
+}
+
+void Client::setError(int error)
+{
+	_error = error;
+}
+
 void Client::addData(const std::string & data)
 {
 	// Update the last event time
@@ -76,7 +86,9 @@ void Client::addData(const std::string & data)
 	{
 		if (_requests.empty() || _requests.begin()->first.requestReady())
 			_requests.push_front(std::pair<HttpRequest, HttpResponse>());
-		size_t read = _requests.begin()->first.addData(data.substr(bytesRead));
+		long long int read = _requests.begin()->first.addData(data.substr(bytesRead));
+		if (read == -1)
+			_error = true;
 		if (read == 0)
 			break;
 		bytesRead += read;
@@ -129,7 +141,7 @@ Client &Client::operator=(const Client &rhs)
 	{
 		_IP = rhs._IP;
 		_port = rhs._port;
-		_Error = rhs._Error;
+		_error = rhs._error;
 		_lastEventTime = rhs._lastEventTime;
 		_requests = rhs._requests;
 	}
@@ -138,7 +150,7 @@ Client &Client::operator=(const Client &rhs)
 
 std::ostream &operator<<(std::ostream &os, const Client &obj)
 {
-	std::cout << CYAN << "_Error: "<< RESET << obj._Error << std::endl;
+	std::cout << CYAN << "_Error: "<< RESET << obj._error << std::endl;
 	std::cout << CYAN << "_lastEventTime: "<< RESET << obj._lastEventTime << std::endl;
 	std::cout << CYAN << "_requests: "<< RESET << obj._requests.size() << std::endl;
 

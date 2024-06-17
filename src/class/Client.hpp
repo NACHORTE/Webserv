@@ -24,6 +24,8 @@ class Client
 		const HttpRequest & getRequest(void) const;
 		size_t getRequestCount(void) const;
 
+		int getError(void) const;
+		void setError(int error);
 	// Member functions
 
 		void addData(const std::string & data);
@@ -43,7 +45,7 @@ class Client
 		std::string _IP;
 		int _port;
 
-		bool _Error;
+		bool _error;
 		clock_t _lastEventTime;
 		// Queue of requests and responses (Most recent request is at the front of the list)
 		std::list<std::pair<HttpRequest, HttpResponse> > _requests;
