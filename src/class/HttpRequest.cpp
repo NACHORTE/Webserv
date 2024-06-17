@@ -26,17 +26,17 @@ HttpRequest::HttpRequest(const HttpRequest& other)
 HttpRequest::~HttpRequest()
 {}
 
-void HttpRequest::set_method(const std::string& method)
+void HttpRequest::setMethod(const std::string& method)
 {
 	this->_method = method;
 }
 
-void HttpRequest::set_path(const std::string& path)
+void HttpRequest::setPath(const std::string& path)
 {
 	this->_path = path;
 }
 
-void HttpRequest::set_version(const std::string& version)
+void HttpRequest::setVersion(const std::string& version)
 {
 	this->_version = version;
 }
@@ -127,6 +127,24 @@ size_t HttpRequest::addData(const std::string & data)
 		else
 		{
 			//is chunked
+/* 			try
+			{
+				int chunkSize;
+				do
+				{
+					chunkSize=getChunk(msg);
+					if (chunkSize == 0)
+					{
+						_requestReady = true;
+						
+					}
+				} while (chunkSize > 0);
+			}
+			catch(const std::exception& e)
+			{
+				return (_error = true, 0);
+			}
+			 */
 		}
 	}
 

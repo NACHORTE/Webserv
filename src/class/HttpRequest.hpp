@@ -23,9 +23,9 @@ class HttpRequest {
 
 		// getters, setters
 
-		void set_method(const std::string& method); //TODO change name format to setMethod
-		void set_path(const std::string& path);
-		void set_version(const std::string& version);
+		void setMethod(const std::string& method); //TODO change name format to setMethod
+		void setPath(const std::string& path);
+		void setVersion(const std::string& version);
 		void setHeader(const std::string& key, const std::string& value);
 		void unsetHeader(const std::string& key);
 		void setBody(const std::string& body);

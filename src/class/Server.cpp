@@ -21,7 +21,6 @@ Server::Server(void)
 	Location loc;
 	loc.setURI("/");
 	loc.setIndex("/html/index.html");
-	loc.autoIndex(true);
 	loc.setAllowedMethods(location_methodsMap);
 	addLocation(loc);
 	loc.clear();
@@ -56,8 +55,6 @@ Server::Server(void)
 	loc.setURI("*.cgi");
 	loc.setAllowedMethods(location_methodsMap);
 	loc.isCgi(true);
-	if (!addLocation(loc))
-		std::cout << RED <<  "Failed to add location " << loc.getURI() << " ext: " <<loc.getExtension() << RESET << std::endl; //XXX
 	loc.clear();
 
 	location_methodsMap.clear();
@@ -306,7 +303,7 @@ void Server::loop()
 			// If the location is not a cgi, return the response
 			if (loc->isCgi() == false)
 			{
-				std::cout << "Location " << path << " is not a CGI" << std::endl; //XXX
+				std::cout << "Location " << path << " is a static request" << std::endl; //XXX
 				HttpResponse response;
 				response = _methodsMap[req.getMethod()](req, *this, *loc);
 				response.setReady(true);

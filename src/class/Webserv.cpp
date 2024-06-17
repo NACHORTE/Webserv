@@ -48,7 +48,7 @@ std::vector<Server> Webserv::read_config(const std::string& config_file) //XXX f
 	(void)config_file;
 	std::vector<Server> servers;
 	Server server;
-	server.setPort(8080);
+	server.setPort(8081);
 	server.setRoot("/var/www/html");
 	server.addServerName("localhost");
 	server.addServerName("feo1");
