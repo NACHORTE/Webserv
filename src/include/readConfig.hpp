@@ -12,7 +12,7 @@ void readServerName(std::list<std::string>::iterator & it, const std::list<std::
 void readRoot(std::list<std::string>::iterator & it, const std::list<std::string>::iterator & end, Server & serv);
 void readIndex(std::list<std::string>::iterator & it, const std::list<std::string>::iterator & end, Server & serv);
 void readErrorPage(std::list<std::string>::iterator & it, const std::list<std::string>::iterator & end, Server & serv);
-void readMaxBodySize(std::list<std::string>::iterator & it, const std::list<std::string>::iterator & end, Server & serv);
+void readMaxBody(std::list<std::string>::iterator & it, const std::list<std::string>::iterator & end, Server & serv);
 
 // location block
 void readLocation(std::list<std::string>::iterator & it, const std::list<std::string>::iterator & end, Server & serv);
