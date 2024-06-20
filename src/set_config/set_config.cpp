@@ -4,61 +4,30 @@
 #include "Server.hpp"
 #include "utils.hpp"
 
-int check_duplicated(std::string var)
+static void readListen(std::list<std::string>::iterator & it, const std::list<std::string>::iterator & end, Server & serv)
 {
-	if (var == "" || var == "0")
-		return 0;
-	return 1;
+	if (*(it++) != "listen")
+		throw std::runtime_error("Error reading config file, expected: listen");
+	if (it == end)
+		throw std::runtime_error("Error reading config file, missing port number after listen directive");
+	size_t port = 0;
+	for (size_t i = 0; i < it->size(); ++i)
+	{
+		if ((*it)[i] < '0' or (*it)[i] > '9')
+			throw std::runtime_error("Error reading config file, invalid port number: " + *it);
+		port = port * 10 + (*it)[i] - '0';
+		if (port > 65535)
+			throw std::runtime_error("Error reading config file, invalid port number: " + *it);
+	}
+	if (it == end || *it != ";")
+		throw std::runtime_error("Error reading config file, missing \";\" at the end of the listen directive");
+	serv.setPort(port);
+	++it;
 }
 
-int check_full_server(const Server & server, int n_server)
+static void readLocation(std::list<std::string>::iterator & it, const std::list<std::string>::iterator & end, Server & serv)
 {
-	(void)server;
-	(void)n_server;
-	return 0;
-/* 	if (server.getPort() == 0)
-	{
-		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: port" << std::endl;
-		return 0;
-	}
-	if (server.getServerNames().size() == 0)
-	{
-		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: server_name" << std::endl;
-		return 0;
-	}
- 	if (server->getHost() == "")
-	{
-		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: host" << std::endl;
-		return 0;
-	} 
-	if (server.getRoot() == "")
-	{
-		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: root" << std::endl;
-		return 0;
-	}
- 	if (server->getErrorPage() == "")
-	{
-		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: error_page" << std::endl;
-		return 0;
-	}
-	if (server.getIndex() == "")
-	{
-		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: index" << std::endl;
-		return 0;
-	}
-	if (server.getClientMaxBodySize() == 0)
-	{
-		std::cout << "Error reading config file (server " << n_server + 1 << "), missing: max_body" << std::endl;
-		return 0;
-	}
-	return 1; */
-}
-
-int read_location(Location *location, std::istringstream &iss)
-{
-	(void)location;
-	(void)iss;
-	return 0;
+	return ;
 	/* std::string word;
 
 	if (iss >> word && word[0] == '/')
@@ -162,190 +131,126 @@ int read_location(Location *location, std::istringstream &iss)
 	return 0;*/
 }
 
-std::vector<Server> read_config(const std::string& config_file)
+static Server readServer(std::list<std::string>::iterator & it, const std::list<std::string>::iterator & end)
 {
-	(void)config_file;
-	return std::vector<Server>();
-/* 	std::string input;
-	std::string word;
-	std::string content;
-	int in_server = 0;
-	input = readFile(config_file); //NOTE try catch
-	std::istringstream iss(input);
-	std::vector <Server> servers;
-	int n_server = 0;
+	static bool initialized = false;
+	// Function pointers to read the different attributes of a server
+	static std::map<std::string,
+		void (*)(std::list<std::string>::iterator &,
+			const std::list<std::string>::iterator &,Server &)> attributeFunctions;
+	// Atributes that can appear multiple times
+	static std::set<std::string> duplicableAttributes;
+	// Atributes that have to appear at least once
+	static std::set<std::string> mandatoryAttributes;
 
-	while (iss >> word)
+	if (not initialized)
 	{
-		if (!in_server && word == "server")
-        {
-			if (iss >> word && word == "{")
-			{
-				in_server = 1;
-				Server server;
-				servers.push_back(server);
-			}
-			else
-				return std::vector<Server>();
-            continue;
-        }
-		else if (in_server && word == "}")
+		initialized = true;
+
+		attributeFunctions["listen"] = readListen;
+		attributeFunctions["server_name"] = readServerName;
+		attributeFunctions["root"] = readRoot;
+		attributeFunctions["host"] = readHost;
+		attributeFunctions["error_page"] = readErrorPage;
+		attributeFunctions["index"] = readIndex;
+		attributeFunctions["max_body"] = readMaxBody;
+		attributeFunctions["location"] = readLocation;
+
+		duplicableAttributes.insert("location");
+
+		mandatoryAttributes.insert("listen");
+	}
+
+	Server server;
+	// Attributes that have been used in the server block
+	std::set<std::string> usedAttributes;
+
+	// Skip the server and { tokens
+	if (*(it++) != "server")
+		throw std::runtime_error("Error reading config file, expected: server");
+	if (*(it++) != "{")
+		throw std::runtime_error("Error reading config file, expected \"{\" after server");
+
+	// Start parsing the content
+	while (it != end and *it != "}")
+	{
+		if (usedAttributes.count(*it) == 1 and duplicableAttributes.count(*it) == 0)
+			throw std::runtime_error("Error reading config file, duplicated token in server block: " + *it);
+		if (attributeFunctions.count(*it) == 1)
 		{
-			in_server = 0;
-			//if fails to check full server, return empty vector
-			if (!check_full_server(servers[n_server], n_server))
-				return std::vector<Server>();
-			n_server++;
-			continue;
-		}
-		else if (in_server && word == "location")
-		{
-			Location location;
-			if (!read_location(&location, iss))
-				return std::vector<Server>();
-			servers[n_server].addLocation(location);
-			continue;
-		}
-		else if (in_server && word == "listen")
-		{
-			if (check_duplicated(intToString(servers[n_server].getPort())))
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), duplicated: listen" << std::endl;
-				return std::vector<Server>();
-			}
-			if (iss >> word && word.find_first_not_of("0123456789;") == std::string::npos  && back(word) == ';')
-			{
-				std::istringstream iss_num(word);
-				int Portaux;
-				iss_num >> Portaux;
-				servers[n_server].setPort(Portaux);
-			}
-			else
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), missing/error: listen" << std::endl;
-				return std::vector<Server>();
-			}
-		}
-		else if (in_server && word == "server_name")
-		{
-			if (check_duplicated(*servers[n_server].getServerNames().begin()))
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), duplicated: server_name" << std::endl;
-				return std::vector<Server>();
-			}
-			if (iss >> word && back(word) == ';')
-			{
-				pop_back(word);
-				servers[n_server].addServerName(word);
-			}
-			else
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), missing/error: server_name" << std::endl;
-				return std::vector<Server>();
-			}
-		}
-		else if (in_server && word == "root")
-		{
-			if (check_duplicated(servers[n_server].getRoot()))
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), duplicated: root" << std::endl;
-				return std::vector<Server>();
-			}
-			if (iss >> word && back(word) == ';')
-			{
-				pop_back(word);
-				servers[n_server].setRoot(word);
-			}
-			else
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), missing/error: root" << std::endl;
-				return std::vector<Server>();
-			}
-		}
- 		else if (in_server && word == "host")
-		{
-			if (check_duplicated(servers[n_server].getHost()))
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), duplicated: host" << std::endl;
-				return std::vector<Server>();
-			}
-			if (iss >> word && back(word) == ';')
-			{
-				pop_back(word);
-				servers[n_server].setHost(word);
-			}
-			else
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), missing/error: host" << std::endl;
-				return std::vector<Server>();
-			}
-		} 
- 		else if (in_server && word == "error_page")
-		{
-			if (check_duplicated(servers[n_server].getErrorPage()))
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), duplicated: error_page" << std::endl;
-				return std::vector<Server>();
-			}
-			if (iss >> word && back(word) == ';')
-			{
-				pop_back(word);
-				servers[n_server].setErrorPage(word);
-			}
-			else
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), missing/error: error_page" << std::endl;
-				return std::vector<Server>();
-			}
-		}
-		else if(in_server && word == "index")
-		{
-			if (check_duplicated(servers[n_server].getIndex()))
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), duplicated: index" << std::endl;
-				return std::vector<Server>();
-			}
-			if (iss >> word && back(word) == ';')
-			{
-				pop_back(word);
-				servers[n_server].setIndex(word);
-			}
-			else
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), missing/error: index" << std::endl;
-				return std::vector<Server>();
-			}
-		}
-		else if (in_server && word == "max_body")
-		{
-			if (check_duplicated(intToString(servers[n_server].getClientMaxBodySize())))
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), duplicated: max_body" << std::endl;
-				return std::vector<Server>();
-			}
-			if (iss >> word && word.find_first_not_of("0123456789;") == std::string::npos && back(word) == ';')
-			{
-				std::istringstream iss_num(word);
-				int max_body;
-				iss_num >> max_body;
-				servers[n_server].setMaxBodySize(max_body);
-			}
-			else
-			{
-				std::cout << "Error reading config file (server " << n_server + 1 << "), missing/error: max_body" << std::endl;
-				return std::vector<Server>();
-			}
+			attributeFunctions[*it](it, end, server);
+			usedAttributes.insert(*it);
 		}
 		else
+			throw std::runtime_error("Error reading config file, unknown token in server block: " + *it);
+	}
+
+	// Check if there are any mandatory attributes missing
+	for (std::set<std::string>::iterator it = mandatoryAttributes.begin(); it != mandatoryAttributes.end(); it++)
+		if (usedAttributes.count(*it) == 0)
+			throw std::runtime_error("Error reading config file, missing mandatory token in server block: " + *it);
+	
+	if (it == end || *it != "}")
+		throw std::runtime_error("Error reading config file, missing \"}\" at the end of the server block");
+	// Skip the } token
+	it++;
+	return server;
+}
+
+static std::list<std::string> tokenize(const std::string &configFile)
+{
+	std::ifstream file(configFile);
+	if (!file.is_open())
+		throw std::ios_base::failure("Error: could not open file " + configFile);
+
+	std::string word;
+	std::list<std::string> tokens;
+	std::string special_chars = "{};";
+	while (file >> word)
+	{
+		size_t begin = 0;
+		size_t end = word.find_first_of(special_chars);
+		while (end!= std::string::npos)
 		{
-			std::cout << "Error reading config file, unknown: " << word << std::endl;
-			return std::vector<Server>();
+			if (begin != end)
+				tokens.push_back(word.substr(begin,end - begin));
+			tokens.push_back(word.substr(end,1));
+			begin = end + 1;
+			end = word.find_first_of(special_chars, begin);
+		}
+		if (begin == 0)
+			tokens.push_back(word);
+		else if (begin < word.size())
+			tokens.push_back(word.substr(begin));
+	}
+
+	return tokens;
+}
+
+std::vector<Server> readConfig(const std::string& configFile)
+{
+	std::vector<Server> servers;
+	// Parse the file into tokens (throws exception if file cannot be opened)
+	std::list<std::string> tokens = tokenize(configFile);
+	// Flag that goes true for the first server without a name
+	bool nameLessServer = false;
+	
+	// Keep adding servers until we run out of tokens
+	std::list<std::string>::iterator it = tokens.begin();
+	while(it != tokens.end())
+	{
+		if (*it == "server")
+			servers.push_back(readServer(it, tokens.end()));
+		// Only server tokens are allowed at the top level
+		else
+			throw std::runtime_error("Error reading config file, unknown: " + *it);
+		if (servers.back().getServerNames().empty())
+		{
+			if (nameLessServer == true)
+				throw std::runtime_error("Error reading config file, multiple servers without a name");
+			nameLessServer = true;
 		}
 	}
-	if (in_server == 1)
-	{
-		std::cout << "Error reading config file, missing: }" << std::endl;
-		return std::vector<Server>();
-	}
-	return servers;*/
+
+	return servers;
 }

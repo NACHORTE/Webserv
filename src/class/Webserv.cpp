@@ -28,7 +28,7 @@ void Webserv::addServer(const Server &server)
 void Webserv::init(const std::string &configFile)
 {
 	// Read config file
-	std::vector<Server> servers = read_config(configFile);
+	std::vector<Server> servers = readConfig(configFile);
 
 	// Add servers to listeners or create new listeners
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++)
@@ -43,7 +43,7 @@ void Webserv::loop(void)
 		it->loop();
 }
 
-std::vector<Server> Webserv::read_config(const std::string& config_file) //XXX for test only
+std::vector<Server> Webserv::readConfig(const std::string& config_file) //XXX for test only
 {
 	(void)config_file;
 	std::vector<Server> servers;

@@ -3,6 +3,7 @@
 #include <map>
 
 std::string intToString(int n);
+int stringToInt(const std::string & str);
 std::string readFile(const std::string& filePath, bool binary = false);
 std::string trim(const std::string& str, const std::string & charset = " \t\n\r\f\v");
 char back(std::string str);
