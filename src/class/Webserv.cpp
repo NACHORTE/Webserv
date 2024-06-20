@@ -1,4 +1,5 @@
 #include "Webserv.hpp"
+#include "readConfig.hpp"
 
 Webserv::Webserv(void)
 {}
@@ -41,32 +42,6 @@ void Webserv::loop(void)
 	std::vector<Listener>::iterator it;
 	for (it = _listeners.begin(); it != _listeners.end(); it++)
 		it->loop();
-}
-
-std::vector<Server> Webserv::readConfig(const std::string& config_file) //XXX for test only
-{
-	(void)config_file;
-	std::vector<Server> servers;
-	Server server;
-	server.setPort(8080);
-	server.setRoot("/var/www/html");
-	server.addServerName("localhost");
-	server.addServerName("feo1");
-	servers.push_back(server);
- 	/*server= Server();
-	server.setPort(8080);
-	server.setRoot("/var/www/html");
-	server.addServerName("server2");
-	servers.push_back(server); 
- 	server= Server();
-	server.setPort(8081);
-	server.setRoot("/var/www/html");
-	server.addServerName("server3");
-	server.addServerName("server3_1");
-	server.addServerName("server3_2");
-	servers.push_back(server);
- */
-	return servers;
 }
 
 std::ostream &operator<<(std::ostream &os, const Webserv &obj)

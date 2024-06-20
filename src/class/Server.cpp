@@ -178,6 +178,18 @@ void Server::setRoot(const std::string & root)
 		_root = "/" + root;
 	else
 		_root = root;
+	// update the root of all locations
+	size_t len = _locations.size();
+	for (size_t i = 0; i < len; ++i)
+	{
+		Location * loc = const_cast<Location*>(_locations[i]);
+		// If the server has a root, merge it with the location's root (this->_root + location->_root)
+		if (!_root.empty() and loc->getAlias().empty())
+			loc->setRoot(joinPath(_root, loc->getRoot()));
+		// If the server has an alias add the root of the server to it
+		if (!_root.empty() and !loc->getAlias().empty())
+			loc->setAlias(joinPath(_root, loc->getAlias()));
+	}
 }
 
 const std::map<int, std::set<std::string> > & Server::getErrorPages() const
@@ -211,6 +223,15 @@ const std::string & Server::getIndex(void) const
 void Server::setIndex(const std::string & index)
 {
 	_index = index;
+		// update the root of all locations
+	size_t len = _locations.size();
+	for (size_t i = 0; i < len; ++i)
+	{
+		Location * loc = const_cast<Location*>(_locations[i]);
+		// If the server has an index and the location doesn't, set the index from the server 
+		if (!_index.empty() && loc->getIndex().empty())
+			loc->setIndex(_index);
+	}
 }
 
 const LocationContainer & Server::getLocationContainer(void) const
@@ -233,7 +254,7 @@ bool Server::addLocation(Location location)
 		location.setAlias(joinPath(_root, location.getAlias()));
 	// If the server has an index and the location doesn't, set the index from the server 
 	if (!_index.empty() && location.getIndex().empty())
-		location.setIndex(joinPath(_root, location.getIndex()));
+		location.setIndex(_index);
 	return _locations.addLocation(location);
 }
 

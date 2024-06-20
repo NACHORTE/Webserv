@@ -25,6 +25,11 @@ bool LocationContainer::addLocation(const Location & location)
 	return true;
 }
 
+size_t LocationContainer::size(void) const
+{
+	return _locations.size();
+}
+
 LocationContainer &LocationContainer::operator=(const LocationContainer &rhs)
 {
 	if (this != &rhs)
