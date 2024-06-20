@@ -110,8 +110,6 @@ std::vector<Server> readConfig(const std::string& configFile)
 	std::vector<Server> servers;
 	// Parse the file into tokens (throws exception if file cannot be opened)
 	std::list<std::string> tokens = tokenize(configFile);
-	// Flag that goes true for the first server without a name
-	bool nameLessServer = false;
 	
 	// Keep adding servers until we run out of tokens
 	std::list<std::string>::iterator it = tokens.begin();
@@ -122,12 +120,6 @@ std::vector<Server> readConfig(const std::string& configFile)
 		// Only server tokens are allowed at the top level
 		else
 			throw std::runtime_error("Error reading config file, unknown: " + *it);
-		if (servers.back().getServerNames().empty())
-		{
-			if (nameLessServer == true)
-				throw std::runtime_error("Error reading config file, multiple servers without a name");
-			nameLessServer = true;
-		}
 	}
 
 	return servers;
