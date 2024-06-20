@@ -54,24 +54,6 @@ std::string intToString(int n)
 }
 
 /**
- * @brief Converts a string to an integer.
- * 
- * This function takes a string as input and returns the integer value it represents.
- * It stops reading if it encounters a non-numeric character.
- * 
- * @param str String to convert to an integer.
- * @return The integer value of the string.
- * 
- * @example
- * std::string number = "42";
- * int result = stringToInt(number);
- * // Expected result: 42
- */
-int stringToInt(const std::string & str)
-{
-	
-}
-/**
  * @brief Reads the contents of a file and returns them as a string.
  * 
  * This function opens a file specified by the given file path and reads its contents into a string.

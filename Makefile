@@ -26,7 +26,7 @@ SRC := src/class/Client.cpp\
 	src/methods/DELETE.cpp\
 	src/methods/GET.cpp\
 	src/methods/POST.cpp\
-	src/set_config/set_config.cpp\
+	src/readConfig/readConfig.cpp\
 	src/utils.cpp
 
 # Setup obj and src files and obj folders

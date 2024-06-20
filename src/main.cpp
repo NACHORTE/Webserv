@@ -1,25 +1,6 @@
 #include <iostream>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <poll.h>
-#include <stdio.h>
-#include <string.h>
-#include "HttpResponse.hpp"
-#include "HttpRequest.hpp"
-#include "Server.hpp"
-#include <sstream>
-#include <cstring>
-#include <fstream>
-#include <vector>
-#include <poll.h>
-#include "defines.h"
-#include "colors.h"
 #include "utils.hpp"
 #include "Webserv.hpp"
-
-#define DEFAULT_CONFIG_FILE "config/default.conf"
 
 int main(int argc, char **argv)
 {
