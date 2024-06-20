@@ -42,7 +42,7 @@ class Listener
 		int _sockfd;
 		// Vector of all the servers (_serverMap points to these servers)
 		std::list<Server> _serverList;
-		// Map of all the servers (key is the hostname, multiple hostanames can point to the same server)
+		// Map of all the servers (key is the hostname, multiple hostnames can point to the same server)
 		std::map<std::string,Server *> _serverMap;
 		// Vector of clients
 		std::vector<struct pollfd> _pollfds;

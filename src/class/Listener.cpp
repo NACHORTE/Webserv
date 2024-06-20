@@ -50,6 +50,18 @@ void Listener::addServer(const Server & server)
 	// Get the hostnames of the new server
 	const std::set<std::string> & serverNames = server.getServerNames();
 
+	// If there is no server name, add it to the front.
+	// If there is already a server with no name, throw an error
+	// Don't add the nameless server to the server map
+	if (serverNames.size() == 0)
+	{
+		if (_serverList.front().getServerNames().size() == 0)
+			throw std::runtime_error("[ERROR] Listener " + intToString(_port)
+				+ " has a duplicate nameless server");
+		_serverList.push_front(server);
+		return;
+	}
+
 	// Check if there is a server with the same hostname
 	for (std::set<std::string>::const_iterator it = serverNames.begin();
 			it != serverNames.end();++it)
