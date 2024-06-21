@@ -46,7 +46,6 @@ Server readServer(std::list<std::string>::iterator & it, const std::list<std::st
 		if (attributeFunctions.count(*it) == 1)
 		{
 			std::string attribute = *it;
-			std::cout << "parsing attribute: " << attribute << std::endl; //XXX
 			attributeFunctions[attribute](++it, end, server);
 			usedAttributes.insert(attribute);
 		}

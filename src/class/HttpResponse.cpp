@@ -250,9 +250,25 @@ std::string HttpResponse::to_string() const
 HttpResponse HttpResponse::error(	// generate a default error page
 			int code,
 			const std::string & phrase,
-			const std::string & msg)
+			std::string msg)
 {
 	HttpResponse ret;
+
+	// default error pages
+	if (code == 400 and msg.empty())
+		msg = "Bad request.";
+	else if (code == 401 and msg.empty())
+		msg = "Unauthorized.";
+	if (code == 404 and msg.empty())
+		msg = "The requested resource was not found.";
+	else if (code == 403 and msg.empty())
+		msg = "Access denied.";
+	else if (code == 405 and msg.empty())
+		msg = "Method not allowed.";
+	else if (code == 500 and msg.empty())
+		msg = "Internal server error.";
+	else if (code == 501 and msg.empty())
+		msg = "Not implemented.";
 
 	// Set the status code and phrase
 	ret.setStatus(code, phrase);

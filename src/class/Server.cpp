@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include "colors.h" //XXX
 #include <fcntl.h>
+#include <fstream>
 
 Server::Server(void)
 {
@@ -257,7 +258,8 @@ void Server::loop()
 				continue;
 			}
 			// Else is a CGI, start the cgi program
-			if (startCgi(client) != 0)
+			int code = startCgi(client);
+			if (code != 0)
 			{
 				client.setResponse(errorResponse(500));
 				_clients.erase(it--);
@@ -344,12 +346,25 @@ int Server::startCgi(const Client &client)
 	// Check if the client is already waiting for a CGI program to finish
 	if (_cgiClients.count(ClientInfo(client)) == 1)
 		return (0);
+
+	// Check if the file exists and can be executed
+	{
+		std::string path = client.getRequest().getPath();
+		path = cleanPath(decodeURL(path.substr(0, path.find("?"))));
+		const Location * loc = _locations[path];
+		if (!loc)
+			return (404);
+		std::ifstream file(loc->getFilename(path).c_str());
+		if (!file.good())
+			return (404);
+		file.close();
+	}
 	// Create a pipe to communicate with the CGI program
 	// fdsIn = pipe to read from fork
 	// fdsOut = pipe to write to fork
 	int fdsIn[2], fdsOut[2];
 	if (pipe(fdsIn) != 0 || pipe(fdsOut) != 0)
-		return (-1);
+		return (500);
 
 	// Fork the process
 	int pid = fork();
@@ -359,7 +374,7 @@ int Server::startCgi(const Client &client)
 		close(fdsIn[1]);
 		close(fdsOut[0]);
 		close(fdsOut[1]);
-		return (-1);
+		return (500);
 	}
 	// Child process
 	if (pid == 0)
@@ -379,7 +394,7 @@ int Server::startCgi(const Client &client)
 			exit(EXIT_FAILURE);
 		// Execute the CGI program
 		execve(args[0], args, envp);
-		std::cerr << "Server " << *getServerNames().begin() << " failed to execute CGI program" << std::endl; //NOTE msg
+		std::cerr << "Server " << *getServerNames().begin() << " failed to execute CGI program "  << args[0] << std::endl; //NOTE msg
 		exit(EXIT_FAILURE);
 	}
 	// Parent process

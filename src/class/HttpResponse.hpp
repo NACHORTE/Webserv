@@ -37,7 +37,7 @@ class HttpResponse {
 		static HttpResponse error(
 			int code,
 			const std::string & phrase = "",
-			const std::string & msg = "");
+			std::string msg = "");
 		bool responseReady() const;
 		std::string popResponse(size_t length = -1);
 	// operator overloads

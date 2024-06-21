@@ -180,6 +180,14 @@ HttpResponse POST(const HttpRequest & req, const Server & serv, const Location &
 		}
 	}
 	ret.setStatus(200, "POST OK");
-	ret.setBody("text/html", "<html><body><h1>POST</h1></body></html>");
+	try
+	{
+		ret.setBody("www/html/post.html");
+	}
+	catch (const std::exception & e)
+	{
+		ret.setBody("text/html", "POST OK");
+	}
+	ret.setReady(true);
 	return ret;
 }
