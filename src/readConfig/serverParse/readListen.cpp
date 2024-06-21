@@ -13,6 +13,7 @@ void readListen(std::list<std::string>::iterator & it, const std::list<std::stri
 		if (port > 65535)
 			throw std::runtime_error("Error reading config file, invalid port number: " + *it);
 	}
+	++it;
 	if (it == end or *it != ";")
 		throw std::runtime_error("Error reading config file, missing \";\" at the end of the listen directive");
 	serv.setPort(port);

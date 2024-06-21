@@ -10,93 +10,9 @@
 
 Server::Server(void)
 {
-	_root = "/www/";
  	_methodsMap["GET"] = GET;
 	_methodsMap["POST"] = POST;
 	_methodsMap["DELETE"] = DELETE;
-
-	std::set<std::string> location_methodsMap;
-	location_methodsMap.insert("GET");
-
-	Location loc;
-	loc.setURI("/");
-	loc.setIndex("/html/index.html");
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();
-
-	loc.setURI("/index.html");
-	loc.setAlias("/html/index.html");
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();
-
-	loc.setURI("/favicon.ico");
-	loc.setAlias("/img/favicon.ico");
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();
-
-/* 	loc.setURI("/html/");
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();
-
-	loc.setURI("/img/");
-	loc.autoIndex(true);
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();
-
-	loc.setURI("/css/");
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();*/
-	loc.setURI("*.cgi");
-	loc.setAllowedMethods(location_methodsMap);
-	loc.isCgi(true);
-	loc.clear();
-
-	location_methodsMap.clear();
-	location_methodsMap.insert("GET");
-	location_methodsMap.insert("POST");
-	location_methodsMap.insert("DELETE");
-
-	loc.setURI("/upload/");
-	loc.setAllowedMethods(location_methodsMap);
-	loc.autoIndex(true);
-	addLocation(loc);
-	loc.clear();
-
-	location_methodsMap.clear();
-	location_methodsMap.insert("GET");
-	location_methodsMap.insert("POST");
-
-	loc.setURI("/upload/");
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();
-
-
-	loc.setURI("/google.com");
-	loc.setReturnValue(301, "https://www.google.com");
-	addLocation(loc);
-	loc.clear();
-
-	loc.setURI("/titer");
-	loc.setReturnValue(301,"https://x.com/");
-	addLocation(loc);
-	loc.clear();
-
-	addErrorPage(403,"/error/403.html");
-
-	addErrorPage(404,"/error/404.html");
-	addErrorPage(404,"/error/404.htm");
-
-	addErrorPage(405,"/error/405.html");
-
-	addErrorPage(500,"/error/500.html");
-	addErrorPage(500,"/error/500.htm");
 }
 
 Server::Server(const Server & src)
@@ -184,10 +100,10 @@ void Server::setRoot(const std::string & root)
 	{
 		Location * loc = const_cast<Location*>(_locations[i]);
 		// If the server has a root, merge it with the location's root (this->_root + location->_root)
-		if (!_root.empty() and loc->getAlias().empty())
+		if (not _root.empty() and not startsWith(loc->getRoot(), _root))
 			loc->setRoot(joinPath(_root, loc->getRoot()));
 		// If the server has an alias add the root of the server to it
-		if (!_root.empty() and !loc->getAlias().empty())
+		if (not _root.empty() and loc->getAlias().size() != 0 and not startsWith(loc->getAlias(), _root))
 			loc->setAlias(joinPath(_root, loc->getAlias()));
 	}
 }
@@ -229,7 +145,7 @@ void Server::setIndex(const std::string & index)
 	{
 		Location * loc = const_cast<Location*>(_locations[i]);
 		// If the server has an index and the location doesn't, set the index from the server 
-		if (!_index.empty() && loc->getIndex().empty())
+		if (not _index.empty() and loc->getIndex().empty())
 			loc->setIndex(_index);
 	}
 }
@@ -239,7 +155,7 @@ const LocationContainer & Server::getLocationContainer(void) const
 	return (_locations);
 }
 
-int Server::getClientMaxBodySize(void) const
+size_t Server::getClientMaxBodySize(void) const
 {
 	return (_maxBodySize);
 }
@@ -247,13 +163,13 @@ int Server::getClientMaxBodySize(void) const
 bool Server::addLocation(Location location)
 {
 	// If the server has a root, merge it with the location's root (this->_root + location->_root)
-	if (!_root.empty() && location.getAlias().empty())
+	if (not _root.empty() and not startsWith(location.getRoot(), _root))
 		location.setRoot(joinPath(_root, location.getRoot()));
 	// If the server has an alias add the root of the server to it
-	if (!_root.empty() && !location.getAlias().empty())
+	if (not _root.empty() and location.getAlias().size() != 0 and not startsWith(location.getAlias(), _root))
 		location.setAlias(joinPath(_root, location.getAlias()));
 	// If the server has an index and the location doesn't, set the index from the server 
-	if (!_index.empty() && location.getIndex().empty())
+	if (not _index.empty() and location.getIndex().empty())
 		location.setIndex(_index);
 	return _locations.addLocation(location);
 }

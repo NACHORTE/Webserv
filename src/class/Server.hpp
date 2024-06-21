@@ -31,7 +31,7 @@ class Server
 		void addClient(Client &client);
 
 		int getPort() const;
-		int getClientMaxBodySize() const;
+		size_t getClientMaxBodySize() const;
 		const std::string & getIndex() const;
 		const std::string & getRoot() const;
 		const std::set<std::string> & getServerNames() const;

@@ -523,6 +523,28 @@ bool isDir(const std::string& ruta) {
     return S_ISDIR(estado.st_mode);
 }
 
+/* 
+ * Checks if a string starts with a specified prefix.
+ * 
+ * @param str The string to check.
+ * @param prefix The prefix to check for.
+ * @return True if the string starts with the prefix, false otherwise.
+ * 
+ * @example
+ * std::string str = "hello world";
+ * std::string prefix = "hello";
+ * if (startsWith(str, prefix))
+ *     std::cout << "The string starts with the prefix." << std::endl;
+ * else
+ *     std::cout << "The string does not start with the prefix." << std::endl;
+ */
+bool startsWith(const std::string& str, const std::string& prefix)
+{
+	if (str.length() >= prefix.length())
+		return (0 == str.compare(0, prefix.length(), prefix));
+	return false;
+}
+
 /*
  * Checks if a string ends with a specified suffix.
  * 

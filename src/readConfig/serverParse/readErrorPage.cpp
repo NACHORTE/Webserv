@@ -22,12 +22,16 @@ void readErrorPage(std::list<std::string>::iterator & it, const std::list<std::s
 	std::list<std::string>::iterator next = it;
 	++next;
 	std::set<int> errorCodes;	
+	size_t count = 0;
 	while (next != end and *next != ";")
 	{
 		errorCodes.insert(toInt(*it));
 		++it;
 		++next;
+		++count;
 	}
+	if (count == 0)
+		throw std::runtime_error("Error reading config file, expected number after error_page");
 	for (std::set<int>::iterator code = errorCodes.begin(); code != errorCodes.end(); ++code)
 		serv.addErrorPage(*code, *it);
 	++it;

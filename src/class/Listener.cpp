@@ -323,13 +323,46 @@ std::ostream &operator<<(std::ostream &os, const Listener &obj)
 	size_t i = 0;
 	for (std::list<Server>::const_iterator it = obj._serverList.begin(); it != obj._serverList.end(); ++it)
 	{
-		os << "\t\tServer " << ++i << ":";
+		os << "\t\t" << ++i << ". ";
 		std::set<std::string> serverNames = it->getServerNames();
 		for (std::set<std::string>::const_iterator it2 = serverNames.begin();
 			it2 != serverNames.end(); ++it2)
 			os << " " << *it2;
 		os << std::endl;
+		os << "\t\t\tRoot: " << it->getRoot() << std::endl;
+		os << "\t\t\tIndex: " << it->getIndex() << std::endl;
+		os << "\t\t\tError pages: " << std::endl;
+		std::map<int, std::set<std::string> > errorPages = it->getErrorPages();
+		for (std::map<int, std::set<std::string> >::const_iterator it2 = errorPages.begin();
+			it2 != errorPages.end(); ++it2)
+		{
+			os << "\t\t\t\t" << it2->first << ":";
+			for (std::set<std::string>::const_iterator it3 = it2->second.begin();
+				it3 != it2->second.end(); ++it3)
+				os << " " << *it3;
+			os << std::endl;
+		}
+		os << "\t\t\tLocations: " << std::endl;
+		size_t len = it->getLocationContainer().size();
+		for (size_t i = 0; i < len; ++i)
+		{
+			const Location *loc = it->getLocationContainer()[i];
+			os << "\t\t\t\t" << loc->getURI() << std::endl;
+			os << "\t\t\t\t\tExtension: " << loc->getExtension() << std::endl;
+			os << "\t\t\t\t\tAlias: " << loc->getAlias() << std::endl;
+			os << "\t\t\t\t\tRoot: " << loc->getRoot() << std::endl;
+			os << "\t\t\t\t\tIndex: " << loc->getIndex() << std::endl;
+			os << "\t\t\t\t\tMethods: ";
+			std::set<std::string> methods = loc->getAllowedMethods();
+			for (std::set<std::string>::const_iterator it2 = methods.begin();
+				it2 != methods.end(); ++it2)
+				os << " " << *it2;
+			os << std::endl;
+			os << "\t\t\t\t\tCGI: " << loc->isCgi() << std::endl;
+			os << "\t\t\t\t\tAutoindex: " << (loc->autoIndex()?"true":"false") << std::endl;
+		}
 	}
+	os << "\t\t\tMax body size: " << obj._serverList.front().getClientMaxBodySize() << std::endl;
 	os << "\tAmount of clients: " << obj._clients.size() - 1 << std::endl;
 	i = 1;
 	for (std::list<Client>::const_iterator it = ++obj._clients.begin(); it != obj._clients.end(); ++i, ++it)

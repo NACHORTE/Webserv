@@ -21,7 +21,7 @@ void readMaxBody(std::list<std::string>::iterator & it, const std::list<std::str
 		multiplier = 1024 * 1024;
 	else if (back(*it) == 'g')
 		multiplier = 1024 * 1024 * 1024;
-	
+
 	// Get the value
 	size_t val = 0;
 	for (size_t i = 0 ; i < it->size() and (*it)[i] >= '0' and (*it)[i] <= '9'; ++i)

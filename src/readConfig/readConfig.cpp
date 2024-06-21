@@ -45,7 +45,7 @@ std::vector<Server> readConfig(const std::string& configFile)
 	std::vector<Server> servers;
 	// Parse the file into tokens (throws exception if file cannot be opened)
 	std::list<std::string> tokens = tokenize(configFile);
-	
+
 	// Keep adding servers until we run out of tokens
 	std::list<std::string>::iterator it = tokens.begin();
 	while(it != tokens.end())
