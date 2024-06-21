@@ -55,7 +55,7 @@ void Listener::addServer(const Server & server)
 	// Don't add the nameless server to the server map
 	if (serverNames.size() == 0)
 	{
-		if (_serverList.front().getServerNames().size() == 0)
+		if (not _serverList.empty() and _serverList.front().getServerNames().size() == 0)
 			throw std::runtime_error("[ERROR] Listener " + intToString(_port)
 				+ " has a duplicate nameless server");
 		_serverList.push_front(server);
@@ -142,8 +142,10 @@ void Listener::loop()
 void Listener::closeFds()
 {
 	// Close all the clients
-	for (size_t i = 0; i < _pollfds.size(); ++i)
+	for (size_t i = 1; i < _pollfds.size(); ++i)
 		closeConnection(i);
+	// Close the server
+	close(_sockfd);
 }
 
 Listener &Listener::operator=(const Listener &src)
@@ -267,20 +269,26 @@ int Listener::sendData(int fd, Client &client)
 int Listener::closeConnection(int fd)
 {
 	// Find the index of the client
-	size_t clientIndex;
+	size_t clientIndex = 0;
 	for (clientIndex = 0; clientIndex < _pollfds.size(); ++clientIndex)
 		if (_pollfds[clientIndex].fd == fd)
 			break;
-	// Get the client from the list of clients
-	std::list<Client>::iterator clientIt = _clients.begin();
-	std::advance(clientIt, clientIndex);
-
 	// Don't allow to remove the listener
 	if (clientIndex == 0)
 	{
 		std::cout << "[Listener::closeConnection] Can't close client 0 (listener socket)" << std::endl;
 		return 1;
 	}
+	// if the client is not found, return 1
+	if (clientIndex == _pollfds.size())
+	{
+		std::cout << "[Listener::closeConnection] Client not found" << std::endl; // NOTE msg
+		return 1;
+	}
+	// Get the client from the list of clients
+	std::list<Client>::iterator clientIt = _clients.begin();
+	std::advance(clientIt, clientIndex);
+
 
 	std::cout << "Closing connection " << clientIt->getIP() << ":"<< clientIt->getPort() << " to port "<< _port << std::endl;
 
