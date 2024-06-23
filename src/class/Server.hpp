@@ -26,12 +26,12 @@ class Server
 		void addErrorPage(int error_code, const std::string & errorPage);
 
 		void addServerName(const std::string & serverName);
-		void addLocation(Location l0ocation);
+		bool addLocation(Location location);
 		void addErrorPage(const std::string & errorPage);
 		void addClient(Client &client);
 
 		int getPort() const;
-		int getClientMaxBodySize() const;
+		size_t getClientMaxBodySize() const;
 		const std::string & getIndex() const;
 		const std::string & getRoot() const;
 		const std::set<std::string> & getServerNames() const;

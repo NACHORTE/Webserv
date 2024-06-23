@@ -23,15 +23,15 @@ class HttpRequest {
 
 		// getters, setters
 
-		void set_method(const std::string& method); //TODO change name format to setMethod
-		void set_path(const std::string& path);
-		void set_version(const std::string& version);
+		void setMethod(const std::string& method); //TODO change name format to setMethod
+		void setPath(const std::string& path);
+		void setVersion(const std::string& version);
 		void setHeader(const std::string& key, const std::string& value);
 		void unsetHeader(const std::string& key);
 		void setBody(const std::string& body);
 
 		// Add data to the request buffer and return the number of bytes added
-		size_t addData(const std::string & data);
+		long long int addData(const std::string & data);
 
 		const std::string & getMethod() const;
 		const std::string & getPath() const;

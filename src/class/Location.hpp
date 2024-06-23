@@ -17,6 +17,8 @@ class Location
 		void setURI(const std::string & URI);
 		const std::string & getURI(void) const;
 
+		const std::string & getExtension(void) const;
+
 		void setIndex(const std::string & index);
 		const std::string & getIndex(void) const;
 
@@ -36,8 +38,6 @@ class Location
 
 		void autoIndex(bool autoIndex); // setter
 		bool autoIndex(void) const; // getter
-		// Creates the response with the html of the content of the folder if there is no index file
-		HttpResponse getAutoIndexResponse(const std::string & path) const;
 
 		void setReturnValue(int code, const std::string & body);
 		const std::pair<int, std::string> & getReturnValue(void) const;
@@ -72,6 +72,8 @@ class Location
 
 		// If the URI ends with a slash, it's a folder
 		std::string _URI;
+		// Matches the extension of the file (*.log *.html *.css ...)
+		std::string _extension;
 		// Index is the file that will be served if the URI is a folder (default is index.html)
 		std::string _index;
 		// Root is from where the class will serve the files (root + path)

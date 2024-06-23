@@ -20,6 +20,8 @@ class LocationContainer
 
 	// Member functions
 
+		size_t size(void) const;
+
 	// Operator overloads
 
 		LocationContainer & operator=(const LocationContainer & rhs);

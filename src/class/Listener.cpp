@@ -50,6 +50,18 @@ void Listener::addServer(const Server & server)
 	// Get the hostnames of the new server
 	const std::set<std::string> & serverNames = server.getServerNames();
 
+	// If there is no server name, add it to the front.
+	// If there is already a server with no name, throw an error
+	// Don't add the nameless server to the server map
+	if (serverNames.size() == 0)
+	{
+		if (not _serverList.empty() and _serverList.front().getServerNames().size() == 0)
+			throw std::runtime_error("[ERROR] Listener " + intToString(_port)
+				+ " has a duplicate nameless server");
+		_serverList.push_front(server);
+		return;
+	}
+
 	// Check if there is a server with the same hostname
 	for (std::set<std::string>::const_iterator it = serverNames.begin();
 			it != serverNames.end();++it)
@@ -64,13 +76,6 @@ void Listener::addServer(const Server & server)
 	for (std::set<std::string>::const_iterator it = serverNames.begin();
 			it != serverNames.end(); ++it)
 		_serverMap[*it] = &_serverList.back();
-}
-
-Server &Listener::getServer(const std::string &hostname) const // XXX UNUSED ?
-{
-	if (_serverMap.count(hostname) == 1)
-		return (*_serverMap.at(hostname));
-	throw std::runtime_error("[Listener::getServer] Server not found for hostname: " + hostname);
 }
 
 int Listener::getPort(void) const
@@ -122,8 +127,13 @@ void Listener::loop()
 	// Check if any clients have timed out (skip the first client bc its the listener)
 	size_t i = 1;
 	for (std::list<Client>::iterator it = ++_clients.begin(); it != _clients.end(); ++it, ++i)
-		if (it->timeout())
-			closeConnection(_pollfds[i--].fd); // NOTE return timeout error to client before closing
+	{
+		if (it->timeout() and it->responseReady())
+			closeConnection(_pollfds[i--].fd);
+		else if (it->timeout() and not it->responseReady())
+			it->setResponse(errorResponse(*it, 408, "Request Timeout", "Client timed out"));
+	}
+
 	// Loop through the servers and call their loop function
 	for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
 		it->loop();
@@ -132,8 +142,10 @@ void Listener::loop()
 void Listener::closeFds()
 {
 	// Close all the clients
-	for (size_t i = 0; i < _pollfds.size(); ++i)
+	for (size_t i = 1; i < _pollfds.size(); ++i)
 		closeConnection(i);
+	// Close the server
+	close(_sockfd);
 }
 
 Listener &Listener::operator=(const Listener &src)
@@ -190,20 +202,24 @@ int Listener::readData(int fd, Client &client)
 	// If there is an error, close the connection
 	if (bytesRead < 0)
 	{
-		// NOTE send internal server error to client before closing
-		std::cout << "[Listener::readData] Error reading data" << std::endl; // NOTE msg
-		closeConnection(fd);
-		return 1;
+		client.setResponse(errorResponse(client, 500, "Internal_serv_error", "Couldn't read data from client"));
+		return 0;
 	}
-	if (bytesRead == 0) // NOTE fix POLLIN always true
+	if (bytesRead == 0) // TODO fix POLLIN always true
 		return 0;
 
 	std::cout << "Reading " << bytesRead << " bytes from " << client.getIP() << ":" << client.getPort() << std::endl; //XXX
 	// Add the data to the client's buffer
 	client.addData(std::string(buffer,bytesRead));
 	std::cout << client.getIP() << ":" << client.getPort() << " number of requests: " << client.getRequestCount() << " request_ready: " << (client.requestReady()?"True":"False") << std::endl; //XXX
+	// If there is an error, generate an error response that will be sent in the next sendData
+	if (client.error())
+	{
+		client.setResponse(errorResponse(client, 400, "Bad Request", "Error parsing request"));
+		return 0;
+	}
 
-	// If the request is ready, send it to a server
+	// send the client to a server if there is an error so it generates a response
 	if (client.requestReady())
 		sendToServer(client);
 
@@ -231,7 +247,7 @@ int Listener::sendData(int fd, Client &client)
 	std::cout << "Sending data to " << client.getIP() << ":" << client.getPort() << std::endl; // NOTE msg
 
 	// If keep-alive is set pop the request and wait for another one
-	if (client.keepAlive())
+	if (client.keepAlive() and not client.error())
 	{
 		std::cout << "Keeping connection alive with " << client.getIP() << ":" << client.getPort() << std::endl; // NOTE msg
 		client.popRequest();
@@ -253,20 +269,26 @@ int Listener::sendData(int fd, Client &client)
 int Listener::closeConnection(int fd)
 {
 	// Find the index of the client
-	size_t clientIndex;
+	size_t clientIndex = 0;
 	for (clientIndex = 0; clientIndex < _pollfds.size(); ++clientIndex)
 		if (_pollfds[clientIndex].fd == fd)
 			break;
-	// Get the client from the list of clients
-	std::list<Client>::iterator clientIt = _clients.begin();
-	std::advance(clientIt, clientIndex);
-
 	// Don't allow to remove the listener
 	if (clientIndex == 0)
 	{
 		std::cout << "[Listener::closeConnection] Can't close client 0 (listener socket)" << std::endl;
 		return 1;
 	}
+	// if the client is not found, return 1
+	if (clientIndex == _pollfds.size())
+	{
+		std::cout << "[Listener::closeConnection] Client not found" << std::endl; // NOTE msg
+		return 1;
+	}
+	// Get the client from the list of clients
+	std::list<Client>::iterator clientIt = _clients.begin();
+	std::advance(clientIt, clientIndex);
+
 
 	std::cout << "Closing connection " << clientIt->getIP() << ":"<< clientIt->getPort() << " to port "<< _port << std::endl;
 
@@ -309,7 +331,7 @@ std::ostream &operator<<(std::ostream &os, const Listener &obj)
 	size_t i = 0;
 	for (std::list<Server>::const_iterator it = obj._serverList.begin(); it != obj._serverList.end(); ++it)
 	{
-		os << "\t\tServer " << ++i << ":";
+		os << "\t\t" << ++i << ". ";
 		std::set<std::string> serverNames = it->getServerNames();
 		for (std::set<std::string>::const_iterator it2 = serverNames.begin();
 			it2 != serverNames.end(); ++it2)
@@ -324,4 +346,22 @@ std::ostream &operator<<(std::ostream &os, const Listener &obj)
 		os << ") (fd " << obj._pollfds[i].fd << ") (request count " << it->getRequestCount() << (it->requestReady()?" ready":" not ready")<< ")" << std::endl;
 	}
 	return (os);
+}
+
+HttpResponse Listener::errorResponse(Client & client, int errorCode, const std::string & phrase, const std::string & msg)
+{
+	// Set the error code in the client so when the response is sent, the client is closed
+	client.error(true);
+
+	// Get the host of the request if possible
+	if (client.getRequestCount() == 0)
+		return _serverList.front().errorResponse(errorCode, phrase, msg);
+	std::vector<std::string> host = client.getRequest().getHeader("Host");
+	std::string hostname = host.size() > 0 ? host[0] : "";
+
+	// If the server exists, add the client to the server
+	if (_serverMap.count(hostname) == 1)
+		return _serverMap.at(hostname)->errorResponse(errorCode, phrase, msg);
+	// Else send it to the default server
+	return _serverList.front().errorResponse(errorCode, phrase, msg);
 }

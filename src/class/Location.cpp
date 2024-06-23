@@ -19,15 +19,26 @@ Location::~Location()
 
 void Location::setURI(const std::string & URI)
 {
+	size_t pos = URI.find('*');
 	if (URI.empty() || URI[0] != '/')
-		_URI = '/' + URI;
+		_URI = '/' + URI.substr(0,pos);
 	else
-		_URI = URI;
+		_URI = URI.substr(0,pos);
+	// if the URI has extension but no slash at the end, add it
+	if (pos != std::string::npos and back(_URI) != '/')
+		_URI += '/';
+	if (pos != std::string::npos)
+		_extension = URI.substr(pos + 1);
 }
 
 const std::string &Location::getURI(void) const
 {
 	return _URI;
+}
+
+const std::string &Location::getExtension(void) const
+{
+	return _extension;
 }
 
 void Location::setIndex(const std::string & index)
@@ -181,13 +192,20 @@ bool Location::matchesURI(std::string path) const
 	
 	// check as a directory
 	// check if the path starts with the URI
-	if (_URI.size() <= path.size() && path.compare(0, _URI.size(), _URI) == 0)
-		return true;
+	if (_URI.size() <= path.size() and path.compare(0, _URI.size(), _URI) == 0)
+	{
+		if (_extension.empty())
+			return true;
+		return endsWith(path, _extension);
+	}
 	// check if the path is the URI with a slash at the end
-	if (back(path)!= '/')
-		path += '/';
-	if (path == _URI)
-		return true;
+	if (_extension.empty())
+	{
+		if (back(path)!= '/')
+			path += '/';
+		if (path == _URI)
+			return true;
+	}
 
 	return false;
 }
@@ -280,6 +298,7 @@ std::string Location::getFilenameNoIndex(std::string path) const
 void Location::clear(void)
 {
 	_URI.clear();
+	_extension.clear();
 	_index.clear();
 	_root.clear();
 	_alias.clear();
@@ -288,15 +307,6 @@ void Location::clear(void)
 	_autoIndex = false;
 	_returnValue.first = -1;
 	_returnValue.second.clear();
-}
-
-HttpResponse Location::getAutoIndexResponse(const std::string & path) const
-{
-	// TODO
-	(void)path;
-	HttpResponse response;
-	response.setStatus(500, "not_yet_implemented");
-	return response;
 }
 
 HttpResponse Location::getReturnResponse(void) const
@@ -318,6 +328,7 @@ Location &Location::operator=(const Location &rhs)
 	if (this != &rhs)
 	{
 		_URI = rhs._URI;
+		_extension = rhs._extension;
 		_index = rhs._index;
 		_root = rhs._root;
 		_alias = rhs._alias;
@@ -331,18 +342,15 @@ Location &Location::operator=(const Location &rhs)
 
 bool Location::operator==(const Location & rhs) const
 {
-	return (operator==(rhs._URI));
+	return (operator==(rhs._URI) && _extension == rhs._extension);
 }
 
-bool Location::operator==(const std::string & rhs) const
+bool Location::operator==(const std::string & rhs) const // NOTE used?
 {
-	std::string uri = _URI;
-	if (uri.size() > 0 && uri[0] != '/')
-		uri = '/' + uri;
 	std::string path = rhs;
 	if (path.size() > 0 && path[0] != '/')
 		path = '/' + path;
-	return (path == uri);
+	return (path == _URI);
 }
 
 std::ostream &operator<<(std::ostream &os, const Location &obj)

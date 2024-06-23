@@ -31,8 +31,6 @@ class Webserv
 
 	// Private member functions
 
-		std::vector<Server> read_config(const std::string &configFile);
-
 	// Friends <3
 		friend std::ostream &operator<<(std::ostream &os, const Webserv &obj);
 };

@@ -26,7 +26,22 @@ SRC := src/class/Client.cpp\
 	src/methods/DELETE.cpp\
 	src/methods/GET.cpp\
 	src/methods/POST.cpp\
-	src/set_config/set_config.cpp\
+	src/readConfig/locationParse/readAlias.cpp\
+	src/readConfig/locationParse/readAllow.cpp\
+	src/readConfig/locationParse/readAutoIndex.cpp\
+	src/readConfig/locationParse/readCGI.cpp\
+	src/readConfig/locationParse/readIndex.cpp\
+	src/readConfig/locationParse/readLocation.cpp\
+	src/readConfig/locationParse/readReturn.cpp\
+	src/readConfig/locationParse/readRoot.cpp\
+	src/readConfig/readConfig.cpp\
+	src/readConfig/serverParse/readErrorPage.cpp\
+	src/readConfig/serverParse/readIndex.cpp\
+	src/readConfig/serverParse/readListen.cpp\
+	src/readConfig/serverParse/readMaxBody.cpp\
+	src/readConfig/serverParse/readRoot.cpp\
+	src/readConfig/serverParse/readServer.cpp\
+	src/readConfig/serverParse/readServerName.cpp\
 	src/utils.cpp
 
 # Setup obj and src files and obj folders

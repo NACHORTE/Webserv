@@ -2,7 +2,6 @@
 #include "utils.hpp"
 #include <iostream>
 #include "dirent.h"
-#include "colors.h"
 
 HttpResponse getAutoIndex(const std::string & path, const Location & loc, const Server & serv)
 {
@@ -38,7 +37,6 @@ HttpResponse getAutoIndex(const std::string & path, const Location & loc, const 
 	return ret;
 }
 
-#include "colors.h"
 HttpResponse GET(const HttpRequest & req, const Server & serv, const Location & loc)
 {
 	HttpResponse ret;

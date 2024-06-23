@@ -7,98 +7,13 @@
 #include <cstdlib>
 #include "colors.h" //XXX
 #include <fcntl.h>
+#include <fstream>
 
 Server::Server(void)
 {
-	_root = "/www/";
  	_methodsMap["GET"] = GET;
 	_methodsMap["POST"] = POST;
 	_methodsMap["DELETE"] = DELETE;
-
-	std::set<std::string> location_methodsMap;
-	location_methodsMap.insert("GET");
-
-	Location loc;
-	loc.setURI("/");
-	loc.setIndex("/html/index.html");
-	loc.autoIndex(true);
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();
-
-	loc.setURI("/index.html");
-	loc.setAlias("/html/index.html");
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();
-
-	loc.setURI("/favicon.ico");
-	loc.setAlias("/img/favicon.ico");
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();
-
-/* 	loc.setURI("/html/");
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();
-
-	loc.setURI("/img/");
-	loc.autoIndex(true);
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();
-
-	loc.setURI("/css/");
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();*/
-
-	location_methodsMap.clear();
-	location_methodsMap.insert("GET");
-	location_methodsMap.insert("POST");
-	location_methodsMap.insert("DELETE");
-
-	loc.setURI("/upload/");
-	loc.setAllowedMethods(location_methodsMap);
-	loc.autoIndex(true);
-	addLocation(loc);
-	loc.clear();
-
-	location_methodsMap.clear();
-	location_methodsMap.insert("GET");
-	location_methodsMap.insert("POST");
-
-	loc.setURI("/upload/");
-	loc.setAllowedMethods(location_methodsMap);
-	addLocation(loc);
-	loc.clear();
-
-	loc.setURI("/bin-cgi/");
-	loc.setAllowedMethods(location_methodsMap);
-	loc.isCgi(true);
-	addLocation(loc);
-	loc.clear();
-
-	loc.setURI("/google.com");
-	loc.setReturnValue(301, "https://www.google.com");
-	addLocation(loc);
-	loc.clear();
-
-	loc.setURI("/titer");
-	loc.setReturnValue(301,"https://x.com/");
-	addLocation(loc);
-	loc.clear();
-
-	addErrorPage(403,"/error/403.html");
-
-	addErrorPage(404,"/error/404.html");
-	addErrorPage(404,"/error/404.htm");
-
-	addErrorPage(405,"/error/405.html");
-
-	addErrorPage(500,"/error/500.html");
-	addErrorPage(500,"/error/500.htm");
 }
 
 Server::Server(const Server & src)
@@ -180,6 +95,18 @@ void Server::setRoot(const std::string & root)
 		_root = "/" + root;
 	else
 		_root = root;
+	// update the root of all locations
+	size_t len = _locations.size();
+	for (size_t i = 0; i < len; ++i)
+	{
+		Location * loc = const_cast<Location*>(_locations[i]);
+		// If the server has a root, merge it with the location's root (this->_root + location->_root)
+		if (not _root.empty() and not startsWith(loc->getRoot(), _root))
+			loc->setRoot(joinPath(_root, loc->getRoot()));
+		// If the server has an alias add the root of the server to it
+		if (not _root.empty() and loc->getAlias().size() != 0 and not startsWith(loc->getAlias(), _root))
+			loc->setAlias(joinPath(_root, loc->getAlias()));
+	}
 }
 
 const std::map<int, std::set<std::string> > & Server::getErrorPages() const
@@ -213,6 +140,15 @@ const std::string & Server::getIndex(void) const
 void Server::setIndex(const std::string & index)
 {
 	_index = index;
+		// update the root of all locations
+	size_t len = _locations.size();
+	for (size_t i = 0; i < len; ++i)
+	{
+		Location * loc = const_cast<Location*>(_locations[i]);
+		// If the server has an index and the location doesn't, set the index from the server 
+		if (not _index.empty() and loc->getIndex().empty())
+			loc->setIndex(_index);
+	}
 }
 
 const LocationContainer & Server::getLocationContainer(void) const
@@ -220,23 +156,23 @@ const LocationContainer & Server::getLocationContainer(void) const
 	return (_locations);
 }
 
-int Server::getClientMaxBodySize(void) const
+size_t Server::getClientMaxBodySize(void) const
 {
 	return (_maxBodySize);
 }
 
-void Server::addLocation(Location location)
+bool Server::addLocation(Location location)
 {
 	// If the server has a root, merge it with the location's root (this->_root + location->_root)
-	if (!_root.empty() && location.getAlias().empty())
+	if (not _root.empty() and not startsWith(location.getRoot(), _root))
 		location.setRoot(joinPath(_root, location.getRoot()));
 	// If the server has an alias add the root of the server to it
-	if (!_root.empty() && !location.getAlias().empty())
+	if (not _root.empty() and location.getAlias().size() != 0 and not startsWith(location.getAlias(), _root))
 		location.setAlias(joinPath(_root, location.getAlias()));
 	// If the server has an index and the location doesn't, set the index from the server 
-	if (!_index.empty() && location.getIndex().empty())
-		location.setIndex(joinPath(_root, location.getIndex()));
-	_locations.addLocation(location);
+	if (not _index.empty() and location.getIndex().empty())
+		location.setIndex(_index);
+	return _locations.addLocation(location);
 }
 
 void Server::addServerName(const std::string & serverName)
@@ -305,7 +241,7 @@ void Server::loop()
 			// If the location is not a cgi, return the response
 			if (loc->isCgi() == false)
 			{
-				std::cout << "Location " << path << " is not a CGI" << std::endl; //XXX
+				std::cout << "Location " << path << " is a static request" << std::endl; //XXX
 				HttpResponse response;
 				response = _methodsMap[req.getMethod()](req, *this, *loc);
 				response.setReady(true);
@@ -322,7 +258,8 @@ void Server::loop()
 				continue;
 			}
 			// Else is a CGI, start the cgi program
-			if (startCgi(client) != 0)
+			int code = startCgi(client);
+			if (code != 0)
 			{
 				client.setResponse(errorResponse(500));
 				_clients.erase(it--);
@@ -409,12 +346,25 @@ int Server::startCgi(const Client &client)
 	// Check if the client is already waiting for a CGI program to finish
 	if (_cgiClients.count(ClientInfo(client)) == 1)
 		return (0);
+
+	// Check if the file exists and can be executed
+	{
+		std::string path = client.getRequest().getPath();
+		path = cleanPath(decodeURL(path.substr(0, path.find("?"))));
+		const Location * loc = _locations[path];
+		if (!loc)
+			return (404);
+		std::ifstream file(loc->getFilename(path).c_str());
+		if (!file.good())
+			return (404);
+		file.close();
+	}
 	// Create a pipe to communicate with the CGI program
 	// fdsIn = pipe to read from fork
 	// fdsOut = pipe to write to fork
 	int fdsIn[2], fdsOut[2];
 	if (pipe(fdsIn) != 0 || pipe(fdsOut) != 0)
-		return (-1);
+		return (500);
 
 	// Fork the process
 	int pid = fork();
@@ -424,7 +374,7 @@ int Server::startCgi(const Client &client)
 		close(fdsIn[1]);
 		close(fdsOut[0]);
 		close(fdsOut[1]);
-		return (-1);
+		return (500);
 	}
 	// Child process
 	if (pid == 0)
@@ -444,7 +394,7 @@ int Server::startCgi(const Client &client)
 			exit(EXIT_FAILURE);
 		// Execute the CGI program
 		execve(args[0], args, envp);
-		std::cerr << "Server " << *getServerNames().begin() << " failed to execute CGI program" << std::endl; //NOTE msg
+		std::cerr << "Server " << *getServerNames().begin() << " failed to execute CGI program "  << args[0] << std::endl; //NOTE msg
 		exit(EXIT_FAILURE);
 	}
 	// Parent process
