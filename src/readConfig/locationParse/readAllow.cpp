@@ -6,8 +6,6 @@ void readAllow(std::list<std::string>::iterator & it, const std::list<std::strin
 		throw std::runtime_error("Error reading config file, expected value after allow token");
 	while (it != end and *it != ";")
 	{
-		if (*it != "GET" and *it != "POST" and *it != "DELETE")
-			throw std::runtime_error("Error reading config file, expected GET, POST or DELETE after allow");
 		loc.addAllowedMethod(*it);
 		++it;
 	}
