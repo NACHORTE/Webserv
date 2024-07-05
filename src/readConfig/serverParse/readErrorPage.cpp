@@ -23,7 +23,7 @@ void readErrorPage(std::list<std::string>::iterator & it, const std::list<std::s
 	++next;
 	std::set<int> errorCodes;	
 	size_t count = 0;
-	while (next != end and *next != ";")
+	while (next != end and *next != ";" and *next != "{" and *next != "}")
 	{
 		errorCodes.insert(toInt(*it));
 		++it;
