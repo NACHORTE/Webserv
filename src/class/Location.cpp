@@ -170,6 +170,7 @@ bool Location::isDir(std::string path) const
 
 bool Location::matchesURI(std::string path) const
 {
+	path = cleanPath(decodeURL(path.substr(0, path.find("?"))));
 	if (path.empty())
 		return false;
 
@@ -212,6 +213,7 @@ bool Location::matchesURI(std::string path) const
 
 std::string Location::getFilename(std::string path) const
 {
+	path = cleanPath(decodeURL(path.substr(0, path.find("?"))));
 	if (path.empty())
 		return "";
 

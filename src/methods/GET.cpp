@@ -36,7 +36,6 @@ HttpResponse getAutoIndex(const std::string & path, const Location & loc, const 
 	ret.setBody("text/html",body);
 	return ret;
 }
-
 HttpResponse GET(const HttpRequest & req, const Server & serv, const Location & loc)
 {
 	HttpResponse ret;
@@ -50,6 +49,13 @@ HttpResponse GET(const HttpRequest & req, const Server & serv, const Location & 
 	if (filename.empty())
 		return serv.errorResponse(404, "Not Found", "File not found");
 
+	// If the path is a directory and autoindex is enabled, return the autoindex
+	if (loc.isDir(path))
+	{
+		if (loc.autoIndex())
+			return getAutoIndex(path, loc, serv);
+		return serv.errorResponse(403, "Forbidden", "Path is for a folder and location has no autoindex");
+	}
 	// The request was succesful
 	try
 	{
@@ -59,8 +65,6 @@ HttpResponse GET(const HttpRequest & req, const Server & serv, const Location & 
 	// Catch FileNotFound and return 404 Not Found
 	catch (std::exception & e)
 	{	
-		if (loc.isDir(path) && loc.autoIndex())
-			return getAutoIndex(path, loc, serv);
 		return serv.errorResponse(404, "Not Found", e.what());
 	}
 

@@ -211,7 +211,6 @@ int Listener::readData(int fd, Client &client)
 	std::cout << "Reading " << bytesRead << " bytes from " << client.getIP() << ":" << client.getPort() << std::endl; //XXX
 	// Add the data to the client's buffer
 	client.addData(std::string(buffer,bytesRead));
-	std::cout << client.getIP() << ":" << client.getPort() << " number of requests: " << client.getRequestCount() << " request_ready: " << (client.requestReady()?"True":"False") << std::endl; //XXX
 	// If there is an error, generate an error response that will be sent in the next sendData
 	if (client.error())
 	{
