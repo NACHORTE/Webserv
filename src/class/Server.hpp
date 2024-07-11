@@ -87,13 +87,11 @@ class Server
 
 	// Private member functions
 
-		// check whether a request is for a CGI program
-		bool isCgi(const HttpRequest &request);
 		// start a CGI program (fork, execve, pipe, etc.)
-		int startCgi(const Client &client);
+		int startCgi(const Client &client, const Location &loc);
 		HttpResponse cgiResponse(const ClientInfo &clientInfo) const;
 
-		char **getPath(const HttpRequest & req);
+		char **getPath(const HttpRequest & req, const Location &loc);
 		char **getEnv(const HttpRequest & req);
 		
 	// Friends <3

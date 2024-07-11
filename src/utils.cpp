@@ -565,3 +565,23 @@ bool endsWith(const std::string& str, const std::string& suffix) {
         return (0 == str.compare(str.length() - suffix.length(), suffix.length(), suffix));
     return false;
 }
+
+const std::set<std::string> & getAllowedHttpMethods(void)
+{
+	static bool initialized = false;
+	static std::set<std::string> methods;
+	if (not initialized)
+	{
+		methods.insert("GET");
+		methods.insert("HEAD");
+		methods.insert("POST");
+		methods.insert("PUT");
+		methods.insert("DELETE");
+		methods.insert("CONNECT");
+		methods.insert("OPTIONS");
+		methods.insert("TRACE");
+		initialized = true;
+	}
+
+	return methods;
+}

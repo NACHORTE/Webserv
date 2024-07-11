@@ -182,7 +182,7 @@ const std::string & HttpRequest::getVersion() const
 {
 	return _version;
 }
-#include <iostream> //XXX
+
 std::vector<std::string> HttpRequest::getHeader(const std::string& key) const
 {
 	std::vector<std::string> output;

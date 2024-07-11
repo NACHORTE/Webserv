@@ -5,7 +5,6 @@
 #include <sys/wait.h>
 #include <poll.h>
 #include <cstdlib>
-#include "colors.h" //XXX
 #include <fcntl.h>
 #include <fstream>
 
@@ -105,7 +104,7 @@ void Server::setRoot(const std::string & root)
 			loc->setRoot(joinPath(_root, loc->getRoot()));
 		// If the server has an alias add the root of the server to it
 		if (not _root.empty() and loc->getAlias().size() != 0 and not startsWith(loc->getAlias(), _root))
-			loc->setAlias(joinPath(_root, loc->getAlias()));
+			loc->setAlias(joinPath(_root, loc->getAlias()) + (back(loc->getAlias()) == '/' ? "/" : ""));
 	}
 }
 
@@ -168,7 +167,7 @@ bool Server::addLocation(Location location)
 		location.setRoot(joinPath(_root, location.getRoot()));
 	// If the server has an alias add the root of the server to it
 	if (not _root.empty() and location.getAlias().size() != 0 and not startsWith(location.getAlias(), _root))
-		location.setAlias(joinPath(_root, location.getAlias()));
+		location.setAlias(joinPath(_root, location.getAlias()) + (back(location.getAlias()) == '/' ? "/" : ""));
 	// If the server has an index and the location doesn't, set the index from the server 
 	if (not _index.empty() and location.getIndex().empty())
 		location.setIndex(_index);
@@ -186,7 +185,6 @@ void Server::loop()
 	for (std::set<Client *>::iterator it = _clients.begin(); it != _clients.end(); it++)
 	{
 		Client &client = **it;
-
 		// If the client has a response ready, remove it from the list of clients
 		if (client.responseReady())
 		{
@@ -197,14 +195,12 @@ void Server::loop()
 		if (client.requestReady() && _cgiClients.count(ClientInfo(client)) == 0)
 		{
 			const HttpRequest &req = client.getRequest();
-			// Get the path of the request
 			std::string path = cleanPath(decodeURL(req.getPath().substr(0, req.getPath().find("?"))));
 			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " ("<< req.getMethod()<< " " << path << ")" << std::endl; //XXX
 
 			// Check if it's an allowed method
 			if (_methodsMap.count(req.getMethod()) == 0)
 			{
-				std::cout << "Method " << req.getMethod() << " is not allowed for this server" << std::endl; //XXX
 				HttpResponse response = errorResponse(501, "Not implemented", "Method " + req.getMethod() + " is not allowed for this server");
 				client.setResponse(response);
 				_clients.erase(it--);
@@ -214,26 +210,21 @@ void Server::loop()
 			const Location * loc = _locations[path];
 			if (!loc)
 			{
-				std::cout << "Location " << path << " not found" << std::endl; //XXX
 				client.setResponse(errorResponse(404));
 				_clients.erase(it--);
 				continue;
 			}
-			
 			// If the method is not allowed for the location, return a 405 error
 			if (loc->isAllowedMethod(req.getMethod()) == false)
 			{
-				std::cout << "Method " << req.getMethod() << " is not allowed for location " << path << std::endl; //XXX
 				HttpResponse response = errorResponse(405, "Method Not Allowed", "Method " + req.getMethod() + " is not allowed for this location");
 				client.setResponse(response);
 				_clients.erase(it--);
 				continue;
 			}
-
 			// If the location has a redirection, return it
 			if (loc->hasReturnValue())
 			{
-				std::cout << "Location " << path << " has a redirection" << std::endl; //XXX
 				client.setResponse(loc->getReturnResponse());
 				_clients.erase(it--);
 				continue;
@@ -241,7 +232,6 @@ void Server::loop()
 			// If the location is not a cgi, return the response
 			if (loc->isCgi() == false)
 			{
-				std::cout << "Location " << path << " is a static request" << std::endl; //XXX
 				HttpResponse response;
 				response = _methodsMap[req.getMethod()](req, *this, *loc);
 				response.setReady(true);
@@ -249,7 +239,6 @@ void Server::loop()
 				_clients.erase(it--);
 				continue;
 			}
-			std::cout << "Location " << path << " is a CGI" << std::endl; //XXX
 			// Check if location is another WebServer
 			if (endsWith(path, "webserv"))
 			{
@@ -258,7 +247,7 @@ void Server::loop()
 				continue;
 			}
 			// Else is a CGI, start the cgi program
-			int code = startCgi(client);
+			int code = startCgi(client,*loc);
 			if (code != 0)
 			{
 				client.setResponse(errorResponse(500));
@@ -331,34 +320,20 @@ bool Server::ClientInfo::operator<(const ClientInfo &rhs) const
 	return (_client < rhs._client);
 }
 
-bool Server::isCgi(const HttpRequest &request)
-{
-	std::string path = request.getPath().substr(0, request.getPath().find("?"));
-	path = cleanPath(decodeURL(path));
-	const Location * loc = _locations[path];
-	if (!loc)
-		return false;
-	return loc->isCgi();
-}
-
-int Server::startCgi(const Client &client)
+int Server::startCgi(const Client &client, const Location &loc)
 {
 	// Check if the client is already waiting for a CGI program to finish
 	if (_cgiClients.count(ClientInfo(client)) == 1)
 		return (0);
 
 	// Check if the file exists and can be executed
-	{
-		std::string path = client.getRequest().getPath();
-		path = cleanPath(decodeURL(path.substr(0, path.find("?"))));
-		const Location * loc = _locations[path];
-		if (!loc)
-			return (404);
-		std::ifstream file(loc->getFilename(path).c_str());
-		if (!file.good())
-			return (404);
-		file.close();
-	}
+	std::ifstream file(loc.getFilename(client.getRequest().getPath()).c_str());
+	if (!file.good())
+		return (404);
+	if (access(loc.getFilename(client.getRequest().getPath()).c_str(), X_OK) != 0)
+		return (403);
+	file.close();
+
 	// Create a pipe to communicate with the CGI program
 	// fdsIn = pipe to read from fork
 	// fdsOut = pipe to write to fork
@@ -388,7 +363,7 @@ int Server::startCgi(const Client &client)
 		close(fdsOut[1]);
 		close(fdsOut[0]);
 		// Get the path and environment variables for the CGI program
-		char **args = getPath(client.getRequest());
+		char **args = getPath(client.getRequest(),loc);
 		char **envp = getEnv(client.getRequest());
 		if (args == NULL || envp == NULL)
 			exit(EXIT_FAILURE);
@@ -432,13 +407,9 @@ HttpResponse Server::cgiResponse(const ClientInfo &clientInfo) const
 	return (errorResponse(500, "internal_server_error", "couldn't get stdout from cgi Response"));
 }
 
-char **Server::getPath(const HttpRequest & req)
+char **Server::getPath(const HttpRequest & req, const Location &loc)
 {
-	std::string path = cleanPath(decodeURL(req.getPath().substr(0, req.getPath().find("?"))));
-	const Location * loc = _locations[path];
-	if (!loc)
-		return NULL;
-	std::string filename = loc->getFilename(path);
+	std::string filename = loc.getFilename(req.getPath());
 	if (filename.empty())
 		return NULL;
 

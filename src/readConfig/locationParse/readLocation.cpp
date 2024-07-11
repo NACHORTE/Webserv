@@ -1,5 +1,5 @@
 #include "readConfig.hpp"
-
+#include "colors.h" //XXX
 void readLocation(std::list<std::string>::iterator & it, const std::list<std::string>::iterator & end, Server & server)
 {
 	static bool initialized = false;

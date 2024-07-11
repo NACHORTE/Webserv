@@ -34,10 +34,7 @@ class HttpResponse {
 		void clear();
 		bool empty() const;
 		std::string to_string() const;
-		static HttpResponse error(
-			int code,
-			const std::string & phrase = "",
-			std::string msg = "");
+		static HttpResponse error(int code, const std::string & phrase = "", std::string msg = "");
 		bool responseReady() const;
 		std::string popResponse(size_t length = -1);
 	// operator overloads

@@ -170,6 +170,7 @@ bool Location::isDir(std::string path) const
 
 bool Location::matchesURI(std::string path) const
 {
+	path = cleanPath(decodeURL(path.substr(0, path.find("?"))));
 	if (path.empty())
 		return false;
 
@@ -212,6 +213,7 @@ bool Location::matchesURI(std::string path) const
 
 std::string Location::getFilename(std::string path) const
 {
+	path = cleanPath(decodeURL(path.substr(0, path.find("?"))));
 	if (path.empty())
 		return "";
 
@@ -224,9 +226,13 @@ std::string Location::getFilename(std::string path) const
 	{
 		if (path[0] == '/')
 			path = path.substr(1);
-		path = joinPath(_alias, path.substr(trim(_URI,"/").size()));
+		path = joinPath(_alias, path.substr(trim(_URI,"/").size())).substr(1);
 		if (path.size() == 0)
 			return "";
+		if (::isDir(path) and _index.size() == 0)
+			path =  joinPath(path, "index.html");
+		else if (::isDir(path))
+			path = joinPath(path, _index);
 		return path.substr(path[0] == '/', path.size() - (back(path) == '/'));
 	}
 	// If the location is a file, return the root + path

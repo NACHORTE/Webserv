@@ -14,17 +14,14 @@
 !src/**/*.cpp
 !src/**/*.h
 !src/**/*.hpp
-!html/**/*.html
-!include/**/*.hpp
-!include/**/*.h
 !Makefile
 !subject.pdf
 !.gitignore
-!imgs/**/*
-!upload/**/*
-!**/*.conf
+!config/**/*
 !www/**/*
-www/upload/*
+!YoupiBanane/**/*
+!ubuntu_cgi_tester
+!ubuntu_tester
 #ignore all object files and libraries
 **/*.o
 *.o
