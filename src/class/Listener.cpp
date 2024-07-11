@@ -97,24 +97,14 @@ void Listener::loop()
 				acceptConnection();
 			// If the client is ready to read, read the data
 			else if (_pollfds[i].revents & POLLIN)
-			{
 				// if readData returns 1, the client is closed and the index is decremented
 				if (readData(_pollfds[i].fd, *it))
-				{
-					--i;
-					--it;
-				}
-			}
+					(--i , --it);
 			// Check if the file descriptor is ready to write
 			else if (_pollfds[i].revents & POLLOUT && it->responseReady())
-			{
 				// if sendData returns 1, the client is closed and the index is decremented
 				if(sendData(_pollfds[i].fd, *it))
-				{
-					--i;
-					--it;
-				}
-			}
+					(--i , --it);
 			// Check if the file descriptor has been closed
 			else if (_pollfds[i].revents & (POLLHUP | POLLERR))
 			{
