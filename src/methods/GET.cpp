@@ -62,7 +62,7 @@ HttpResponse GET(const HttpRequest & req, const Server & serv, const Location & 
 			if (loc.autoIndex())
 				return getAutoIndex(path, loc, serv);
 			return serv.errorResponse(403, "Forbidden", "Path is for a folder and location has no autoindex");
-		}	
+		}
 		return serv.errorResponse(404, "Not Found", e.what());
 	}
 
