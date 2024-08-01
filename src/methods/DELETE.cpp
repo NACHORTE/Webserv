@@ -3,7 +3,7 @@
 #include <fstream>
 #include <cstdio>
 
-HttpResponse DELETE(const HttpRequest & req, const Server & serv, const Location & loc)
+HttpResponse DELETE(Client & req, const Server & serv, const Location & loc)
 {
 	HttpResponse ret;
 

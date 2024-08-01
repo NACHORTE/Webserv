@@ -23,7 +23,7 @@ class HttpRequest {
 
 		// getters, setters
 
-		void setMethod(const std::string& method); //TODO change name format to setMethod
+		void setMethod(const std::string& method);
 		void setPath(const std::string& path);
 		void setVersion(const std::string& version);
 		void setHeader(const std::string& key, const std::string& value);
@@ -35,6 +35,7 @@ class HttpRequest {
 
 		const std::string & getMethod() const;
 		const std::string & getPath() const;
+		const std::string & getQueryString() const;
 		const std::string & getVersion() const;
 		std::vector<std::string> getHeader(const std::string& key) const; // returns a vector of all headers with the given key
 		std::vector<std::pair<std::string, std::string> > getHeaders() const;
@@ -61,6 +62,7 @@ class HttpRequest {
 
 		std::string _method;	// GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS, TRACE, PATCH
 		std::string _path;	// /path/to/file
+		std::string _queryString;	// key=value&key=value...
 		std::string _version;	// HTTP/1.1
 		std::vector<std::pair<std::string, std::string> > _headers;	// key-value pairs
 		std::string _body;	// body of the request

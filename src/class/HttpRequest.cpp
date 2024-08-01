@@ -324,6 +324,17 @@ int HttpRequest::parseHeader(const std::string& header)
 	// Check if line is valid
 	if (iss_line.fail() || !iss_line.eof())
 		return (_method.clear(), _path.clear(), _version.clear(), _headers.clear(), 1);
+	// Decode path and query string if needed
+	_path = decodeURL(_path);
+	// Split path and query string
+	size_t pos = _path.find("?");
+	if (pos != std::string::npos)
+	{
+		_queryString = _path.substr(pos + 1);
+		_path = _path.substr(0, pos);
+	}
+	// Clean path
+	_path = cleanPath(_path);
 
 	// Get headers
 	while (std::getline(iss, line) && line != "\r" && line != "")

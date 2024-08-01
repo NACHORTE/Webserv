@@ -2,9 +2,11 @@
 #include <iostream>
 #include <map>
 #include "Client.hpp"
-#include <list>
 #include <set>
 #include "LocationContainer.hpp"
+#include "CGI.hpp"
+
+class CGI;
 
 class Server
 {
@@ -18,27 +20,31 @@ class Server
 	// Setters and getters
 
 		void setPort(int port);
-		void setMaxBodySize(size_t clientMaxBodySize);
-		void setIndex(const std::string & index);
-		void setRoot(const std::string & root);
-		void setLocationContainer(const std::vector<Location> & LocationContainer);
-		void setErrorPages(const std::map<int, std::set<std::string> > & errorPages);
-		void addErrorPage(int error_code, const std::string & errorPage);
-
-		void addServerName(const std::string & serverName);
-		bool addLocation(Location location);
-		void addErrorPage(const std::string & errorPage);
-		void addClient(Client &client);
-
 		int getPort() const;
-		size_t getClientMaxBodySize() const;
-		const std::string & getIndex() const;
-		const std::string & getRoot() const;
-		const std::set<std::string> & getServerNames() const;
-		const LocationContainer & getLocationContainer() const;
-		const std::map<int, std::set<std::string> > & getErrorPages() const;
 
+		void setMaxBodySize(size_t clientMaxBodySize);
+		size_t getMaxBodySize() const;
+
+		void setIndex(const std::string & index);
+		const std::string & getIndex() const;
+
+		void setRoot(const std::string & root);
+		const std::string & getRoot() const;
+	
+		void addServerName(const std::string & serverName);
+		const std::set<std::string> & getServerNames() const;
+
+		void setErrorPages(const std::map<int, std::set<std::string> > & errorPages);
+		const std::map<int, std::set<std::string> > & getErrorPages() const;
+		void addErrorPage(int error_code, const std::string & errorPage);
+		void addErrorPage(const std::string & errorPage);
+
+		void addClient(Client &client);
 		void removeClient(Client &client);
+
+		void setLocationContainer(const std::vector<Location> & LocationContainer);
+		const LocationContainer & getLocationContainer() const;
+		bool addLocation(Location location);
 
 	// Member functions
 
@@ -46,6 +52,7 @@ class Server
 		void loop();
 
 	// Operator overloads
+
 		Server & operator=(const Server & rhs);
 
 	protected:
@@ -55,7 +62,7 @@ class Server
 		// Port number that the server will listen to
 		int _port;
 		// Maximum body size that the server will accept
-		size_t _maxBodySize; // TODO No va aun
+		size_t _maxBodySize;
 		// Default file to serve when the request is for a directory
     	std::string _index;
 		// Root directory for the server
@@ -69,31 +76,16 @@ class Server
 		// List of locations that the server will serve
 		LocationContainer _locations;
 		// Map of the methods the server can handle (GET, POST, DELETE)
-		std::map<std::string, HttpResponse (*)(const HttpRequest &, const Server &,const Location &)> _methodsMap;
-
-		// _cgiClients holds the list of clients that are waiting for a CGI program to finish
-		struct ClientInfo //TODO esto a otra clase alomejor no se
-		{
-			ClientInfo();
-			ClientInfo(const Client &client, int pid = -1, int fdIn = -1, int fdOut = -1);
-			bool operator==(const ClientInfo &rhs) const;
-			bool operator<(const ClientInfo &rhs) const;
-   			Client* _client;
-    		int _pid;
-   			int _fdOut;
-   			int _fdIn;
-		};
-		std::set<ClientInfo> _cgiClients;
+		std::map<std::string, void (Server::*)(Client &, const Location &)> _methodsMap;
+		// _activeCGI holds the list of clients that are waiting for a CGI program to finish
+		CGI _activeCGI;
 
 	// Private member functions
 
-		// start a CGI program (fork, execve, pipe, etc.)
-		int startCgi(const Client &client, const Location &loc);
-		HttpResponse cgiResponse(const ClientInfo &clientInfo) const;
+		void GET(Client & client, const Location & loc);
+		void POST(Client & client, const Location & loc);
+		void DELETE(Client & client, const Location & loc);
 
-		char **getPath(const HttpRequest & req, const Location &loc);
-		char **getEnv(const HttpRequest & req);
-		
 	// Friends <3
 		friend std::ostream &operator<<(std::ostream &os, const Server &obj);
 };

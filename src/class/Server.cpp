@@ -1,5 +1,4 @@
 #include "Server.hpp"
-#include "HttpMethods.hpp"
 #include "utils.hpp"
 #include <unistd.h>
 #include <sys/wait.h>
@@ -10,9 +9,9 @@
 
 Server::Server(void)
 {
- 	_methodsMap["GET"] = GET;
-	_methodsMap["POST"] = POST;
-	_methodsMap["DELETE"] = DELETE;
+ 	_methodsMap["GET"] = &Server::GET;
+	_methodsMap["POST"] = &Server::POST;
+	_methodsMap["DELETE"] = &Server::DELETE;
 }
 
 Server::Server(const Server & src)
@@ -36,7 +35,7 @@ Server &Server::operator=(const Server &rhs)
 		_clients = rhs._clients;
 		_locations = rhs._locations;
 		_methodsMap = rhs._methodsMap;
-		_cgiClients = rhs._cgiClients;
+		_activeCGI = rhs._activeCGI;
 	}
 	return (*this);
 }
@@ -57,7 +56,7 @@ std::ostream &operator<<(std::ostream &os, const Server &obj)
 	os << std::endl;
 	os << "Locations: " << obj._locations << std::endl;
 	os << "Available methods: ";
-	for (std::map<std::string, HttpResponse (*)(const HttpRequest &, const Server &, const Location &)>::const_iterator it = obj._methodsMap.begin(); it != obj._methodsMap.end(); ++it)
+	for (std::map<std::string, void (Server::*)(Client &, const Location &)>::const_iterator it = obj._methodsMap.begin(); it != obj._methodsMap.end(); ++it)
 		os << it->first << " ";
 	os << std::endl;
 	return (os);
@@ -155,7 +154,7 @@ const LocationContainer & Server::getLocationContainer(void) const
 	return (_locations);
 }
 
-size_t Server::getClientMaxBodySize(void) const
+size_t Server::getMaxBodySize(void) const
 {
 	return (_maxBodySize);
 }
@@ -181,95 +180,47 @@ void Server::addServerName(const std::string & serverName)
 
 void Server::loop()
 {
-	// Generate response for clients that have the request ready
+	// Iterate the clients to generate and check responses
+	// NOTE Clients get removed from the list as soon as they have a response or the response started generating
 	for (std::set<Client *>::iterator it = _clients.begin(); it != _clients.end(); it++)
 	{
 		Client &client = **it;
 		// If the client has a response ready, remove it from the list of clients
 		if (client.responseReady())
-		{
 			_clients.erase(it--);
-			continue;
+		// If the body of the request is too large, return a 413 error
+		else if (client.getRequest().getBody().size() > _maxBodySize)
+		{
+			client.setResponse(errorResponse(413, "Request Entity Too Large", "The body of the request is too large"));
+			_clients.erase(it--);
 		}
-		// If the client has the request ready and it is not already generating a response from CGI, start generating the response
-		if (client.requestReady() && _cgiClients.count(ClientInfo(client)) == 0)
+		// If the client has the request ready, start generating the response
+		else if (client.requestReady())
 		{
 			const HttpRequest &req = client.getRequest();
-			std::string path = cleanPath(decodeURL(req.getPath().substr(0, req.getPath().find("?"))));
-			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " ("<< req.getMethod()<< " " << path << ")" << std::endl; //XXX
+			const Location * loc = _locations[req.getPath()];
+			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " ("<< req.getMethod()<< " " << req.getPath() << ")" << std::endl; //XXX
 
 			// Check if it's an allowed method
 			if (_methodsMap.count(req.getMethod()) == 0)
-			{
-				HttpResponse response = errorResponse(501, "Not implemented", "Method " + req.getMethod() + " is not allowed for this server");
-				client.setResponse(response);
-				_clients.erase(it--);
-				continue;
-			}
-			// Check if the path matches a location, if not return a 404 error
-			const Location * loc = _locations[path];
-			if (!loc)
-			{
+				client.setResponse(errorResponse(501, "Not implemented", "Method " + req.getMethod() + " is not allowed for this server"));
+			// Check if the path matches a location. If not, return a 404 error
+			else if (!loc)
 				client.setResponse(errorResponse(404));
-				_clients.erase(it--);
-				continue;
-			}
 			// If the method is not allowed for the location, return a 405 error
-			if (loc->isAllowedMethod(req.getMethod()) == false)
-			{
-				HttpResponse response = errorResponse(405, "Method Not Allowed", "Method " + req.getMethod() + " is not allowed for this location");
-				client.setResponse(response);
-				_clients.erase(it--);
-				continue;
-			}
+			else if (loc->isAllowedMethod(req.getMethod()) == false)
+				client.setResponse(errorResponse(405, "Method Not Allowed", "Method " + req.getMethod() + " is not allowed for this location"));
 			// If the location has a redirection, return it
 			if (loc->hasReturnValue())
-			{
 				client.setResponse(loc->getReturnResponse());
-				_clients.erase(it--);
-				continue;
-			}
-			// If the location is not a cgi, return the response
-			if (loc->isCgi() == false)
-			{
-				HttpResponse response;
-				response = _methodsMap[req.getMethod()](req, *this, *loc);
-				response.setReady(true);
-				client.setResponse(response);
-				_clients.erase(it--);
-				continue;
-			}
-			// Check if location is another WebServer
-			if (endsWith(path, "webserv"))
-			{
-				client.setResponse(errorResponse(403, "Forbidden", "CGI execution of webserv is forbidden"));
-				_clients.erase(it--);
-				continue;
-			}
-			// Else is a CGI, start the cgi program
-			int code = startCgi(client,*loc);
-			if (code != 0)
-			{
-				client.setResponse(errorResponse(500));
-				_clients.erase(it--);
-			}
+			else
+				_methodsMap[req.getMethod()](client, *loc);
+			_clients.erase(it--);
 		}
 	}
 
-	// Check if any CGI processes have finished
-	for (std::set<ClientInfo>::iterator it = _cgiClients.begin(); it != _cgiClients.end(); ++it)
-	{
-		int status;
-		int pid = waitpid(it->_pid, &status, WNOHANG);
-		if (pid > 0) // CGI program has finished
-		{
-			HttpResponse response;
-			response = cgiResponse(*it);
-			it->_client->setResponse(response);
-			_clients.erase(it->_client);
-			_cgiClients.erase(it--);
-		}
-	}
+	// Iterate the clients that are waiting for a CGI program to finish
+	_activeCGI.loop(*this);
 }
 
 void Server::addClient(Client &client)
@@ -279,45 +230,9 @@ void Server::addClient(Client &client)
 
 void Server::removeClient(Client &client)
 {
-	if (_cgiClients.count(ClientInfo(client)) == 1)
-	{
-		const ClientInfo & cgiClient = *(_cgiClients.find(ClientInfo(client)));
-		kill(cgiClient._pid, SIGKILL);
-		close(cgiClient._fdOut);
-		close(cgiClient._fdIn);
-		_cgiClients.erase(ClientInfo(client));
-	}
+	_activeCGI.closeCgi(client);
 	if (_clients.count(&client) == 1)
-	{
-		std::cout << "Removing client " <<client.getIP()<<":"<<client.getPort()<<" from server "<< *_serverNames.begin() << std::endl; //XXX
 		_clients.erase(&client);
-	}
-}
-
-Server::ClientInfo::ClientInfo()
-{
-	_client = NULL;
-	_pid = -1;
-	_fdOut = -1;
-	_fdIn = -1;
-}
-
-Server::ClientInfo::ClientInfo(const Client &client, int pid, int fdIn, int fdOut)
-{
-	_client = const_cast<Client *>(&client);
-	_pid = pid;
-	_fdIn = fdIn;
-	_fdOut = fdOut;
-}
-
-bool Server::ClientInfo::operator==(const ClientInfo &rhs) const
-{
-	return (_client == rhs._client);
-}
-
-bool Server::ClientInfo::operator<(const ClientInfo &rhs) const
-{
-	return (_client < rhs._client);
 }
 
 int Server::startCgi(const Client &client, const Location &loc)
@@ -424,10 +339,7 @@ char **Server::getPath(const HttpRequest & req, const Location &loc)
 char **Server::getEnv(const HttpRequest & req)
 {
 	// Get the query string
-	size_t pos = req.getPath().find("?");
-	std::string queryString ="QUERY_STRING=";
-	if (pos != std::string::npos && pos != req.getPath().size() - 1)
-		queryString += req.getPath().substr(pos + 1);
+	std::string queryString ="QUERY_STRING=" + req.getQueryString();
 
 	// Get the method and uri
 	std::string method = std::string("REQUEST_METHOD=") + req.getMethod();
