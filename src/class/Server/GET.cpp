@@ -1,3 +1,4 @@
+#include "Server.hpp"
 #include "HttpMethods.hpp"
 #include "utils.hpp"
 #include <iostream>
@@ -37,17 +38,18 @@ HttpResponse getAutoIndex(const std::string & path, const Location & loc, const 
 	return ret;
 }
 
-HttpResponse GET(const HttpRequest & req, const Server & serv, const Location & loc)
+void  Server::GET(Client & client, const Location & loc)
 {
 	HttpResponse ret;
 
-	// Get the path without the query string
-	std::string path = req.getPath();
-	path = cleanPath(decodeURL(path.substr(0, path.find('?'))));
+	std::string path = client.getRequest().getPath();
 	// Get the path of the requested file
 	std::string filename = loc.getFilename(path);
 	if (filename.empty())
-		return serv.errorResponse(404, "Not Found", "File not found");
+		return (void)client.setResponse(errorResponse(404, "Not Found", "File not found"));
+
+    if (loc.isCGI())
+        return (void)_activeCGI.newCgi(client, filename, *this);
 
 	try
 	{
@@ -60,11 +62,11 @@ HttpResponse GET(const HttpRequest & req, const Server & serv, const Location & 
 		if (loc.isDir(path))
 		{
 			if (loc.autoIndex())
-				return getAutoIndex(path, loc, serv);
-			return serv.errorResponse(403, "Forbidden", "Path is for a folder and location has no autoindex");
+				return (void)client.setResponse(getAutoIndex(path, loc, serv));
+			client.setResponse(errorResponse(403, "Forbidden", "Path is for a folder and location has no autoindex"));
+            return;
 		}
-		return serv.errorResponse(404, "Not Found", e.what());
+		client.setResponse(errorResponse(404, "Not Found", e.what()));
+        return;
 	}
-
-	return ret;
 }

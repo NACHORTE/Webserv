@@ -10,7 +10,6 @@ class HttpResponse {
 	public:
 	// Constructor, destructor, copy constructor
 		HttpResponse();
-		HttpResponse(HttpResponse const & src);
         HttpResponse(const std::string & response);
 		~HttpResponse();
 
@@ -27,7 +26,6 @@ class HttpResponse {
 		std::vector<std::string> getHeader(const std::string& key) const;
 		const std::string & getBody() const;
 
-        void addData(const std::string & data);
 
 	// member functions
 		void clear();
