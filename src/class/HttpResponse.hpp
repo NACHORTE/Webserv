@@ -11,10 +11,7 @@ class HttpResponse {
 	// Constructor, destructor, copy constructor
 		HttpResponse();
 		HttpResponse(HttpResponse const & src);
-		HttpResponse(
-			HttpRequest const & req,
-			const LocationContainer & valid_paths,
-			const std::map<std::string, HttpResponse (*)(const HttpRequest &, const LocationContainer &)> & valid_methods);
+        HttpResponse(const std::string & response);
 		~HttpResponse();
 
 	// getters, setters
@@ -29,6 +26,8 @@ class HttpResponse {
 		const std::string & getStatusPhrase() const;
 		std::vector<std::string> getHeader(const std::string& key) const;
 		const std::string & getBody() const;
+
+        void addData(const std::string & data);
 
 	// member functions
 		void clear();

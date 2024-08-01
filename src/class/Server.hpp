@@ -37,12 +37,10 @@ class Server
 		void setErrorPages(const std::map<int, std::set<std::string> > & errorPages);
 		const std::map<int, std::set<std::string> > & getErrorPages() const;
 		void addErrorPage(int error_code, const std::string & errorPage);
-		void addErrorPage(const std::string & errorPage);
 
 		void addClient(Client &client);
 		void removeClient(Client &client);
 
-		void setLocationContainer(const std::vector<Location> & LocationContainer);
 		const LocationContainer & getLocationContainer() const;
 		bool addLocation(Location location);
 
@@ -64,7 +62,7 @@ class Server
 		// Maximum body size that the server will accept
 		size_t _maxBodySize;
 		// Default file to serve when the request is for a directory
-    	std::string _index;
+    	std::string _index; // TODO : multiple index files
 		// Root directory for the server
     	std::string _root;
 		// List of server names that the server will respond to (host header in the request must match one of these names)
@@ -82,6 +80,7 @@ class Server
 
 	// Private member functions
 
+        // HTTP METHODS (defined in their own files (GET.cpp, POST.cpp, DELETE.cpp))
 		void GET(Client & client, const Location & loc);
 		void POST(Client & client, const Location & loc);
 		void DELETE(Client & client, const Location & loc);

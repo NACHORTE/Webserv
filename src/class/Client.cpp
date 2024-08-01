@@ -26,6 +26,13 @@ void Client::setResponse(const HttpResponse & response)
 	_requests.rbegin()->second = response;
 }
 
+void Client::setResponse(const std::string & response)
+{
+    if (_requests.empty())
+        _requests.push_front(std::pair<HttpRequest, HttpResponse>());
+    _requests.rbegin()->second.addData(response);
+}
+
 std::string Client::getIP() const
 {
 	return (_IP);

@@ -16,6 +16,7 @@ class Client
 
 	// Setters and getters
 		void setResponse(const HttpResponse & response);
+        void setResponse(const std::string & response);
 
 		std::string getIP() const;
 		int getPort() const;
