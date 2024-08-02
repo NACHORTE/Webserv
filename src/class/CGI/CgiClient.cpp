@@ -8,15 +8,15 @@ CGI::CgiClient::CgiClient():
     _isDone = false;
 }
 
-CGI::CgiClient::CgiClient(const Client &client, int pid, int fdOut, int fdIn):
-    Client(client), _pid(pid), _fdOut(fdOut), _fdIn(fdIn)
+CGI::CgiClient::CgiClient(Client &client, int pid, int fdOut, int fdIn):
+    _client(&client), _pid(pid), _fdOut(fdOut), _fdIn(fdIn)
 {
     _isDone = false;
     _outOffset = 0;
     _outputBuffer = _client->getRequest().getBody();
 }
 
-CGI::CgiClient::CgiClient(const CgiClient &src):
+CGI::CgiClient::CgiClient(const CgiClient &src)
 {
     *this = src;
 }
@@ -80,4 +80,9 @@ int CGI::CgiClient::read(size_t buff_size)
     if (bytesRead > 0)
         _inputBuffer.append(buffer,0,bytesRead);
     return bytesRead;
+}
+
+bool CGI::CgiClient::outBufferEmpty() const
+{
+	return _outOffset == _outputBuffer.size();
 }

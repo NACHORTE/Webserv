@@ -36,7 +36,7 @@ class CGI
 		struct CgiClient
 		{
             CgiClient();
-            CgiClient(const Client &client, int pid = -1, int fdOut = -1, int fdIn = -1);
+            CgiClient(Client &client, int pid = -1, int fdOut = -1, int fdIn = -1);
             CgiClient(const CgiClient &src);
             ~CgiClient();
             CgiClient &operator=(const CgiClient &rhs);

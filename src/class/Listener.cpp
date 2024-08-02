@@ -97,14 +97,18 @@ void Listener::loop()
 				acceptConnection();
 			// If the client is ready to read, read the data
 			else if (_pollfds[i].revents & POLLIN)
+			{
 				// if readData returns 1, the client is closed and the index is decremented
 				if (readData(_pollfds[i].fd, *it))
 					(--i , --it);
+			}
 			// Check if the file descriptor is ready to write
 			else if (_pollfds[i].revents & POLLOUT && it->responseReady())
+			{
 				// if sendData returns 1, the client is closed and the index is decremented
 				if(sendData(_pollfds[i].fd, *it))
 					(--i , --it);
+			}
 			// Check if the file descriptor has been closed
 			else if (_pollfds[i].revents & (POLLHUP | POLLERR))
 			{
@@ -193,7 +197,7 @@ int Listener::readData(int fd, Client &client)
 	if (bytesRead < 0)
 	{
 		client.setResponse(errorResponse(client, 500, "Internal_serv_error", "Couldn't read data from client"));
-		return 0;
+		return 1;
 	}
 	if (bytesRead == 0) // TODO fix POLLIN always true
 		return 0;
@@ -205,7 +209,7 @@ int Listener::readData(int fd, Client &client)
 	if (client.error())
 	{
 		client.setResponse(errorResponse(client, 400, "Bad Request", "Error parsing request"));
-		return 0;
+		return 1;
 	}
 
 	// send the client to a server if there is an error so it generates a response
@@ -217,7 +221,11 @@ int Listener::readData(int fd, Client &client)
 
 int Listener::sendData(int fd, Client &client)
 {
-	// Get the response chunk from the client
+	if (client.error())
+	{
+		client.setResponse(errorResponse(client, 500, "Internal_serv_error", "Error generating response"));
+		return 1;
+	}
 	if (!client.responseReady())
 	{
 		std::cout << "[Listener::sendData] No response ready" << std::endl; // NOTE msg

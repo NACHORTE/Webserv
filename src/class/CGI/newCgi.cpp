@@ -1,6 +1,12 @@
 #include "CGI.hpp"
+#include "utils.hpp"
+#include <fstream>
+#include "Server.hpp"
+#include "unistd.h"
+#include "stdlib.h"
+#include <fcntl.h>
 
-static char **Server::getPath(const std::string & filename)
+static char **getPath(const std::string & filename)
 {
 	char **output = new char*[2];
 	if (output == NULL)
@@ -15,7 +21,7 @@ static char **Server::getPath(const std::string & filename)
 	return output;
 }
 
-static char **Server::getEnv(const HttpRequest & req)
+static char **getEnv(const HttpRequest & req)
 {
 	// Get the query string
 	std::string queryString ="QUERY_STRING=" + req.getQueryString();
@@ -65,8 +71,10 @@ void CGI::newCgi(Client &client, const std::string & filename, const Server& ser
 {
 	// Check if the client is already waiting for a CGI program to finish
     for (size_t i = 0; i < _clients.size(); ++i)
+	{
         if (_clients[i]._client == &client)
             return;
+	}
 
 	// Check if the file exists and can be executed
 	std::ifstream file(filename.c_str());
@@ -103,7 +111,7 @@ void CGI::newCgi(Client &client, const std::string & filename, const Server& ser
 		close(fdsOut[1]);
 		close(fdsOut[0]);
 		// Get the path and environment variables for the CGI program
-		char **args = getPath(client.getRequest(),loc);
+		char **args = getPath(filename);
 		char **envp = getEnv(client.getRequest());
 		if (args == NULL || envp == NULL)
 			exit(EXIT_FAILURE);

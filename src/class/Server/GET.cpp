@@ -1,5 +1,4 @@
 #include "Server.hpp"
-#include "HttpMethods.hpp"
 #include "utils.hpp"
 #include <iostream>
 #include "dirent.h"
@@ -48,13 +47,13 @@ void  Server::GET(Client & client, const Location & loc)
 	if (filename.empty())
 		return (void)client.setResponse(errorResponse(404, "Not Found", "File not found"));
 
-    if (loc.isCGI())
-        return (void)_activeCGI.newCgi(client, filename, *this);
+    if (loc.isCgi())
+		return (void)_activeCGI.newCgi(client, filename, *this);
 
 	try
 	{
 		ret.setStatus(200);
-		ret.setBody(filename);
+		ret.setBodyFromFile(filename);
 	}
 	catch (std::exception & e)
 	{	
@@ -62,7 +61,7 @@ void  Server::GET(Client & client, const Location & loc)
 		if (loc.isDir(path))
 		{
 			if (loc.autoIndex())
-				return (void)client.setResponse(getAutoIndex(path, loc, serv));
+				return (void)client.setResponse(getAutoIndex(path, loc, *this));
 			client.setResponse(errorResponse(403, "Forbidden", "Path is for a folder and location has no autoindex"));
             return;
 		}

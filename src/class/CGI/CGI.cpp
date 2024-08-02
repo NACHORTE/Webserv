@@ -1,7 +1,9 @@
 #include "CGI.hpp"
 #include <list>
-#include <sys/wait.h>
 #include "Server.hpp"
+#include "stdlib.h"
+#include "unistd.h"
+#include "sys/wait.h"
 
 CGI::CGI(void)
 {

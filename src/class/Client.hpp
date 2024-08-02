@@ -24,6 +24,9 @@ class Client
 		const HttpRequest & getRequest(void) const;
 		size_t getRequestCount(void) const;
 
+		void error(bool error);
+		bool error(void) const;
+
 	// Member functions
 
 		void addData(const std::string & data);
@@ -31,7 +34,6 @@ class Client
 		bool responseReady(void) const;
 		bool timeout(void) const;
 		bool keepAlive(void) const;
-		// Deletes the last request and response from _requests
 		void popRequest(void);
 
 	// Operator overloads
@@ -46,6 +48,8 @@ class Client
 		clock_t _lastEventTime;
 		// Queue of requests and responses (Most recent request is at the front of the list)
 		std::list<std::pair<HttpRequest, HttpResponse> > _requests;
+
+		bool _error;
 	// Private member functions
 
 	// Friends <3

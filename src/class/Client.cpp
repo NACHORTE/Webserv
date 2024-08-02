@@ -130,6 +130,18 @@ void Client::popRequest()
 		_requests.pop_back();
 }
 
+void Client::error(bool error)
+{
+	_error = error;
+}
+
+bool Client::error() const
+{
+	if (_requests.empty())
+		return (false);
+	return (_requests.rbegin()->first.error() or _requests.rbegin()->second.error() or _error);
+}
+
 Client &Client::operator=(const Client &rhs)
 {
 	if (this != &rhs)

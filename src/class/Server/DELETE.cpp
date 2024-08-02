@@ -1,5 +1,4 @@
 #include "Server.hpp"
-#include "HttpMethods.hpp"
 #include "utils.hpp"
 #include <fstream>
 #include <cstdio>
@@ -21,7 +20,7 @@ void Server::DELETE(Client & client, const Location & loc)
 
 	// delete file
 	if (std::remove(filename.c_str()) == 0)
-		client.setResponse(HttpResponse::error(200, "OK"));
+		client.setResponse(errorResponse(200, "OK", "File deleted"));
 	else
 		client.setResponse(errorResponse(500, "Internal Server Error", "Failed to delete file"));
 }
