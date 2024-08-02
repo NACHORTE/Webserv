@@ -26,12 +26,12 @@ HttpRequest::HttpRequest()
  * 
  * @param msg The string containing the http request or part of it.
  */
-HttpRequest::HttpRequest(const std::string& msg)
+HttpRequest::HttpRequest(const std::string& request)
 {
 	_requestReady = false;
 	_headerReady = false;
 	_error = false;
-	addData(msg);
+	addData(request);
 }
 
 /**
@@ -212,10 +212,10 @@ void HttpRequest::setBody(const std::string& body, bool chunked)
 	this->_body = body;
 	unsetHeader("Transfer-Encoding");
 	unsetHeader("Content-Length");
-	if (chunked == false)
-		setHeader("Content-Length", intToString(body.size()));
-	else
+	if (chunked)
 		setHeader("Transfer-Encoding", "chunked");
+	else
+		setHeader("Content-Length", intToString(body.size()));
 }
 
 /**
@@ -317,19 +317,19 @@ long long int HttpRequest::addData(const std::string & data)
 	if (_requestReady)
 		return 0;
 
-	_buffer = _buffer + data;
+	_inBuff = _inBuff + data;
 	// If the header has not been found yet, search for it
 	if (not _headerReady)
 	{
 		// Find the end of the header
-		size_t pos = _buffer.find("\r\n\r\n");
+		size_t pos = _inBuff.find("\r\n\r\n");
 		// If the end of the header is not found, return the number of bytes read
 		if (pos == std::string::npos)
 			return data.size();
 		// If the end of the header is found, parse it
-		if (parseHeader(_buffer.substr(0, pos + 4)) == 1)
+		if (parseHeader(_inBuff.substr(0, pos + 4)) == 1)
 			return (this->clear(), _error=true, -1);
-		_buffer = _buffer.substr(pos + 4);
+		_inBuff = _inBuff.substr(pos + 4);
 		_headerReady = true;
 	}
 	// Parse the body if the header has been found already
@@ -354,11 +354,13 @@ long long int HttpRequest::addData(const std::string & data)
 			if (contentLength < _body.size())
 				return (this->clear(), _error=true, -1);
 			// Add the data to the body
-			size_t len = (contentLength - _body.size() > _buffer.size()) ?
-				_buffer.size() : contentLength - _body.size();
-			_body += _buffer.substr(0, len);
-			_buffer = _buffer.substr(len);
-
+			if (contentLength != 0)
+			{
+				size_t len = (contentLength - _body.size() > _inBuff.size()) ?
+					_inBuff.size() : contentLength - _body.size();
+				_body += _inBuff.substr(0, len);
+				_inBuff = _inBuff.substr(len);
+			}
 			// If the body is complete, set the request as ready
 			if (_body.size() == contentLength)
 				_requestReady = true;
@@ -369,7 +371,7 @@ long long int HttpRequest::addData(const std::string & data)
 			long long int chunkSize;
 			do
 			{
-				chunkSize=getChunk(_buffer, _body);
+				chunkSize=getChunk(_inBuff, _body);
 				// 0\r\n\r\n
 				if (chunkSize == 5)
 				{
@@ -384,7 +386,10 @@ long long int HttpRequest::addData(const std::string & data)
 		}
 	}
 
-	return data.size() - _buffer.size(); 
+	long long int ret = data.size() - _inBuff.size();
+	if (_requestReady)
+		_inBuff.clear();
+	return ret; 
 }
 
 /**
@@ -428,7 +433,7 @@ void HttpRequest::clear()
 	_requestReady = false;
 	_headerReady = false;
 	_error = false;
-	_buffer.clear();
+	_inBuff.clear();
 }
 
 /**
@@ -459,7 +464,7 @@ HttpRequest & HttpRequest::operator=(HttpRequest const & rhs)
 		this->_requestReady = rhs._requestReady;
 		this->_headerReady = rhs._headerReady;
 		this->_error = rhs._error;
-		this->_buffer = rhs._buffer;
+		this->_inBuff = rhs._inBuff;
 	}
 	return *this;
 }
@@ -483,7 +488,7 @@ int HttpRequest::parseHeader(const std::string& header)
 	std::string version;
 	std::string line;
 	std::getline(iss, line);
-	std::istringstream iss_line(line); // NOTE trim removed, check if still works
+	std::istringstream iss_line(trim(line));
 	iss_line >> _method >> _path >> version;
 	// Check if line is valid
 	if (iss_line.fail() || !iss_line.eof())
@@ -534,7 +539,7 @@ std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs)
 	for (size_t i = 0; i < rhs._headers.size(); i++)
 		o << "\t" << rhs._headers[i].first << ": " << rhs._headers[i].second << std::endl;
 	o << CYAN << "_body: " << RESET << rhs._body << std::endl;
-	o << CYAN << "_buffer: " << RESET << rhs._buffer << std::endl;
+	o << CYAN << "_inBuff: " << RESET << rhs._inBuff << std::endl;
 	o << CYAN << "_requestReady: " << RESET << rhs._requestReady << std::endl;
 	o << CYAN << "_headerReady: " << RESET << rhs._headerReady << std::endl;
 	o << CYAN << "_error: " << RESET << rhs._error << std::endl;

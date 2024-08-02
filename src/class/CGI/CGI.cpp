@@ -1,5 +1,7 @@
 #include "CGI.hpp"
 #include <list>
+#include <sys/wait.h>
+#include "Server.hpp"
 
 CGI::CGI(void)
 {
@@ -31,9 +33,9 @@ std::ostream &operator<<(std::ostream &os, const CGI &obj)
 }
 
 // Defined in newCgi.cpp
-void CGI::newCgi(Client &client, const std::string &filename, const Server &server);
+//void CGI::newCgi(Client &client, const std::string &filename, const Server &server);
 
-void closeCgi(Client &client)
+void CGI::closeCgi(Client &client)
 {    
     for (size_t i = 0; i < _clients.size(); ++i)
     {
@@ -50,7 +52,7 @@ void closeCgi(Client &client)
     }
 }
 
-void closeCgi(size_t index)
+void CGI::closeCgi(size_t index)
 {
     if (index >= _clients.size())
         return;
@@ -76,7 +78,7 @@ void CGI::loop(const Server &server)
             bool disconnected = _pollfdOut[i].revents & POLLHUP or _pollfdIn[i].revents & POLLHUP;
             if (error)
             {
-                _clients[i]._client->setResponse(errorResponse(500, "internal_server_error", "cgi error"));
+                _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "cgi error"));
                 closeCgi(i--);
                 continue;
             }
@@ -84,16 +86,16 @@ void CGI::loop(const Server &server)
             {
                 if (_clients[i].read(IO_BUFF_SIZE) == -1)
                 {
-                    _clients[i]._client->setResponse(errorResponse(500, "internal_server_error", "couldn't read from cgi"));
+                    _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "couldn't read from cgi"));
                     closeCgi(i--);
                     continue;
                 }
             }
-            if ((disconnected or _clients[i]._isDone) and not readReady)
+            if (disconnected and not readReady)
             {
                 _clients[i]._client->setResponse(_clients[i]._inputBuffer);
                 if (not _clients[i]._client->responseReady())
-                    _clients[i]._client->setResponse(errorResponse(500, "internal_server_error", "cgi didn't send a complete response"));
+                    _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "cgi didn't send a complete response"));
                 closeCgi(i--);
                 continue;
             }
@@ -101,7 +103,7 @@ void CGI::loop(const Server &server)
             {
                 if (_clients[i].write(IO_BUFF_SIZE) == -1)
                 {
-                    _clients[i]._client->setResponse(errorResponse(500, "internal_server_error", "couldn't write to cgi"));
+                    _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "couldn't write to cgi"));
                     closeCgi(i--);
                 }
             }
@@ -112,11 +114,11 @@ void CGI::loop(const Server &server)
     for (size_t i = 0; i < _clients.size(); ++i)
     {
         int status;
-        pid_t result = waitpid(_clients[i].pid, &status, WNOHANG);
+        pid_t result = waitpid(_clients[i]._pid, &status, WNOHANG);
         
         if (result == -1)
         {
-            _clients[i].client->setResponse(errorResponse(500, "internal_server_error", "waitpid failed"));
+            _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "waitpid failed"));
             closeCgi(i--);
         }
         else if (result > 0)
@@ -125,15 +127,15 @@ void CGI::loop(const Server &server)
             {
                 if (WEXITSTATUS(status) == EXIT_FAILURE)
                 {
-                    _clients[i].client->setResponse(errorResponse(500, "internal_server_error", "cgi exited with failure"));
+                    _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "cgi exited with failure"));
                     closeCgi(i--);
                 }
                 else
-                    _clients[i].isDone = true;
+                    _clients[i]._isDone = true;
             }
             else if (WIFSIGNALED(status))
             {
-                _clients[i].client->setResponse(errorResponse(500, "internal_server_error", "cgi terminated by signal"));
+                _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "cgi terminated by signal"));
                 closeCgi(i--);
             }
         }

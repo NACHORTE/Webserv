@@ -55,6 +55,7 @@ class CGI
             int _fdOut; // fdOut = pipe to write to fork
             int _fdIn; // fdIn = pipe to read from fork
             bool _isDone;
+			bool _readReady;
 		};
 	// Atributes
 

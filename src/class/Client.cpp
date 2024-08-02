@@ -5,7 +5,6 @@
 
 Client::Client(std::string IP, int port)
 {
-	_error = false;
 	_lastEventTime = clock();
 	_IP = IP;
 	_port = port;
@@ -73,16 +72,6 @@ size_t Client::getRequestCount(void) const
 	return (_requests.size());
 }
 
-int Client::error(void) const
-{
-	return (_error);
-}
-
-void Client::error(bool error)
-{
-	_error = error;
-}
-
 void Client::addData(const std::string & data)
 {
 	// Update the last event time
@@ -94,13 +83,8 @@ void Client::addData(const std::string & data)
 		if (_requests.empty() || _requests.begin()->first.requestReady())
 			_requests.push_front(std::pair<HttpRequest, HttpResponse>());
 		long long int read = _requests.begin()->first.addData(data.substr(bytesRead));
-		if (read == -1)
-		{
-			_error = true;
+		if (read < 0)
 			return;
-		}
-		if (read == 0)
-			break;
 		bytesRead += read;
 	}
 }
@@ -151,7 +135,6 @@ Client &Client::operator=(const Client &rhs)
 	{
 		_IP = rhs._IP;
 		_port = rhs._port;
-		_error = rhs._error;
 		_lastEventTime = rhs._lastEventTime;
 		_requests = rhs._requests;
 	}
@@ -160,7 +143,6 @@ Client &Client::operator=(const Client &rhs)
 
 std::ostream &operator<<(std::ostream &os, const Client &obj)
 {
-	std::cout << CYAN << "_Error: "<< RESET << obj._error << std::endl;
 	std::cout << CYAN << "_lastEventTime: "<< RESET << obj._lastEventTime << std::endl;
 	std::cout << CYAN << "_requests: "<< RESET << obj._requests.size() << std::endl;
 

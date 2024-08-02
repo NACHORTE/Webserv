@@ -7,21 +7,21 @@
  *	Represents an HTTP request
  *	Contains the following fields:
  *		- method: GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS, TRACE, PATCH
+ *		- query string: key=value&key=value...
  *		- path: /path/to/file
- *		- version: HTTP/1.1
  *		- headers: key-value pairs
  *		- body: body of the request
 */
 class HttpRequest {
 	public:
-		// constructors, destructor, copy constructor
+	// constructors, destructor, copy constructor
 
 		HttpRequest();
-		HttpRequest(const std::string& msg);
+		HttpRequest(const std::string& request);
 		HttpRequest(HttpRequest const & src);
 		~HttpRequest();
 
-		// getters, setters
+	// getters, setters
 
 		void setMethod(const std::string& method);
 		const std::string & getMethod() const;
@@ -33,7 +33,7 @@ class HttpRequest {
 
 		void setHeader(const std::string& key, const std::string& value);
 		void unsetHeader(const std::string& key);
-		std::vector<std::string> getHeader(const std::string& key) const; // returns a vector of all headers with the given key
+		std::vector<std::string> getHeader(const std::string& key) const;
 		const std::vector<std::pair<std::string, std::string> > & getHeaders() const;
 
 		void setBody(const std::string& body, bool chunked = false);
@@ -41,14 +41,15 @@ class HttpRequest {
 
 		void requestReady(bool ready);
 		bool requestReady() const;
-		// member functions
+
+	// member functions
 
 		long long int addData(const std::string & data);
-		std::string to_string() const; // convert an HttpRequest to a string
-		void clear(); // clear all fields
-		bool error() const; // check if the request is in an error state
+		std::string to_string() const;
+		void clear();
+		bool error() const;
 
-		// operator overloads
+	// operator overloads
 
 		HttpRequest & operator=(HttpRequest const & rhs);
 
@@ -56,17 +57,25 @@ class HttpRequest {
 	private:
 	// Member attributes
 
-		std::string _method;	// GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS, TRACE, PATCH
-		std::string _path;	// /path/to/file
-		std::string _queryString;	// key=value&key=value...
+		// HTTP Method (GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS, TRACE, PATCH)
+		std::string _method;
+		// Path to the file with no query string
+		std::string _path;
+		// Query string (key=value&key=value...)
+		std::string _queryString;
+		// Http headers (key-value pairs), can have multiple headers with the same key
 		std::vector<std::pair<std::string, std::string> > _headers;	// key-value pairs
-		std::string _body;	// body of the request
+		// Body of the request (can be empty) (Content-Length must be set in the headers)
+		std::string _body;
 	
+		// The request is complete so it can be processed
 		bool _requestReady;
+		// The header has been parsed (used on addData)
 		bool _headerReady;
+		// The request is in an error state
 		bool _error;
-
-		std::string _buffer; // Used while adding data to the request
+		// Buffer used while adding data to the request (used on addData)
+		std::string _inBuff;
 
 	// Private member functions
 
