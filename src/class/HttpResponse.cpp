@@ -184,22 +184,18 @@ void HttpResponse::setBody(const std::string& content_type, const std::string& b
 }
 
 /**
- * @brief Set the response filling it with the content of the file.
+ * @brief Set the body of the response from a file.
  * 
- * Generates the response with the content of the file with the given name.
+ * Sets the body of the response with the content of the file with the given
+ * filename.
  * 
- * Sets the status code to 200 (OK) and the status phrase to "OK".
- * 
- * The headers Content-Type and Content-Length are set automatically.
+ * The headers are updated accordingly.
  * 
  * @param filename The name of the file to read the body from.
- * @throws std::runtime_error if the file cannot be read.
  */
-void HttpResponse::setResponseFromFile(const std::string& filename)
+void HttpResponse::setBodyFromFile(const std::string& filename)
 {
-	setStatus(200, "OK");
 	setBody(extToMime(filename), readFile(filename, isBinaryFile(filename)));
-	responseReady(true);
 }
 
 /**

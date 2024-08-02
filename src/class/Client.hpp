@@ -4,7 +4,6 @@
 #include <list>
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
-#include <ctime>
 
 class Client
 {

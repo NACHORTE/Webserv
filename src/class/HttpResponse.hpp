@@ -24,7 +24,7 @@ class HttpResponse {
 		const std::vector<std::pair<std::string, std::string> > & getHeaders() const;
 
 		void setBody(const std::string& content_type, const std::string& body, bool chunked = false);
-		void setResponseFromFile(const std::string& filename);
+		void setBodyFromFile(const std::string& filename);
 		const std::string & getBody() const;
 
 		void responseReady(bool ready);

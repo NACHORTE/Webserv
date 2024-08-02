@@ -2,6 +2,7 @@
 #include "defines.h"
 #include "utils.hpp"
 #include "colors.h"
+#include <ctime>
 
 Client::Client(std::string IP, int port)
 {
@@ -57,10 +58,10 @@ std::string Client::getResponse() const
 {
 	if (_requests.empty())
 		return ("");
-	return (_requests.rbegin()->second());
+	return (_requests.rbegin()->second.to_string());
 }
 
-const HttpRequest &Client::getRequest(void) const//TODO hacer esto de otra forma
+const HttpRequest &Client::getRequest(void) const
 {
 	if (_requests.empty())
 		throw std::runtime_error("No request available");
@@ -74,33 +75,33 @@ size_t Client::getRequestCount(void) const
 
 void Client::addData(const std::string & data)
 {
-	// Update the last event time
-	_lastEventTime = clock();
-
 	size_t bytesRead = 0;
 	while (bytesRead < data.size())
 	{
 		if (_requests.empty() || _requests.begin()->first.requestReady())
 			_requests.push_front(std::pair<HttpRequest, HttpResponse>());
 		long long int read = _requests.begin()->first.addData(data.substr(bytesRead));
-		if (read < 0)
+		if (read <= 0)
 			return;
 		bytesRead += read;
 	}
+
+	// Update the last event time
+	_lastEventTime = clock();
 }
 
 bool Client::requestReady() const
 {
 	if (_requests.empty())
 		return (false);
-	return (_requests.begin()->first.requestReady());
+	return (_requests.rbegin()->first.requestReady());
 }
 
 bool Client::responseReady() const
 {
 	if (_requests.empty())
 		return (false);
-	return (_requests.begin()->second.responseReady());
+	return (_requests.rbegin()->second.responseReady());
 }
 
 bool Client::timeout() const
@@ -115,7 +116,7 @@ bool Client::keepAlive() const
 {
 	if (_requests.empty())
 		return (false);
-	std::vector<std::string> header = _requests.begin()->first.getHeader("Connection");
+	std::vector<std::string> header = _requests.rbegin()->first.getHeader("Connection");
 	if (header.empty())
 		return (false);
 	return (header[0] == "keep-alive");

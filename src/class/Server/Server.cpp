@@ -194,7 +194,7 @@ HttpResponse Server::errorResponse(int error, const std::string & phrase, const 
 {
 	// If there is no error page for the error, return the default error page
 	if (_errorPages.count(error) == 0)
-		return HttpResponse::error(error, phrase, msg);
+		return HttpResponse::errorResponse(error, phrase, msg);
 
 	// Return the first page that matches a location
 	std::set<std::string> errorPages = _errorPages.at(error);
@@ -203,16 +203,16 @@ HttpResponse Server::errorResponse(int error, const std::string & phrase, const 
 		try
 		{
 			HttpResponse response;
-			std::string path = *it;
+			std::string path = joinPath(_root,*it);
 			response.setStatus(error);
-			response.setBody(path);
-			response.setReady(true);
+			response.setBodyFromFile(path);
+			response.responseReady(true);
 			return response;
 		}
 		catch(const std::exception& e)
 		{}
 	}
-	return HttpResponse::error(error, phrase, msg);
+	return HttpResponse::errorResponse(error, phrase, msg);
 }
 
 void Server::loop()
@@ -251,7 +251,7 @@ void Server::loop()
 			if (loc->hasReturnValue())
 				client.setResponse(loc->getReturnResponse());
 			else
-				_methodsMap[req.getMethod()](client, *loc);
+				(this->*_methodsMap[req.getMethod()])(client, *loc);
 			_clients.erase(it--);
 		}
 	}
