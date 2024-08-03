@@ -5,7 +5,6 @@
 #include "unistd.h"
 #include "sys/wait.h"
 #include "utils.hpp"
-#include "colors.h" // XXX
 
 CGI::CGI(void)
 {}
@@ -85,7 +84,6 @@ void CGI::loop(const Server &server)
 
         int status;
         pid_t result = waitpid(_clients[i]._pid, &status, WNOHANG);
-        
 		// If there is an error with waitpid, close the CGI program
         if (result == -1)
         {
@@ -121,7 +119,6 @@ void CGI::loop(const Server &server)
 			size_t clientIndex = i / 2;
             if (_pollfd[i].revents & POLLIN)
             {
-				std::cout << YELLOW << "Reading from client"<< RESET << std::endl; //XXX
 				_clients[clientIndex]._somethingToRead = true;
                 if (_clients[clientIndex].read(IO_BUFF_SIZE) == -1)
                 {
@@ -132,14 +129,12 @@ void CGI::loop(const Server &server)
             }
             else if (_pollfd[i].revents & POLLERR or _pollfd[i].revents & POLLHUP)
             {
-				std::cout << YELLOW << "Error or HUP" << RESET<< std::endl; //XXX
 				generateResponse(_clients[clientIndex], server);
 				closeCgi(clientIndex);
 				i = clientIndex * 2 - 1;
             }
             else if (_pollfd[i].revents & POLLOUT and not _clients[clientIndex].outBufferEmpty())
             {
-				std::cout << YELLOW << "Writing to client" << RESET<< std::endl; //XXX
                 if (_clients[clientIndex].write(IO_BUFF_SIZE) == -1)
                 {
                     _clients[clientIndex]._client->setResponse(server.errorResponse(500, "internal_server_error", "couldn't write to cgi"));
@@ -155,7 +150,6 @@ void CGI::loop(const Server &server)
 	{
 		if (_clients[i]._isDone and not _clients[i]._somethingToRead)
 		{
-			std::cout << YELLOW << "Client is done and has nothing to read" << RESET << std::endl; //XXX
 			generateResponse(_clients[i], server);
 			closeCgi(i--);
 		}
@@ -178,9 +172,6 @@ void CGI::generateResponse(CgiClient &cgiClient, const Server &server)
 	endOfHeader += 4;
 	std::string header = cgiClient._inputBuffer.substr(0, endOfHeader);
 	std::string body = cgiClient._inputBuffer.substr(endOfHeader);
-	//std::cout << CYAN << "_inputBuffer: " << cgiClient._inputBuffer << RESET << std::endl;
-	//std::cout << GREEN << "header: " << header << RESET << std::endl;
-	//std::cout << RED << "body: " << body << RESET << std::endl;
 
 	// Parse the header
 	response.addData(header);

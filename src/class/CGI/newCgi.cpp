@@ -5,7 +5,6 @@
 #include "unistd.h"
 #include "stdlib.h"
 #include <fcntl.h>
-#include "colors.h" // XXX
 
 static char **getPath(const std::string & filename)
 {
@@ -22,7 +21,7 @@ static char **getPath(const std::string & filename)
 	return output;
 }
 
-/* static char **getEnv(HttpRequest req)
+static char **getEnv(HttpRequest req)
 {
 	// Get the query string
 	std::string queryString ="QUERY_STRING=" + req.getQueryString();
@@ -66,7 +65,7 @@ static char **getPath(const std::string & filename)
 	}
 
 	return output;
-} */
+}
 
 void CGI::newCgi(Client &client, const std::string & filename, const Server& server)
 {
@@ -114,13 +113,11 @@ void CGI::newCgi(Client &client, const std::string & filename, const Server& ser
 		// Get the path and environment variables for the CGI program
 		std::string path = "./" + baseName(filename);
 		char **args = getPath(path);
-		//char **envp = getEnv(client.getRequest());
+		char **envp = getEnv(client.getRequest());
 		if (args == NULL /*|| envp == NULL*/)
 			exit(EXIT_FAILURE);
-		std::cerr << GREEN << args[0] << RESET << std::endl;
 		// Execute the CGI program
-		execve(args[0], args, NULL);
-		std::cerr << GREEN << "execve failed" << RESET << std::endl;
+		execve(args[0], args, envp);
 		exit(EXIT_FAILURE);
 	}
 	// Parent process

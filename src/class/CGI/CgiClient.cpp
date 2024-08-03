@@ -1,5 +1,7 @@
 #include "CGI.hpp"
 #include <unistd.h>
+#include <iostream> // XXX
+#include "colors.h" // XXX
 
 CGI::CgiClient::CgiClient():
     _client(NULL), _pid(-1), _fdOut(-1), _fdIn(-1)
@@ -7,6 +9,7 @@ CGI::CgiClient::CgiClient():
     _outOffset = 0;
     _isDone = false;
 	_inputBuffer = "HTTP/1.1 200 OK\r\n";
+	_somethingToRead = false;
 }
 
 CGI::CgiClient::CgiClient(Client &client, int pid, int fdOut, int fdIn):
@@ -16,6 +19,7 @@ CGI::CgiClient::CgiClient(Client &client, int pid, int fdOut, int fdIn):
     _outOffset = 0;
     _outputBuffer = _client->getRequest().getBody();
 	_inputBuffer = "HTTP/1.1 200 OK\r\n";
+	_somethingToRead = false;
 }
 
 CGI::CgiClient::CgiClient(const CgiClient &src)
@@ -38,28 +42,10 @@ CGI::CgiClient &CGI::CgiClient::operator=(const CgiClient &rhs)
         _pid = rhs._pid;
         _fdOut = rhs._fdOut;
         _fdIn = rhs._fdIn;
+		_isDone = rhs._isDone;
+		_somethingToRead = rhs._somethingToRead;
     }
     return *this;
-}
-
-bool CGI::CgiClient::operator==(const CgiClient &rhs) const
-{
-    return _client == rhs._client;
-}
-
-bool CGI::CgiClient::operator<(const CgiClient &rhs) const
-{
-    return _client < rhs._client;
-}
-
-bool CGI::CgiClient::operator==(const Client &rhs) const
-{
-    return _client == &rhs;
-}
-
-bool CGI::CgiClient::operator<(const Client &rhs) const
-{
-    return _client < &rhs;
 }
 
 int CGI::CgiClient::write(size_t buff_size)

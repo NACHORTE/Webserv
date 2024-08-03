@@ -1,12 +1,12 @@
 #!/bin/env python3
-from datetime import datetime
-
-# Obtener la fecha y hora actuales
-current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-# Escribir la fecha y hora actuales en el archivo /tmp/tmp.txt
-with open("./tmp.txt", "a") as file:
-    file.write(f"{current_time}\n")
+#from datetime import datetime
+#
+## Obtener la fecha y hora actuales
+#current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#
+## Escribir la fecha y hora actuales en el archivo /tmp/tmp.txt
+#with open("./tmp.txt", "a") as file:
+#    file.write(f"{current_time}\n")
 import sys
 RED = "\033[31m"
 RESET = "\033[0m"

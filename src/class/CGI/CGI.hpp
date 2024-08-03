@@ -40,10 +40,6 @@ class CGI
             CgiClient(const CgiClient &src);
             ~CgiClient();
             CgiClient &operator=(const CgiClient &rhs);
-            bool operator==(const CgiClient &rhs) const;
-            bool operator<(const CgiClient &rhs) const;
-            bool operator==(const Client &rhs) const;
-            bool operator<(const Client &rhs) const;
             int write(size_t buff_size);
             int read(size_t buff_size);
             bool outBufferEmpty() const;
