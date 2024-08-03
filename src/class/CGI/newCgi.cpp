@@ -22,7 +22,7 @@ static char **getPath(const std::string & filename)
 	return output;
 }
 
-static char **getEnv(const HttpRequest & req)
+/* static char **getEnv(HttpRequest req)
 {
 	// Get the query string
 	std::string queryString ="QUERY_STRING=" + req.getQueryString();
@@ -66,19 +66,14 @@ static char **getEnv(const HttpRequest & req)
 	}
 
 	return output;
-}
+} */
 
 void CGI::newCgi(Client &client, const std::string & filename, const Server& server)
 {
 	// Check if the client is already waiting for a CGI program to finish
-    for (size_t i = 0; i < _clients.size(); ++i)
-	{
-        if (_clients[i]._client == &client)
-		{
-			std::cout << RED << "Client is already waiting for a CGI program to finish" << RESET << std::endl; //XXX
-            return;
-		}
-	}
+	for (size_t i = 0; i < _clients.size(); ++i)
+		if (_clients[i]._client == &client)
+			return;
 
 	// Check if the file exists and can be executed
 	if (access(filename.c_str(), F_OK) != 0)
@@ -113,13 +108,19 @@ void CGI::newCgi(Client &client, const std::string & filename, const Server& ser
 		dup2(fdsOut[0],STDIN_FILENO);
 		close(fdsOut[1]);
 		close(fdsOut[0]);
-		// Get the path and environment variables for the CGI program
-		char **args = getPath(filename);
-		char **envp = getEnv(client.getRequest());
-		if (args == NULL || envp == NULL)
+		// Change the working directory to the directory of the CGI program
+		if (chdir(dirName(filename).c_str()) != 0)
 			exit(EXIT_FAILURE);
+		// Get the path and environment variables for the CGI program
+		std::string path = "./" + baseName(filename);
+		char **args = getPath(path);
+		//char **envp = getEnv(client.getRequest());
+		if (args == NULL /*|| envp == NULL*/)
+			exit(EXIT_FAILURE);
+		std::cerr << GREEN << args[0] << RESET << std::endl;
 		// Execute the CGI program
-		execve(args[0], args, envp);
+		execve(args[0], args, NULL);
+		std::cerr << GREEN << "execve failed" << RESET << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	// Parent process

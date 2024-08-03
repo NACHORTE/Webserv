@@ -25,3 +25,5 @@ std::string getExtension(const std::string & filename);
 bool isBinaryFile(const std::string & filename);
 std::string joinPath(const std::string & path1, const std::string & path2);
 std::string cleanPath(const std::string & path);
+std::string baseName(const std::string & path);
+std::string dirName(const std::string & path);

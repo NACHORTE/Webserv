@@ -1,9 +1,18 @@
 #!/bin/env python3
+from datetime import datetime
+
+# Obtener la fecha y hora actuales
+current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+# Escribir la fecha y hora actuales en el archivo /tmp/tmp.txt
+with open("./tmp.txt", "a") as file:
+    file.write(f"{current_time}\n")
 import sys
 RED = "\033[31m"
 RESET = "\033[0m"
 print(f"{RED}############EMPTY CGI ################{RESET}", file=sys.stderr)
 
+    
 # Definir el contenido HTML de la página con un contador
 html_content = """<!DOCTYPE html>
 <html lang="es">
@@ -61,3 +70,4 @@ html_content = """<!DOCTYPE html>
 # Escribir el contenido HTML en stdout
 print("Content-Type: text/html\r\n\r\n", end="")
 print(html_content)
+

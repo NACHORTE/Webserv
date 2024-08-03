@@ -585,3 +585,19 @@ const std::set<std::string> & getAllowedHttpMethods(void)
 
 	return methods;
 }
+
+std::string baseName(const std::string & path)
+{
+	size_t pos = path.find_last_of('/');
+	if (pos == std::string::npos)
+		return path;
+	return path.substr(pos + 1);
+}
+
+std::string dirName(const std::string & path)
+{
+	size_t pos = path.find_last_of('/');
+	if (pos == std::string::npos)
+		return "";
+	return path.substr(0, pos);
+}
