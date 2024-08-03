@@ -171,13 +171,9 @@ void CGI::generateResponse(CgiClient &cgiClient, const Server &server)
 		return;
 	}
 	endOfHeader += 4;
-	std::string header = cgiClient._inputBuffer.substr(0, endOfHeader);
-	std::string body = cgiClient._inputBuffer.substr(endOfHeader);
-	std::cout << CYAN << cgiClient._inputBuffer << RESET << std::endl;
-	std::cout << GREEN << header << RESET << std::endl;
-	std::cout << YELLOW << body << RESET << std::endl;
 
 	// Parse the header
+	std::string header = cgiClient._inputBuffer.substr(0, endOfHeader);
 	response.addData(header);
 	// If there is a Status header, set the status code and phrase and remove the header
 	std::vector<std::string> statusHeader = response.getHeader("Status");
@@ -193,6 +189,7 @@ void CGI::generateResponse(CgiClient &cgiClient, const Server &server)
 	}
 
 	// Add the body to the response
+	std::string body = cgiClient._inputBuffer.substr(endOfHeader);
 	std::vector<std::string> contentLength = response.getHeader("Content-Length");
 	if (contentLength.size() == 0)
 		response.setHeader("Content-Length", intToString(body.size()));

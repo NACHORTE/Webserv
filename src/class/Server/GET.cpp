@@ -36,7 +36,7 @@ HttpResponse getAutoIndex(const std::string & path, const Location & loc, const 
 	ret.setBody("text/html",body);
 	return ret;
 }
-#include "colors.h" //XXX
+
 void  Server::GET(Client & client, const Location & loc)
 {
 	HttpResponse ret;

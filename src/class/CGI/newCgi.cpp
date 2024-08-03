@@ -5,6 +5,7 @@
 #include "unistd.h"
 #include "stdlib.h"
 #include <fcntl.h>
+#include "colors.h" // XXX
 
 static char **getPath(const std::string & filename)
 {
@@ -73,16 +74,17 @@ void CGI::newCgi(Client &client, const std::string & filename, const Server& ser
     for (size_t i = 0; i < _clients.size(); ++i)
 	{
         if (_clients[i]._client == &client)
+		{
+			std::cout << RED << "Client is already waiting for a CGI program to finish" << RESET << std::endl; //XXX
             return;
+		}
 	}
 
 	// Check if the file exists and can be executed
-	std::ifstream file(filename.c_str());
-	if (!file.good())
+	if (access(filename.c_str(), F_OK) != 0)
 		return (void)client.setResponse(server.errorResponse(404, "not_found", "file not found"));
 	if (access(filename.c_str(), X_OK) != 0)
 		return (void)client.setResponse(server.errorResponse(403, "forbidden", "file not executable"));
-	file.close();
 
 	// Create a pipe to communicate with the CGI program
 	int fdsIn[2], fdsOut[2];
@@ -100,6 +102,7 @@ void CGI::newCgi(Client &client, const std::string & filename, const Server& ser
 		return (void)client.setResponse(server.errorResponse(500, "internal_server_error", "fork failed"));
 	}
 	// Child process
+
 	if (pid == 0)
 	{
 		// Redirect stdout of the fork program to the pipe
