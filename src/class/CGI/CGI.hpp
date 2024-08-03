@@ -55,19 +55,18 @@ class CGI
             int _fdOut; // fdOut = pipe to write to fork
             int _fdIn; // fdIn = pipe to read from fork
             bool _isDone;
-			bool _readReady;
+			bool _somethingToRead;
 		};
 	// Atributes
 
-        // FdIn = pipe to read from fork
-		std::vector<struct pollfd> _pollfdIn;
-        // FdOut = pipe to write to fork
-        std::vector<struct pollfd> _pollfdOut;
+		// Even indexes are read fds, odd indexes are write fds
+		std::vector<struct pollfd> _pollfd;
         // Clients waiting for a CGI program to finish
 		std::vector<CgiClient> _clients;
 
 	// Private member functions
-
+		
+		void generateResponse(CgiClient &client, const Server &server);
 	// Friends <3
 		friend std::ostream &operator<<(std::ostream &os, const CGI &obj);
 };

@@ -36,7 +36,7 @@ HttpResponse getAutoIndex(const std::string & path, const Location & loc, const 
 	ret.setBody("text/html",body);
 	return ret;
 }
-
+#include "colors.h" //XXX
 void  Server::GET(Client & client, const Location & loc)
 {
 	HttpResponse ret;
@@ -54,6 +54,8 @@ void  Server::GET(Client & client, const Location & loc)
 	{
 		ret.setStatus(200);
 		ret.setBodyFromFile(filename);
+		ret.responseReady(true);
+		client.setResponse(ret);
 	}
 	catch (std::exception & e)
 	{	

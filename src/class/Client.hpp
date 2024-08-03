@@ -20,8 +20,10 @@ class Client
 		std::string getIP() const;
 		int getPort() const;
 		std::string getHost(void) const;
-		std::string getResponse() const;
-		const HttpRequest & getRequest(void) const;
+		HttpResponse & getResponse();
+		const HttpResponse & getResponseConst() const;
+		HttpRequest & getRequest(void);
+		const HttpRequest & getRequestConst(void) const;
 		size_t getRequestCount(void) const;
 
 		void error(bool error);

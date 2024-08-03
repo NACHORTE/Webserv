@@ -218,20 +218,10 @@ int Listener::readData(int fd, Client &client)
 
 	return 0;
 }
-
+#include "colors.h"
 int Listener::sendData(int fd, Client &client)
 {
-	if (client.error())
-	{
-		client.setResponse(errorResponse(client, 500, "Internal_serv_error", "Error generating response"));
-		return 1;
-	}
-	if (!client.responseReady())
-	{
-		std::cout << "[Listener::sendData] No response ready" << std::endl; // NOTE msg
-		return 0;
-	}
-	std::string response = client.getResponse();
+	std::string response = client.getResponse().to_string();
 
 	// Send the data to the client
 	int bytesSent = write(fd, response.c_str(), response.size());
@@ -274,12 +264,6 @@ int Listener::closeConnection(int fd)
 	if (clientIndex == 0)
 	{
 		std::cout << "[Listener::closeConnection] Can't close client 0 (listener socket)" << std::endl;
-		return 1;
-	}
-	// if the client is not found, return 1
-	if (clientIndex == _pollfds.size())
-	{
-		std::cout << "[Listener::closeConnection] Client not found" << std::endl; // NOTE msg
 		return 1;
 	}
 	// Get the client from the list of clients

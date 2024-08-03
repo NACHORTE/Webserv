@@ -54,14 +54,28 @@ std::string Client::getHost(void) const
 	return (header[0]);
 }
 
-std::string Client::getResponse() const
+HttpResponse & Client::getResponse()
 {
 	if (_requests.empty())
-		return ("");
-	return (_requests.rbegin()->second.to_string());
+		throw std::runtime_error("No response available");
+	return (_requests.rbegin()->second);
 }
 
-const HttpRequest &Client::getRequest(void) const
+const HttpResponse & Client::getResponseConst() const
+{
+	if (_requests.empty())
+		throw std::runtime_error("No response available");
+	return (_requests.rbegin()->second);
+}
+
+HttpRequest &Client::getRequest(void)
+{
+	if (_requests.empty())
+		throw std::runtime_error("No request available");
+	return (_requests.rbegin()->first);
+}
+
+const HttpRequest &Client::getRequestConst(void) const
 {
 	if (_requests.empty())
 		throw std::runtime_error("No request available");

@@ -6,6 +6,7 @@ CGI::CgiClient::CgiClient():
 {
     _outOffset = 0;
     _isDone = false;
+	_inputBuffer = "HTTP/1.1 200 OK\r\n";
 }
 
 CGI::CgiClient::CgiClient(Client &client, int pid, int fdOut, int fdIn):
@@ -14,6 +15,7 @@ CGI::CgiClient::CgiClient(Client &client, int pid, int fdOut, int fdIn):
     _isDone = false;
     _outOffset = 0;
     _outputBuffer = _client->getRequest().getBody();
+	_inputBuffer = "HTTP/1.1 200 OK\r\n";
 }
 
 CGI::CgiClient::CgiClient(const CgiClient &src)

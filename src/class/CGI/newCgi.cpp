@@ -131,9 +131,9 @@ void CGI::newCgi(Client &client, const std::string & filename, const Server& ser
     pollfd pollfdIn;
     pollfdIn.fd = fdsIn[0];
     pollfdIn.events = POLLIN | POLLHUP | POLLERR;
-    _pollfdIn.push_back(pollfdIn);
+    _pollfd.push_back(pollfdIn);
     pollfd pollfdOut;
     pollfdOut.fd = fdsOut[1];
     pollfdOut.events = POLLOUT | POLLHUP | POLLERR;
-    _pollfdOut.push_back(pollfdOut);
+    _pollfd.push_back(pollfdOut);
 }

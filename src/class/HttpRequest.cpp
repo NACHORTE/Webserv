@@ -1,7 +1,6 @@
 #include "HttpRequest.hpp"
 #include <sstream>
 #include "utils.hpp"
-#include "colors.h"
 
 /**
  * @brief Default Constructor for the HttpRequest class.
@@ -407,7 +406,7 @@ std::string HttpRequest::to_string() const
 
 	std::string ret;
 	if (_queryString.empty())
-		ret = _method + " " + _path + "HTTP/1.1\r\n";
+		ret = _method + " " + _path + " HTTP/1.1\r\n";
 	else
 		ret = _method + " " + _path + "?" + _queryString + "HTTP/1.1\r\n";
 
@@ -532,16 +531,16 @@ std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs)
 		o << rhs.to_string();
 		return o;
 	}
-	o << CYAN << "_method: " << RESET << rhs._method << std::endl;
-	o << CYAN << "_path: " << RESET << rhs._path << std::endl;
-	o << CYAN << "_queryString: " << RESET << rhs._queryString << std::endl;
-	o << CYAN << "_headers: " << RESET << rhs._headers.size() << std::endl;
+	o << "_method: " << rhs._method << std::endl;
+	o << "_path: " << rhs._path << std::endl;
+	o << "_queryString: " << rhs._queryString << std::endl;
+	o << "_headers: " << rhs._headers.size() << std::endl;
 	for (size_t i = 0; i < rhs._headers.size(); i++)
 		o << "\t" << rhs._headers[i].first << ": " << rhs._headers[i].second << std::endl;
-	o << CYAN << "_body: " << RESET << rhs._body << std::endl;
-	o << CYAN << "_inBuff: " << RESET << rhs._inBuff << std::endl;
-	o << CYAN << "_requestReady: " << RESET << rhs._requestReady << std::endl;
-	o << CYAN << "_headerReady: " << RESET << rhs._headerReady << std::endl;
-	o << CYAN << "_error: " << RESET << rhs._error << std::endl;
+	o << "_body: " << rhs._body << std::endl;
+	o << "_inBuff: " << rhs._inBuff << std::endl;
+	o << "_requestReady: " << rhs._requestReady << std::endl;
+	o << "_headerReady: " << rhs._headerReady << std::endl;
+	o << "_error: " << rhs._error << std::endl;
 	return o;
 }

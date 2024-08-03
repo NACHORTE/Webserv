@@ -5,8 +5,7 @@ RESET = "\033[0m"
 print(f"{RED}############EMPTY CGI ################{RESET}", file=sys.stderr)
 
 # Definir el contenido HTML de la página
-html_content = """
-<!DOCTYPE html>
+html_content = """Content-Type: text/html\r\n\r\n<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
