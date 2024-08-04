@@ -82,6 +82,9 @@ static char **getEnv(HttpRequest req)
 
 void CGI::newCgi(Client &client, const std::string & filename, const Server& server)
 {
+	// Can't execute another webserv
+	if (baseName(filename) == "webserv")
+		return (void)client.setResponse(server.errorResponse(403, "forbidden", "cannot execute another webserv"));
 	// Check if the client is already waiting for a CGI program to finish
 	for (size_t i = 0; i < _clients.size(); ++i)
 		if (_clients[i]._client == &client)

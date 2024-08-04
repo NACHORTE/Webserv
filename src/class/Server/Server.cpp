@@ -237,7 +237,6 @@ void Server::loop()
 			const HttpRequest &req = client.getRequest();
 			const Location * loc = _locations[req.getPath()];
 			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " ("<< req.getMethod()<< " " << req.getPath() << ")" << std::endl; //XXX
-
 			// Check if it's an allowed method
 			if (_methodsMap.count(req.getMethod()) == 0)
 				client.setResponse(errorResponse(501, "Not implemented", "Method " + req.getMethod() + " is not allowed for this server"));
@@ -248,7 +247,7 @@ void Server::loop()
 			else if (loc->isAllowedMethod(req.getMethod()) == false)
 				client.setResponse(errorResponse(405, "Method Not Allowed", "Method " + req.getMethod() + " is not allowed for this location"));
 			// If the location has a redirection, return it
-			if (loc->hasReturnValue())
+			else if (loc->hasReturnValue())
 				client.setResponse(loc->getReturnResponse());
 			else
 				(this->*_methodsMap[req.getMethod()])(client, *loc);
