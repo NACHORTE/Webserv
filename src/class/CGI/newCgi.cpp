@@ -6,6 +6,19 @@
 #include "stdlib.h"
 #include <fcntl.h>
 
+static std::string envVarFormat(const std::string & str)
+{
+	std::string output = str;
+	for (size_t i = 0; i < output.size(); ++i)
+	{
+		if (output[i] >= 'a' && output[i] <= 'z')
+			output[i] -= 32;
+		else if (output[i] == '-')
+			output[i] = '_';
+	}
+	return output;
+}
+
 static char **getPath(const std::string & filename)
 {
 	char **output = new char*[2];
@@ -36,7 +49,7 @@ static char **getEnv(HttpRequest req)
 	std::list<std::string> headerList;
 	std::vector<std::pair<std::string,std::string> > headerVector = req.getHeaders();
 	for (size_t i = 0; i < headerVector.size(); ++i)
-		headerList.push_back(headerVector[i].first + "=" + headerVector[i].second);
+		headerList.push_back(envVarFormat(headerVector[i].first) + "=" + headerVector[i].second);
 
 	// Generate the environment variables
 	size_t outputSize = headerList.size() + 4; // 3 for the query string, method and uri, 1 for the NULL at the end
@@ -114,7 +127,7 @@ void CGI::newCgi(Client &client, const std::string & filename, const Server& ser
 		std::string path = "./" + baseName(filename);
 		char **args = getPath(path);
 		char **envp = getEnv(client.getRequest());
-		if (args == NULL /*|| envp == NULL*/)
+		if (args == NULL || envp == NULL)
 			exit(EXIT_FAILURE);
 		// Execute the CGI program
 		execve(args[0], args, envp);

@@ -1,7 +1,5 @@
 #include "CGI.hpp"
 #include <unistd.h>
-#include <iostream> // XXX
-#include "colors.h" // XXX
 
 CGI::CgiClient::CgiClient():
     _client(NULL), _pid(-1), _fdOut(-1), _fdIn(-1)

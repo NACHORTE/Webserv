@@ -19,6 +19,7 @@
 !.gitignore
 !config/**/*
 !www/**/*
+www/upload/*
 !YoupiBanane/**/*
 !ubuntu_cgi_tester
 !ubuntu_tester

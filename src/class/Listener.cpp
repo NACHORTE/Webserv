@@ -93,8 +93,14 @@ void Listener::loop()
 		for (size_t i = 0; i < _clients.size(); ++i , ++it)
 		{
 			// If the server is ready to read, accept the connection
+			// Check if the file descriptor has been closed
 			if (_pollfds[i].revents & POLLIN && _pollfds[i].fd == _sockfd)
 				acceptConnection();
+			else if (_pollfds[i].revents & (POLLHUP | POLLERR))
+			{
+				closeConnection(_pollfds[i--].fd);
+				--it;
+			}
 			// If the client is ready to read, read the data
 			else if (_pollfds[i].revents & POLLIN)
 			{
@@ -108,12 +114,6 @@ void Listener::loop()
 				// if sendData returns 1, the client is closed and the index is decremented
 				if(sendData(_pollfds[i].fd, *it))
 					(--i , --it);
-			}
-			// Check if the file descriptor has been closed
-			else if (_pollfds[i].revents & (POLLHUP | POLLERR))
-			{
-				closeConnection(_pollfds[i--].fd);
-				--it;
 			}
 		}
 	}
@@ -218,7 +218,7 @@ int Listener::readData(int fd, Client &client)
 
 	return 0;
 }
-#include "colors.h"
+
 int Listener::sendData(int fd, Client &client)
 {
 	std::string response = client.getResponse().to_string();

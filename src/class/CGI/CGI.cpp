@@ -5,6 +5,7 @@
 #include "unistd.h"
 #include "sys/wait.h"
 #include "utils.hpp"
+#include "colors.h" //XXX
 
 CGI::CGI(void)
 {}
@@ -72,6 +73,7 @@ void CGI::closeCgi(size_t index)
     _pollfd.erase(_pollfd.begin() + index * 2);
 }
 
+#include <iomanip>
 void CGI::loop(const Server &server)
 {
 	// Check if the CGI programs have finished and reset _somethingToRead flag
