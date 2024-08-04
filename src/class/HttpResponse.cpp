@@ -507,15 +507,15 @@ std::ostream & operator<<(std::ostream & o, const HttpResponse& rhs)
 		o << rhs.to_string();
 		return o;
 	}
-	o << CYAN << "_statusCode: " << RESET << rhs._statusCode << std::endl;
-	o << CYAN << "_statusPhrase: " << RESET << rhs._statusPhrase << std::endl;
-	o << CYAN << "_headers: " << RESET << rhs._headers.size() << std::endl;
+	o << "_statusCode: " << rhs._statusCode << std::endl;
+	o << "_statusPhrase: " << rhs._statusPhrase << std::endl;
+	o << "_headers: " << rhs._headers.size() << std::endl;
 	for (size_t i = 0; i < rhs._headers.size(); i++)
 		o << "\t" << rhs._headers[i].first << ": " << rhs._headers[i].second << std::endl;
-	o << CYAN << "_body: " << RESET << rhs._body << std::endl;
-	o << CYAN << "_inBuff: " << RESET << rhs._inBuff << std::endl;
-	o << CYAN << "_responseReady: " << RESET << rhs._responseReady << std::endl;
-	o << CYAN << "_headerReady: " << RESET << rhs._headerReady << std::endl;
-	o << CYAN << "_error: " << RESET << rhs._error << std::endl;
+	o << "_body (" << rhs._body.size() << "): " << rhs._body << std::endl;
+	o << "_inBuff: " << rhs._inBuff << std::endl;
+	o << "_responseReady: " << rhs._responseReady << std::endl;
+	o << "_headerReady: " << rhs._headerReady << std::endl;
+	o << "_error: " << rhs._error << std::endl;
 	return o;
 }

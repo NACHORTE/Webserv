@@ -189,7 +189,7 @@ const LocationContainer & Server::getLocationContainer(void) const
 {
 	return (_locations);
 }
-
+#include <colors.h>
 HttpResponse Server::errorResponse(int error, const std::string & phrase, const std::string & msg) const
 {
 	// If there is no error page for the error, return the default error page
@@ -203,7 +203,8 @@ HttpResponse Server::errorResponse(int error, const std::string & phrase, const 
 		try
 		{
 			HttpResponse response;
-			std::string path = joinPath(_root,*it);
+			std::string path = *it;
+			std::cout << GREEN << "Trying to open error page " << path << RESET << std::endl; //XXX
 			response.setStatus(error);
 			response.setBodyFromFile(path);
 			response.responseReady(true);

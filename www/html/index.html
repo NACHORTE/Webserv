@@ -35,10 +35,29 @@
     </form>
 
     <!-- Formulario para eliminar un recurso -->
-    <h2>Eliminar Recurso</h2>
-    <form action="" method="post">
-        <input type="text" name="deletePath" placeholder="Ingrese la ruta a eliminar" required>
-        <input type="submit" value="Eliminar Recurso">
-    </form>
+	<form id="deleteForm">
+		<input type="text" name="deletePath" id="deletePath" placeholder="Ingrese la ruta a eliminar" required>
+		<input type="submit" value="Eliminar Recurso">
+	</form>
+	
+	<script>
+	document.getElementById('deleteForm').addEventListener('submit', function(event) {
+		event.preventDefault(); // Prevenir el envío normal del formulario
+	
+		const deletePath = document.getElementById('deletePath').value;
+	
+		fetch(deletePath, {
+			method: 'DELETE',
+		}).then(response => {
+			if (response.ok) {
+				alert('Recurso eliminado exitosamente.');
+			} else {
+				alert('Error al eliminar el recurso.');
+			}
+		}).catch(error => {
+			alert('Error al eliminar el recurso: ' + error.message);
+		});
+	});
+	</script>
 </body>
 </html>

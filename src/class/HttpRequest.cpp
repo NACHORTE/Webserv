@@ -537,7 +537,7 @@ std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs)
 	o << "_headers: " << rhs._headers.size() << std::endl;
 	for (size_t i = 0; i < rhs._headers.size(); i++)
 		o << "\t" << rhs._headers[i].first << ": " << rhs._headers[i].second << std::endl;
-	o << "_body: " << rhs._body << std::endl;
+	o << "_body (" << rhs._body.size() << "): " << rhs._body << std::endl;
 	o << "_inBuff: " << rhs._inBuff << std::endl;
 	o << "_requestReady: " << rhs._requestReady << std::endl;
 	o << "_headerReady: " << rhs._headerReady << std::endl;
