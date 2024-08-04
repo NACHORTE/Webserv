@@ -5,7 +5,8 @@
 
 void Server::DELETE(Client & client, const Location & loc)
 {
-
+	if (loc.isDir(client.getRequest().getPath()))
+		return (void)client.setResponse(errorResponse(403, "Forbidden", "Cannot delete a directory"));	
 	std::string filename = loc.getFilename(client.getRequest().getPath());
 
 	// If a file was not found, return 404
