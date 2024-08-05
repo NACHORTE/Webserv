@@ -3,6 +3,11 @@
 #include <set>
 #include <map>
 
+#define DEBUG(x) \
+    do { std::cout << "[" << getTime() << "] " << x << std::endl; } while (0)
+
+std::string getTime();
+
 std::string decodeURL(std::string str);
 std::string extToMime(const std::string & filename);
 std::string mimeToExt(const std::string & mime);

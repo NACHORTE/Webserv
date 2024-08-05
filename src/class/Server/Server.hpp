@@ -62,7 +62,7 @@ class Server
 		// Maximum body size that the server will accept
 		size_t _maxBodySize;
 		// Default file to serve when the request is for a directory
-    	std::string _index; // TODO : multiple index files
+    	std::string _index;
 		// Root directory for the server
     	std::string _root;
 		// List of server names that the server will respond to (host header in the request must match one of these names)

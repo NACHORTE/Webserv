@@ -5,7 +5,6 @@
 #include "unistd.h"
 #include "sys/wait.h"
 #include "utils.hpp"
-#include "colors.h" //XXX
 
 CGI::CGI(void)
 {}

@@ -1,6 +1,7 @@
 #include "HttpRequest.hpp"
 #include <sstream>
 #include "utils.hpp"
+#include "defines.h"
 
 /**
  * @brief Default Constructor for the HttpRequest class.
@@ -320,9 +321,12 @@ long long int HttpRequest::addData(const std::string & data)
 	// If the header has not been found yet, search for it
 	if (not _headerReady)
 	{
+
 		// Find the end of the header
 		size_t pos = _inBuff.find("\r\n\r\n");
 		// If the end of the header is not found, return the number of bytes read
+		if (_inBuff.size() > MAX_HEADER_SIZE)
+			return (this->clear(), _error=true, -1);
 		if (pos == std::string::npos)
 			return data.size();
 		// If the end of the header is found, parse it

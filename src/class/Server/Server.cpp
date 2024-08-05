@@ -236,7 +236,6 @@ void Server::loop()
 		{
 			const HttpRequest &req = client.getRequest();
 			const Location * loc = _locations[req.getPath()];
-			std::cout << "Generating response for client " << client.getIP() << ":" << client.getPort() << " ("<< req.getMethod()<< " " << req.getPath() << ")" << std::endl; //XXX
 			// Check if it's an allowed method
 			if (_methodsMap.count(req.getMethod()) == 0)
 				client.setResponse(errorResponse(501, "Not implemented", "Method " + req.getMethod() + " is not allowed for this server"));

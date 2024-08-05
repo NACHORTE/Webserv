@@ -1,5 +1,4 @@
 #include "readConfig.hpp"
-#include <iostream> //XXX
 Server readServer(std::list<std::string>::iterator & it, const std::list<std::string>::iterator & end)
 {
 	static bool initialized = false;
