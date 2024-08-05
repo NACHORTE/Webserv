@@ -4,7 +4,6 @@
 #include <list>
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
-#include <ctime>
 
 class Client
 {
@@ -16,16 +15,20 @@ class Client
 
 	// Setters and getters
 		void setResponse(const HttpResponse & response);
+        void setResponse(const std::string & response);
 
 		std::string getIP() const;
 		int getPort() const;
 		std::string getHost(void) const;
-		std::string getResponse() const;
-		const HttpRequest & getRequest(void) const;
+		HttpResponse & getResponse();
+		const HttpResponse & getResponseConst() const;
+		HttpRequest & getRequest(void);
+		const HttpRequest & getRequestConst(void) const;
 		size_t getRequestCount(void) const;
 
-		int error(void) const;
-		void error(bool);
+		void error(bool error);
+		bool error(void) const;
+
 	// Member functions
 
 		void addData(const std::string & data);
@@ -33,7 +36,6 @@ class Client
 		bool responseReady(void) const;
 		bool timeout(void) const;
 		bool keepAlive(void) const;
-		// Deletes the last request and response from _requests
 		void popRequest(void);
 
 	// Operator overloads
@@ -45,10 +47,11 @@ class Client
 		std::string _IP;
 		int _port;
 
-		bool _error;
 		clock_t _lastEventTime;
 		// Queue of requests and responses (Most recent request is at the front of the list)
 		std::list<std::pair<HttpRequest, HttpResponse> > _requests;
+
+		bool _error;
 	// Private member functions
 
 	// Friends <3

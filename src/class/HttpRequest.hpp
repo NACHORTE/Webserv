@@ -7,69 +7,75 @@
  *	Represents an HTTP request
  *	Contains the following fields:
  *		- method: GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS, TRACE, PATCH
+ *		- query string: key=value&key=value...
  *		- path: /path/to/file
- *		- version: HTTP/1.1
  *		- headers: key-value pairs
  *		- body: body of the request
 */
 class HttpRequest {
 	public:
-		// constructors, destructor, copy constructor
+	// constructors, destructor, copy constructor
 
-		HttpRequest();	// default constructor sets all fields to empty
-		HttpRequest(const std::string& msg); // parse a string into an HttpRequest
-		HttpRequest(HttpRequest const & src); // copy constructor
-		~HttpRequest(); // destructor does nothing
+		HttpRequest();
+		HttpRequest(const std::string& request);
+		HttpRequest(HttpRequest const & src);
+		~HttpRequest();
 
-		// getters, setters
+	// getters, setters
 
-		void setMethod(const std::string& method); //TODO change name format to setMethod
+		void setMethod(const std::string& method);
+		const std::string & getMethod() const;
+
 		void setPath(const std::string& path);
-		void setVersion(const std::string& version);
+		const std::string & getPath() const;
+		
+		const std::string & getQueryString() const;
+
 		void setHeader(const std::string& key, const std::string& value);
 		void unsetHeader(const std::string& key);
-		void setBody(const std::string& body);
+		std::vector<std::string> getHeader(const std::string& key) const;
+		const std::vector<std::pair<std::string, std::string> > & getHeaders() const;
 
-		// Add data to the request buffer and return the number of bytes added
-		long long int addData(const std::string & data);
-
-		const std::string & getMethod() const;
-		const std::string & getPath() const;
-		const std::string & getVersion() const;
-		std::vector<std::string> getHeader(const std::string& key) const; // returns a vector of all headers with the given key
-		std::vector<std::pair<std::string, std::string> > getHeaders() const;
+		void setBody(const std::string& body, bool chunked = false);
 		const std::string & getBody() const;
 
-		// member functions
+		void requestReady(bool ready);
+		bool requestReady() const;
 
-		void parse(const std::string& msg); // parse a string into an HttpRequest
-		std::string to_string() const; // convert an HttpRequest to a string
-		void clear(); // clear all fields
-		bool empty() const; // check if all fields are empty
-		bool requestReady() const; // check if the request is complete
-		bool error() const; // check if the request is in an error state
+	// member functions
 
-		// operator overloads
+		long long int addData(const std::string & data);
+		std::string to_string() const;
+		void clear();
+		bool error() const;
+
+	// operator overloads
 
 		HttpRequest & operator=(HttpRequest const & rhs);
-		std::string operator()() const; // equivalent to to_string()
-		std::vector<std::string> operator[](const std::string& key) const; // equivalent to getHeader(key)
 
 	protected:
 	private:
 	// Member attributes
 
-		std::string _method;	// GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS, TRACE, PATCH
-		std::string _path;	// /path/to/file
-		std::string _version;	// HTTP/1.1
+		// HTTP Method (GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS, TRACE, PATCH)
+		std::string _method;
+		// Path to the file with no query string
+		std::string _path;
+		// Query string (key=value&key=value...)
+		std::string _queryString;
+		// Http headers (key-value pairs), can have multiple headers with the same key
 		std::vector<std::pair<std::string, std::string> > _headers;	// key-value pairs
-		std::string _body;	// body of the request
+		// Body of the request (can be empty) (Content-Length must be set in the headers)
+		std::string _body;
 	
+		// The request is complete so it can be processed
 		bool _requestReady;
+		// The header has been parsed (used on addData)
 		bool _headerReady;
+		// The request is in an error state
 		bool _error;
-
-		std::string _buffer;
+		// Buffer used while adding data to the request (used on addData)
+		std::string _inBuff;
 
 	// Private member functions
 
@@ -79,5 +85,4 @@ class HttpRequest {
 		friend std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs);
 };
 
-// prints the request using to_string and trimming the body if it is too long
 std::ostream & operator<<(std::ostream & o, HttpRequest const & rhs); 

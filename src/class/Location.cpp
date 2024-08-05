@@ -319,13 +319,13 @@ HttpResponse Location::getReturnResponse(void) const
 {
 	HttpResponse response;
 	if (_returnValue.first == -1)
-		return HttpResponse::error(500,"not_OK","Tried to redirect to a location with no return value");
+		return HttpResponse::errorResponse(500,"not_OK","Tried to redirect to a location with no return value");
 	response.setStatus(_returnValue.first);
 	if (_returnValue.first == 301 || _returnValue.first == 302)
 		response.setHeader("Location",_returnValue.second);
 	else
 		response.setBody("text/plain",_returnValue.second);
-	response.setReady(true);
+	response.responseReady(true);
 	return response;
 }
 
@@ -351,7 +351,7 @@ bool Location::operator==(const Location & rhs) const
 	return (operator==(rhs._URI) && _extension == rhs._extension);
 }
 
-bool Location::operator==(const std::string & rhs) const // NOTE used?
+bool Location::operator==(const std::string & rhs) const
 {
 	std::string path = rhs;
 	if (path.size() > 0 && path[0] != '/')
@@ -361,14 +361,16 @@ bool Location::operator==(const std::string & rhs) const // NOTE used?
 
 std::ostream &operator<<(std::ostream &os, const Location &obj)
 {
-	os << "URI: " << obj._URI;
-	os << " | index: " << obj._index;
-	os << " | root: " << obj._root;
-	os << " | alias: " << obj._alias;
-	os << " | allowedMethods: ";
-	for (std::set<std::string>::iterator i = obj._allowedMethods.begin(); i != obj._allowedMethods.end(); ++i)
-		os << *i << " ";
-	os << " | isCgi: " << obj._isCgi;
-	os << " | autoIndex: " << obj._autoIndex;
+	os << obj._URI;
+	os << ", index: " << obj._index;
+	os << ", root: " << obj._root;
+	os << ", allowedMethods: ";
+	if (obj._allowedMethods.empty())
+		os << "all";
+	else
+		for (std::set<std::string>::iterator i = obj._allowedMethods.begin(); i != obj._allowedMethods.end(); ++i)
+			os << *i << " ";
+	os << ", isCgi: " << obj._isCgi;
+	os << ", autoIndex: " << obj._autoIndex;
 	return (os);
 }

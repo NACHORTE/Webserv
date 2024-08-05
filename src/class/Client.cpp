@@ -2,10 +2,10 @@
 #include "defines.h"
 #include "utils.hpp"
 #include "colors.h"
+#include <ctime>
 
 Client::Client(std::string IP, int port)
 {
-	_error = false;
 	_lastEventTime = clock();
 	_IP = IP;
 	_port = port;
@@ -24,6 +24,13 @@ void Client::setResponse(const HttpResponse & response)
 	if (_requests.empty())
 		_requests.push_front(std::pair<HttpRequest, HttpResponse>());
 	_requests.rbegin()->second = response;
+}
+
+void Client::setResponse(const std::string & response)
+{
+    if (_requests.empty())
+        _requests.push_front(std::pair<HttpRequest, HttpResponse>());
+    _requests.rbegin()->second.addData(response);
 }
 
 std::string Client::getIP() const
@@ -47,14 +54,28 @@ std::string Client::getHost(void) const
 	return (header[0]);
 }
 
-std::string Client::getResponse() const
+HttpResponse & Client::getResponse()
 {
 	if (_requests.empty())
-		return ("");
-	return (_requests.rbegin()->second());
+		throw std::runtime_error("No response available");
+	return (_requests.rbegin()->second);
 }
 
-const HttpRequest &Client::getRequest(void) const//TODO hacer esto de otra forma
+const HttpResponse & Client::getResponseConst() const
+{
+	if (_requests.empty())
+		throw std::runtime_error("No response available");
+	return (_requests.rbegin()->second);
+}
+
+HttpRequest &Client::getRequest(void)
+{
+	if (_requests.empty())
+		throw std::runtime_error("No request available");
+	return (_requests.rbegin()->first);
+}
+
+const HttpRequest &Client::getRequestConst(void) const
 {
 	if (_requests.empty())
 		throw std::runtime_error("No request available");
@@ -66,56 +87,41 @@ size_t Client::getRequestCount(void) const
 	return (_requests.size());
 }
 
-int Client::error(void) const
-{
-	return (_error);
-}
-
-void Client::error(bool error)
-{
-	_error = error;
-}
-
 void Client::addData(const std::string & data)
 {
-	// Update the last event time
-	_lastEventTime = clock();
-
 	size_t bytesRead = 0;
 	while (bytesRead < data.size())
 	{
 		if (_requests.empty() || _requests.begin()->first.requestReady())
 			_requests.push_front(std::pair<HttpRequest, HttpResponse>());
 		long long int read = _requests.begin()->first.addData(data.substr(bytesRead));
-		if (read == -1)
-		{
-			_error = true;
+		if (read <= 0)
 			return;
-		}
-		if (read == 0)
-			break;
 		bytesRead += read;
 	}
+
+	// Update the last event time
+	_lastEventTime = clock();
 }
 
 bool Client::requestReady() const
 {
 	if (_requests.empty())
 		return (false);
-	return (_requests.begin()->first.requestReady());
+	return (_requests.rbegin()->first.requestReady());
 }
 
 bool Client::responseReady() const
 {
 	if (_requests.empty())
 		return (false);
-	return (_requests.begin()->second.responseReady());
+	return (_requests.rbegin()->second.responseReady());
 }
 
 bool Client::timeout() const
 {
 	// Calculate the time since the last event
-	double seconds = (double)(clock() - _lastEventTime) / CLOCKS_PER_SEC; //TODO no está marcando bien el tiempo
+	double seconds = (double)(clock() - _lastEventTime) / CLOCKS_PER_SEC;
 	// Return true if the time since the last event is greater than the timeout
 	return (seconds > TIMEOUT);
 }
@@ -124,7 +130,7 @@ bool Client::keepAlive() const
 {
 	if (_requests.empty())
 		return (false);
-	std::vector<std::string> header = _requests.begin()->first.getHeader("Connection");
+	std::vector<std::string> header = _requests.rbegin()->first.getHeader("Connection");
 	if (header.empty())
 		return (false);
 	return (header[0] == "keep-alive");
@@ -138,13 +144,24 @@ void Client::popRequest()
 		_requests.pop_back();
 }
 
+void Client::error(bool error)
+{
+	_error = error;
+}
+
+bool Client::error() const
+{
+	if (_requests.empty())
+		return (false);
+	return (_requests.rbegin()->first.error() or _requests.rbegin()->second.error() or _error);
+}
+
 Client &Client::operator=(const Client &rhs)
 {
 	if (this != &rhs)
 	{
 		_IP = rhs._IP;
 		_port = rhs._port;
-		_error = rhs._error;
 		_lastEventTime = rhs._lastEventTime;
 		_requests = rhs._requests;
 	}
@@ -153,7 +170,6 @@ Client &Client::operator=(const Client &rhs)
 
 std::ostream &operator<<(std::ostream &os, const Client &obj)
 {
-	std::cout << CYAN << "_Error: "<< RESET << obj._error << std::endl;
 	std::cout << CYAN << "_lastEventTime: "<< RESET << obj._lastEventTime << std::endl;
 	std::cout << CYAN << "_requests: "<< RESET << obj._requests.size() << std::endl;
 

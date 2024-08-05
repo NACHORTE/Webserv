@@ -3,63 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>webserv</title>
+    <title>El Nacio que no trabaja</title>
     <link rel="stylesheet" href="/css/index.css">
     <link rel="icon" href="/img/favicon.ico" type="image/x-icon">
 </head>
 <body>
     <h1>El Nacio que no trabaja</h1>
     <img src="/img/goku.png" alt="Sample Image">
-    
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" accept="image/*">
-        <input type="text" name="data1">
-        <input type="submit">
+	
+	<form action="/google.com" method="get">
+		<button type="submit">Nos vamos a Google</button>
+	</form>
+
+	<form action="/titer" method="get">
+		<button type="submit">Nos vamos a Titer</button>
+	</form>
+    <!-- Formulario para subir fotos -->
+    <h2>Subir Fotos</h2>
+    <form action="/uploadfile" method="post" enctype="multipart/form-data">
+        <input type="file" name="files" accept="image/*" multiple required>
+        <input type="submit" value="Subir Fotos">
     </form>
 
-    <form action="/google.com" method="get">
-        <button type="submit">Nos vamos a Google</button>
+    <!-- Formulario para enviar datos -->
+    <h2>Enviar Datos</h2>
+    <form action="/formulario" method="post">
+        <input type="text" name="data1" placeholder="Ingrese el primer dato" required>
+        <input type="text" name="data2" placeholder="Ingrese el segundo dato" required>
+        <input type="submit" value="Enviar Datos">
     </form>
 
-    <form action="/titer" method="get">
-        <button type="submit">Nos vamos a Titer</button>
-    </form>
-
-    <form id="postForm" method="post">
-        <input type="text" id="postPath" placeholder="Enter path" required>
-        <button type="button" onclick="submitPostForm()">Enviar POST</button>
-    </form>
-
-    <!-- New form for DELETE -->
-    <form id="deleteForm" method="post">
-        <input type="text" id="deleteFileName" placeholder="Enter file name to delete" required>
-        <button type="button" onclick="submitDeleteForm()">Eliminar Archivo</button>
-    </form>
-
-    <script>
-        function submitPostForm() {
-            const form = document.getElementById('postForm');
-            const path = document.getElementById('postPath').value;
-            form.action = path;
-            form.submit();
-        }
-
-        function submitDeleteForm() {
-            const fileName = document.getElementById('deleteFileName').value;
-            const url = `/upload/${fileName}`;
-            fetch(url, {
-                method: 'DELETE'
-            }).then(response => {
-                if (response.ok) {
-                    alert('Archivo eliminado exitosamente.');
-                } else {
-                    alert('Error al eliminar el archivo.');
-                }
-            }).catch(error => {
-                console.error('Error:', error);
-                alert('Error al eliminar el archivo.');
-            });
-        }
-    </script>
+    <!-- Formulario para eliminar un recurso -->
+	<form id="deleteForm">
+		<input type="text" name="deletePath" id="deletePath" placeholder="Ingrese la ruta a eliminar" required>
+		<input type="submit" value="Eliminar Recurso">
+	</form>
+	
+	<script>
+	document.getElementById('deleteForm').addEventListener('submit', function(event) {
+		event.preventDefault(); // Prevenir el envío normal del formulario
+	
+		const deletePath = document.getElementById('deletePath').value;
+	
+		fetch(deletePath, {
+			method: 'DELETE',
+		}).then(response => {
+			if (response.ok) {
+				alert('Recurso eliminado exitosamente.');
+			} else {
+				alert('Error al eliminar el recurso.');
+			}
+		}).catch(error => {
+			alert('Error al eliminar el recurso: ' + error.message);
+		});
+	});
+	</script>
 </body>
 </html>

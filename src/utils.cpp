@@ -8,6 +8,8 @@
 #include <list>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <ctime>
+#include <iomanip>
 
 static std::map<std::string, std::string> _ext_mime_map;
 
@@ -31,6 +33,31 @@ static void initext_mime_map()
 	_ext_mime_map["mpeg"] = "video/mpeg";
 	_ext_mime_map["ico"] = "image/x-icon";
 	_ext_mime_map["bin"] = "application/octet-stream";
+}
+
+/**
+ * @brief Returns the current time as a string in the format "YYYY-MM-DD HH:MM:SS".
+ * 
+ * @return A string representing the current time.
+ * 
+ * @example
+ * std::string result = getTime();
+ * // Expected result: "2021-01-01 12:00:00"
+ */
+std::string getTime()
+{
+	std::time_t currTime = std::time(NULL);
+    std::tm* localTime = std::localtime(&currTime);
+
+    std::ostringstream stream;
+    stream << (localTime->tm_year + 1900) << "-"
+           << std::setw(2) << std::setfill('0') << (localTime->tm_mon + 1) << "-"
+           << std::setw(2) << std::setfill('0') << localTime->tm_mday << " "      
+           << std::setw(2) << std::setfill('0') << localTime->tm_hour << ":"      
+           << std::setw(2) << std::setfill('0') << localTime->tm_min << ":"       
+           << std::setw(2) << std::setfill('0') << localTime->tm_sec;             
+
+    return stream.str();
 }
 
 /**
@@ -584,4 +611,20 @@ const std::set<std::string> & getAllowedHttpMethods(void)
 	}
 
 	return methods;
+}
+
+std::string baseName(const std::string & path)
+{
+	size_t pos = path.find_last_of('/');
+	if (pos == std::string::npos)
+		return path;
+	return path.substr(pos + 1);
+}
+
+std::string dirName(const std::string & path)
+{
+	size_t pos = path.find_last_of('/');
+	if (pos == std::string::npos)
+		return "";
+	return path.substr(0, pos);
 }

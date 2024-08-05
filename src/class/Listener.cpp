@@ -93,33 +93,27 @@ void Listener::loop()
 		for (size_t i = 0; i < _clients.size(); ++i , ++it)
 		{
 			// If the server is ready to read, accept the connection
+			// Check if the file descriptor has been closed
 			if (_pollfds[i].revents & POLLIN && _pollfds[i].fd == _sockfd)
 				acceptConnection();
+			else if (_pollfds[i].revents & (POLLHUP | POLLERR))
+			{
+				closeConnection(_pollfds[i--].fd);
+				--it;
+			}
 			// If the client is ready to read, read the data
 			else if (_pollfds[i].revents & POLLIN)
 			{
 				// if readData returns 1, the client is closed and the index is decremented
 				if (readData(_pollfds[i].fd, *it))
-				{
-					--i;
-					--it;
-				}
+					(--i , --it);
 			}
 			// Check if the file descriptor is ready to write
 			else if (_pollfds[i].revents & POLLOUT && it->responseReady())
 			{
 				// if sendData returns 1, the client is closed and the index is decremented
 				if(sendData(_pollfds[i].fd, *it))
-				{
-					--i;
-					--it;
-				}
-			}
-			// Check if the file descriptor has been closed
-			else if (_pollfds[i].revents & (POLLHUP | POLLERR))
-			{
-				closeConnection(_pollfds[i--].fd);
-				--it;
+					(--i , --it);
 			}
 		}
 	}
@@ -131,7 +125,10 @@ void Listener::loop()
 		if (it->timeout() and it->responseReady())
 			closeConnection(_pollfds[i--].fd);
 		else if (it->timeout() and not it->responseReady())
+		{
+			DEBUG("Listener " << _port << ", Client " << it->getIP() << ":" << it->getPort() << " timed out");
 			it->setResponse(errorResponse(*it, 408, "Request Timeout", "Client timed out"));
+		}
 	}
 
 	// Loop through the servers and call their loop function
@@ -155,7 +152,10 @@ Listener &Listener::operator=(const Listener &src)
 		_port = src._port;
 		_sockfd = src._sockfd;
 		_serverList = src._serverList;
-		_serverMap = src._serverMap;
+		for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
+			for (std::set<std::string>::const_iterator it2 = it->getServerNames().begin();
+				it2 != it->getServerNames().end(); ++it2)
+				_serverMap[*it2] = &(*it);
 		_pollfds = src._pollfds;
 		_clients = src._clients;
 	}
@@ -170,19 +170,19 @@ int Listener::acceptConnection(void)
 	int newClientFd = accept(_sockfd, reinterpret_cast<sockaddr*>(&clientAddr), &clientAddrLen);
 	if (newClientFd < 0)
 	{
-		std::cout << "[Listener::acceptConnection] Error accepting connection" << std::endl; // NOTE msg
+		DEBUG("Listener " << _port << ", Error accepting connection");
 		return 1;
 	}
 
 	// Set the new client to non-blocking
 	if (fcntl(newClientFd, F_SETFL, O_NONBLOCK) < 0)
-		std::cout << "[Listener::acceptConnection] Error fcntl" << std::endl; // NOTE msg
+		DEBUG("Listener " << _port << ", Error fcntl");
 
     char clientIP[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(clientAddr.sin_addr), clientIP, INET_ADDRSTRLEN);
     int clientPort = ntohs(clientAddr.sin_port);
+    std::string clientIPAddress(clientIP);
 
-    std::string clientIPAddress(clientIP); // Convertir a std::string
 	// Add the new client to the list of clients
 	struct pollfd pfd;
 	pfd.fd = newClientFd;
@@ -190,7 +190,7 @@ int Listener::acceptConnection(void)
 	_pollfds.push_back(pfd);
 	_clients.push_back(Client(clientIP, clientPort));
 
-	std::cout << "Accepting connection from "<< _clients.back().getIP() << ":" << _clients.back().getPort() << std::endl; //NOTE msg
+	DEBUG("Listener " << _port << ", Client " << clientIPAddress << ":" << clientPort << ", connected");
 	return 0;
 }
 
@@ -202,13 +202,14 @@ int Listener::readData(int fd, Client &client)
 	// If there is an error, close the connection
 	if (bytesRead < 0)
 	{
+		DEBUG("Listener " << _port << ", Client " << client.getIP() << ":" << client.getPort() << ", Error reading data");
 		client.setResponse(errorResponse(client, 500, "Internal_serv_error", "Couldn't read data from client"));
 		return 0;
 	}
-	if (bytesRead == 0) // TODO fix POLLIN always true
+	if (bytesRead == 0)
 		return 0;
 
-	std::cout << "Reading " << bytesRead << " bytes from " << client.getIP() << ":" << client.getPort() << std::endl; //XXX
+	DEBUG("Listener " << _port << ", Client " << client.getIP() << ":" << client.getPort() << ", Read " << bytesRead << " bytes");
 	// Add the data to the client's buffer
 	client.addData(std::string(buffer,bytesRead));
 	// If there is an error, generate an error response that will be sent in the next sendData
@@ -221,34 +222,30 @@ int Listener::readData(int fd, Client &client)
 	// send the client to a server if there is an error so it generates a response
 	if (client.requestReady())
 		sendToServer(client);
-
 	return 0;
 }
 
 int Listener::sendData(int fd, Client &client)
 {
-	// Get the response chunk from the client
-	if (!client.responseReady())
-	{
-		std::cout << "[Listener::sendData] No response ready" << std::endl; // NOTE msg
-		return 0;
-	}
-	std::string response = client.getResponse();
+	std::string response = client.getResponse().to_string();
 
 	// Send the data to the client
 	int bytesSent = write(fd, response.c_str(), response.size());
-	if (bytesSent < 0)
+	if (bytesSent <= 0)
 	{
-		std::cout << "[Listener::sendData] Error sending data" << std::endl; // NOTE msg
+		DEBUG("Listener " << _port << ", Client " << client.getIP() << ":" << client.getPort() << ", Error sending data");
 		closeConnection(fd);
 		return 1;
 	}
-	std::cout << "Sending data to " << client.getIP() << ":" << client.getPort() << std::endl; // NOTE msg
+			DEBUG("Listener " << _port << ", Client " << client.getIP() << ":" << client.getPort()
+			<< ", ("<< client.getRequest().getMethod() << " " << client.getRequest().getPath()
+			<< "), (" << client.getResponse().getStatusCode()
+			<< ") Sent " << bytesSent << " bytes");
 
 	// If keep-alive is set pop the request and wait for another one
 	if (client.keepAlive() and not client.error())
 	{
-		std::cout << "Keeping connection alive with " << client.getIP() << ":" << client.getPort() << std::endl; // NOTE msg
+		DEBUG("Listener " << _port << ", Client " << client.getIP() << ":" << client.getPort() << ", not disconnecting Keep-alive set");
 		client.popRequest();
 	}
 	// Close the connection otherwise
@@ -275,21 +272,14 @@ int Listener::closeConnection(int fd)
 	// Don't allow to remove the listener
 	if (clientIndex == 0)
 	{
-		std::cout << "[Listener::closeConnection] Can't close client 0 (listener socket)" << std::endl;
-		return 1;
-	}
-	// if the client is not found, return 1
-	if (clientIndex == _pollfds.size())
-	{
-		std::cout << "[Listener::closeConnection] Client not found" << std::endl; // NOTE msg
+		DEBUG("Listener " << _port << ", Can't close the listener socket");
 		return 1;
 	}
 	// Get the client from the list of clients
 	std::list<Client>::iterator clientIt = _clients.begin();
 	std::advance(clientIt, clientIndex);
 
-
-	std::cout << "Closing connection " << clientIt->getIP() << ":"<< clientIt->getPort() << " to port "<< _port << std::endl;
+	DEBUG("Listener " << _port << ", Client " << clientIt->getIP() << ":" << clientIt->getPort() << ", disconnected");
 
 	// Delete the pointer to the client from the servers (try to delete from all just in case)
 	for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
@@ -307,17 +297,21 @@ int Listener::closeConnection(int fd)
 
 void Listener::sendToServer(Client &client)
 {
-	std::string hostname = client.getHost();
+	std::string hostname = client.getHost().substr(0, client.getHost().find(':'));
 	// If the server exists, add the client to the server
 	if (_serverMap.count(hostname) == 1)
 	{
-		std::cout << "Forwarding request from " << client.getIP() << ":" << client.getPort() << " to server " << client.getHost() << std::endl; //NOTE msg
+		DEBUG("Listener " << _port << ", Client " << client.getIP() << ":" << client.getPort()
+			<< ", ("<< client.getRequest().getMethod() << " " << client.getRequest().getPath()
+			<< ") forwarded to server " << hostname);
 		_serverMap[hostname]->addClient(client);
 	}
 	// Else send it to the default server
 	else
 	{
-		std::cout << "Forwarding request from " << client.getIP() << ":" << client.getPort() << " to default server" << std::endl; //NOTE msg
+		DEBUG("Listener " << _port << ", Client " << client.getIP() << ":" << client.getPort()
+			<< ", ("<< client.getRequest().getMethod() << " " << client.getRequest().getPath()
+			<< ") forwarded to default server");
 		_serverList.front().addClient(client);
 	}
 }
@@ -325,24 +319,31 @@ void Listener::sendToServer(Client &client)
 std::ostream &operator<<(std::ostream &os, const Listener &obj)
 {
 	os << "Listener (port " << obj._port << ") (socket " << obj._sockfd << ")" << std::endl;
-	os << "\tAmount of servers: " << obj._serverList.size() << std::endl;
+	os << "   Amount of servers: " << obj._serverList.size() << std::endl;
 	// print all servers hostnames
 	size_t i = 0;
 	for (std::list<Server>::const_iterator it = obj._serverList.begin(); it != obj._serverList.end(); ++it)
 	{
-		os << "\t\t" << ++i << ". ";
+		os << "\t" << ++i << ". SERVER_NAME:";
 		std::set<std::string> serverNames = it->getServerNames();
 		for (std::set<std::string>::const_iterator it2 = serverNames.begin();
 			it2 != serverNames.end(); ++it2)
 			os << " " << *it2;
 		os << std::endl;
-	}
-	os << "\tAmount of clients: " << obj._clients.size() - 1 << std::endl;
-	i = 1;
-	for (std::list<Client>::const_iterator it = ++obj._clients.begin(); it != obj._clients.end(); ++i, ++it)
-	{
-		os << "\t\tClient " << i << " (IP " << it->getIP() << ":" << it->getPort();
-		os << ") (fd " << obj._pollfds[i].fd << ") (request count " << it->getRequestCount() << (it->requestReady()?" ready":" not ready")<< ")" << std::endl;
+		const LocationContainer & cont = it->getLocationContainer();
+		os << "\t   " << "Amount of locations: " << cont.size() << std::endl;
+		for (size_t i = 0; i < cont.size(); ++i)
+		{
+			os << "\t\t"<< i+1 << ". " << cont[i]->getURI();
+			const std::set<std::string> methods =  cont[i]->getAllowedMethods();
+			os << " allowed methods:";
+			if (methods.empty())
+				os << " all";
+			else
+				for (std::set<std::string>::const_iterator it = methods.begin(); it != methods.end(); ++it)
+					os << " " <<*it;
+			os << std::endl;
+		}
 	}
 	return (os);
 }
