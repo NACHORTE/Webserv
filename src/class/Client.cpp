@@ -24,6 +24,8 @@ void Client::setResponse(const HttpResponse & response)
 	if (_requests.empty())
 		_requests.push_front(std::pair<HttpRequest, HttpResponse>());
 	_requests.rbegin()->second = response;
+	// Update the last event time
+	_lastEventTime = clock();
 }
 
 void Client::setResponse(const std::string & response)
@@ -31,6 +33,8 @@ void Client::setResponse(const std::string & response)
     if (_requests.empty())
         _requests.push_front(std::pair<HttpRequest, HttpResponse>());
     _requests.rbegin()->second.addData(response);
+	// Update the last event time
+	_lastEventTime = clock();
 }
 
 std::string Client::getIP() const
@@ -142,6 +146,9 @@ void Client::popRequest()
 
 	if (!_requests.empty())
 		_requests.pop_back();
+
+	// Update the last event time
+	_lastEventTime = clock();
 }
 
 void Client::error(bool error)
