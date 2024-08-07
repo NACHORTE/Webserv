@@ -5,6 +5,7 @@ import sys
 import io
 import cgi
 
+ruta_archivo = "../upload/"
 # Definir colores para la salida
 RED = "\033[91m"
 RESET = "\033[0m"
@@ -14,7 +15,15 @@ CYAN = "\033[96m"
 form = cgi.FieldStorage()
 filename = form["files"].filename
 filedata = form["files"].file.read()
-with open(f"../upload/{filename}", "wb") as f:
+
+# Obtén el directorio del archivo
+directorio = os.path.dirname(ruta_archivo)
+
+# Crea los directorios si no existen
+if not os.path.exists(directorio):
+    os.makedirs(directorio)
+
+with open(f"{ruta_archivo}/{filename}", "wb") as f:
 	f.write(filedata)
 print("Content-Type: text/html", end="\r\n")
 print(end="\r\n")
