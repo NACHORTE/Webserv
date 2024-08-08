@@ -24,7 +24,7 @@ static std::list<std::string> tokenize(const std::string &configFile)
 			begin = end + 1;
 			end = word.find_first_of(special_chars, begin);
 		}
-		if (word[end] == '#')
+		if (end != std::string::npos and word[end] == '#')
 		{
 			if (begin != end)
 				tokens.push_back(word.substr(begin,end - begin));
