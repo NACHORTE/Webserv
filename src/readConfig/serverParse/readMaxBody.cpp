@@ -6,7 +6,7 @@ void readMaxBody(std::list<std::string>::iterator & it, const std::list<std::str
 	if (it == end or *it == ";")
 		throw std::runtime_error("Error reading config file, missing value after client_read_max_body directive");
 	// if the last character is not a multiplier or a number, throw an error
-	if ((back(*it) < '0' or back(*it) > '9') and std::string("kmg").find(back(*it)) == std::string::npos)
+	if ((back(*it) < '0' or back(*it) > '9') and std::string("kmgKMG").find(back(*it)) == std::string::npos)
 		throw std::runtime_error("Error reading config file, invalid value for client_read_max_body: " + *it);
 	// check if the rest of the string is a number
 	for (size_t i = 0; i + 1< it->size(); ++i)
