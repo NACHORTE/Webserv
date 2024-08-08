@@ -31,7 +31,9 @@ HttpResponse getAutoIndex(const std::string & path, const Location & loc, const 
 		body += "Could not open directory";
 
 	for (std::set<std::string>::iterator it = files.begin(); it != files.end(); ++it)
-		body += "<a href=\"" + path + "/" + *it + "\">" + *it + "</a><br>";
+	{
+		body += "<a href=\"" + joinPath(path,*it) + "\">" + *it + "</a><br>";
+	}
 	body += "</pre><hr></body></html>";
 
 	HttpResponse ret;
