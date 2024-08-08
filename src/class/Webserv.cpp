@@ -31,6 +31,9 @@ void Webserv::init(const std::string &configFile)
 	// Read config file
 	std::vector<Server> servers = readConfig(configFile);
 
+	if (servers.empty())
+		throw std::runtime_error("Error: no servers found in config file");
+
 	// Add servers to listeners or create new listeners
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++)
 		addServer(*it);
