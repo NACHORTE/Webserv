@@ -15,11 +15,11 @@ void readMaxBody(std::list<std::string>::iterator & it, const std::list<std::str
 	
 	// Set the multiplier based on the last character
 	int multiplier = 1;
-	if (back(*it) == 'k')
+	if (back(*it) == 'k' or back(*it) == 'K')
 		multiplier = 1024;
-	else if (back(*it) == 'm')
+	else if (back(*it) == 'm' or back(*it) == 'M')
 		multiplier = 1024 * 1024;
-	else if (back(*it) == 'g')
+	else if (back(*it) == 'g' or back(*it) == 'G')
 		multiplier = 1024 * 1024 * 1024;
 
 	// Get the value
