@@ -127,6 +127,8 @@ void Listener::loop()
 		else if (it->timeout() and not it->responseReady())
 		{
 			DEBUG("Listener " << _port << ", Client " << it->getIP() << ":" << it->getPort() << " timed out");
+			if (it->getRequestCount() > 0)
+				it->getResponse().clear();
 			it->setResponse(errorResponse(*it, 408, "Request Timeout", "Client timed out"));
 		}
 	}
@@ -134,6 +136,7 @@ void Listener::loop()
 	// Loop through the servers and call their loop function
 	for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
 		it->loop();
+	
 }
 
 void Listener::closeFds()
@@ -352,7 +355,6 @@ HttpResponse Listener::errorResponse(Client & client, int errorCode, const std::
 {
 	// Set the error code in the client so when the response is sent, the client is closed
 	client.error(true);
-
 	// Get the host of the request if possible
 	if (client.getRequestCount() == 0)
 		return _serverList.front().errorResponse(errorCode, phrase, msg);

@@ -3,7 +3,7 @@
 #include <iostream>
 #include "dirent.h"
 #include "unistd.h"
-#include "colors.h"
+#include <sys/stat.h>
 #include <set>
 
 HttpResponse getAutoIndex(const std::string & path, const Location & loc, const Server & serv)
@@ -53,7 +53,7 @@ void  Server::GET(Client & client, const Location & loc)
 	if (filename.empty())
 		return (void)client.setResponse(errorResponse(404, "Not Found", "File not found"));
 
-    if (loc.isCgi())
+	if (loc.isCgi())
 		return (void)_activeCGI.newCgi(client, filename, *this);
 
 	// If the filename doesn't exist, check if it's a directory
@@ -62,9 +62,18 @@ void  Server::GET(Client & client, const Location & loc)
 		if (loc.autoIndex())
 			return (void)client.setResponse(getAutoIndex(path, loc, *this));
 		client.setResponse(errorResponse(403, "Forbidden", "Path is for a folder and location has no autoindex"));
-        return;
+		return;
 		
 	}
+
+	// Get file information using stat
+	struct stat fileInfo;
+	if (stat(filename.c_str(), &fileInfo) != 0)
+		return (void)client.setResponse(errorResponse(500, "Internal Server Error", "Could not get file information"));
+
+	// Check if the file is a regular file
+	if (!S_ISREG(fileInfo.st_mode))
+		return (void)client.setResponse(errorResponse(403, "Forbidden", "Path is not a regular file"));
 
 	try
 	{

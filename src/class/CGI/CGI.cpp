@@ -157,7 +157,7 @@ void CGI::loop(const Server &server)
 	}
 }
 
-#include "colors.h"
+
 
 void CGI::generateResponse(CgiClient &cgiClient, const Server &server)
 {

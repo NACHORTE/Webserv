@@ -1,7 +1,7 @@
 #include "Client.hpp"
 #include "defines.h"
 #include "utils.hpp"
-#include "colors.h"
+
 #include <ctime>
 
 Client::Client(std::string IP, int port)
@@ -177,24 +177,22 @@ Client &Client::operator=(const Client &rhs)
 
 std::ostream &operator<<(std::ostream &os, const Client &obj)
 {
-	std::cout << CYAN << "_lastEventTime: "<< RESET << obj._lastEventTime << std::endl;
-	std::cout << CYAN << "_requests: "<< RESET << obj._requests.size() << std::endl;
+	std::cout << "_lastEventTime: " << obj._lastEventTime << std::endl;
+	std::cout << "_requests: " << obj._requests.size() << std::endl;
 
 	std::list<std::pair<HttpRequest, HttpResponse> >::const_iterator it;
 	size_t i = 1;
 	for (it = obj._requests.begin(); it != obj._requests.end(); it++)
 	{
-		std::cout << (it->first.requestReady()?GREEN:RED);
-		std::cout << "Request " << i << (it->first.requestReady()?" ready":" not ready") << "\n[" << RESET;
+		std::cout << "Request " << i << (it->first.requestReady()?" ready":" not ready") << "\n[";
 		std::cout << it->first;
-		std::cout << (it->first.requestReady()?GREEN:RED)<< "]" << RESET << std::endl;
-		std::cout << (it->second.responseReady()?GREEN:RED);
-		std::cout << "Response " << i << (it->second.responseReady()?" ready":" not ready") << "\n[" << RESET;
+		std::cout << "]" << std::endl;
+		std::cout << "Response " << i << (it->second.responseReady()?" ready":" not ready") << "\n[";
 		std::cout << it->second;
-		std::cout << (it->second.responseReady()?GREEN:RED)<< "]" << RESET;
+		std::cout << "]";
 		++i;
 	}
 	if (obj._requests.size() == 0)
-		std::cout << RED << "No requests" << RESET;
+		std::cout << "No requests";
 	return (os);
 }

@@ -1,6 +1,5 @@
 #include "LocationContainer.hpp"
 #include "utils.hpp"
-#include "colors.h"
 
 LocationContainer::LocationContainer(void)
 {}
@@ -75,8 +74,6 @@ std::ostream &operator<<(std::ostream &os, const LocationContainer &obj)
 {
 	size_t i = 0;
 	for (std::vector<Location>::const_iterator it = obj._locations.begin(); it !=obj._locations.end(); ++it)
-	{
-		os << i++ << ". "<< BOLD << *it << RESET << "\n";
-	}
+		os << i++ << ". "<< *it << "\n";
 	return (os);
 }

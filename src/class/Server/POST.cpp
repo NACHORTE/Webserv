@@ -3,7 +3,6 @@
 #include <map>
 #include <vector>
 #include <fstream>
-#include "colors.h"
 
 void Server::POST(Client & client, const Location & loc)
 {

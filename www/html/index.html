@@ -18,12 +18,13 @@
 	<form action="/titer" method="get">
 		<button type="submit">Nos vamos a Titer</button>
 	</form>
-    <!-- Formulario para subir fotos -->
-    <h2>Subir Fotos</h2>
-    <form action="/uploadfile" method="post" enctype="multipart/form-data">
-        <input type="file" name="files" accept="image/*" multiple required>
-        <input type="submit" value="Subir Fotos">
-    </form>
+	<!-- Formulario para subir archivos -->
+	<h2>Subir Archivos</h2>
+	<form action="/uploadfile" method="post" enctype="multipart/form-data">
+		<input type="file" name="files" multiple required>
+		<input type="submit" value="Subir Archivos">
+	</form>
+
 
     <!-- Formulario para enviar datos -->
     <h2>Enviar Datos</h2>
