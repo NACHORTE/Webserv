@@ -136,7 +136,6 @@ void Listener::loop()
 	// Loop through the servers and call their loop function
 	for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
 		it->loop();
-	
 }
 
 void Listener::closeFds()
