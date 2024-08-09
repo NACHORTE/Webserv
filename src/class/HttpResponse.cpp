@@ -2,7 +2,6 @@
 #include <sstream>
 #include "utils.hpp"
 #include <fstream>
-#include "colors.h"
 
 /**
  * @brief Default constructor for HttpResponse objects.
@@ -348,6 +347,10 @@ void HttpResponse::clear()
 	_statusPhrase.clear();
 	_headers.clear();
 	_body.clear();
+	_responseReady = false;
+	_headerReady = false;
+	_error = false;
+	_inBuff.clear();
 }
 
 /**
