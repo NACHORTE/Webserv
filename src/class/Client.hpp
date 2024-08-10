@@ -9,11 +9,15 @@ class Client
 {
 	public:
 	// Constructors and destructor
-		Client(std::string IP = "", int port = 0);
+		Client(int fd = -1, std::string IP = "", int port = 0);
 		Client(const Client & src);
 		~Client();
 
 	// Setters and getters
+		
+		void setFd(const std::string & IP);
+		int getFd(void) const;
+
 		void setResponse(const HttpResponse & response);
         void setResponse(const std::string & response);
 
@@ -26,8 +30,10 @@ class Client
 		const HttpRequest & getRequestConst(void) const;
 		size_t getRequestCount(void) const;
 
-		void error(bool error);
 		bool error(void) const;
+
+		size_t sentBytes(void) const;
+		void addSentBytes(size_t bytes);
 
 	// Member functions
 
@@ -44,14 +50,16 @@ class Client
 	protected:
 	private:
 	// Member attributes
+
+		int _fd;
 		std::string _IP;
 		int _port;
 
 		clock_t _lastEventTime;
+		size_t _sentBytes;
 		// Queue of requests and responses (Most recent request is at the front of the list)
 		std::list<std::pair<HttpRequest, HttpResponse> > _requests;
 
-		bool _error;
 	// Private member functions
 
 	// Friends <3

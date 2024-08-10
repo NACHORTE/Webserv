@@ -21,7 +21,6 @@ CGI &CGI::operator=(const CGI &rhs)
 {
 	if (this != &rhs)
 	{
-        _pollfd = rhs._pollfd;
         _clients = rhs._clients;
 	}
 	return (*this);
@@ -29,9 +28,6 @@ CGI &CGI::operator=(const CGI &rhs)
 
 std::ostream &operator<<(std::ostream &os, const CGI &obj)
 {
-	os << "CGI: " << obj._pollfd.size() << " fds, " << obj._clients.size() << " clients" << std::endl;
-	for (size_t i = 0; i < obj._pollfd.size(); ++i)
-		os << "[" << i << "] "<<obj._pollfd[i].fd << std::endl;
 	for (size_t i = 0; i < obj._clients.size(); ++i)
 	{
 		os << "[" << i << "] fdin "<<obj._clients[i]._fdIn << std::endl;
@@ -43,37 +39,32 @@ std::ostream &operator<<(std::ostream &os, const CGI &obj)
 // Defined in newCgi.cpp
 //void CGI::newCgi(Client &client, const std::string &filename, const Server &server);
 
-void CGI::closeCgi(Client &client)
+void CGI::closeCgi(MyPoll &myPoll, Client &client)
 {    
     for (size_t i = 0; i < _clients.size(); ++i)
     {
         if (_clients[i]._client == &client)
         {
-            close(_clients[i]._fdIn);
-            close(_clients[i]._fdOut);
+            myPoll.removeFd(_clients[i]._fdIn);
+            myPoll.removeFd(_clients[i]._fdOut);
             kill(_clients[i]._pid, SIGKILL);
             _clients.erase(_clients.begin() + i);
-            _pollfd.erase(_pollfd.begin() + i * 2);
-            _pollfd.erase(_pollfd.begin() + i * 2);
             return;
         }
     }
 }
 
-void CGI::closeCgi(size_t index)
+void CGI::closeCgi(MyPoll &myPoll, size_t index)
 {
     if (index >= _clients.size())
         return;
-    close(_clients[index]._fdIn);
-    close(_clients[index]._fdOut);
+    myPoll.removeFd(_clients[index]._fdIn);
+    myPoll.removeFd(_clients[index]._fdOut);
     kill(_clients[index]._pid, SIGKILL);
     _clients.erase(_clients.begin() + index);
-    _pollfd.erase(_pollfd.begin() + index * 2);
-    _pollfd.erase(_pollfd.begin() + index * 2);
 }
 
-#include <iomanip>
-void CGI::loop(const Server &server)
+void CGI::loop(MyPoll &myPoll, const Server &server)
 {
 	// Check if the CGI programs have finished and reset _somethingToRead flag
     for (size_t i = 0; i < _clients.size(); ++i)
@@ -89,7 +80,7 @@ void CGI::loop(const Server &server)
         if (result == -1)
         {
             _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "waitpid failed"));
-            closeCgi(i--);
+            closeCgi(myPoll, i--);
         }
 		// If the CGI program has finished
         else if (result > 0)
@@ -99,7 +90,7 @@ void CGI::loop(const Server &server)
                 if (WEXITSTATUS(status) == EXIT_FAILURE)
                 {
                     _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "cgi exited with failure"));
-                    closeCgi(i--);
+                    closeCgi(myPoll, i--);
                 }
                 else
                     _clients[i]._isDone = true;
@@ -107,44 +98,45 @@ void CGI::loop(const Server &server)
             else if (WIFSIGNALED(status))
             {
                 _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "cgi terminated by signal"));
-                closeCgi(i--);
+                closeCgi(myPoll, i--);
             }
         }
     }
 
-    // Check if there is something to read or write to the CGI programs
-    if (poll(&_pollfd[0], _pollfd.size(), POLL_TIMEOUT) > 0)
-    {
-        for (size_t i = 0; i < _pollfd.size(); ++i)
-        {
-			size_t clientIndex = i / 2;
-            if (_pollfd[i].revents & POLLIN)
-            {
-				_clients[clientIndex]._somethingToRead = true;
-                if (_clients[clientIndex].read(IO_BUFF_SIZE) == -1)
-                {
-                    _clients[clientIndex]._client->setResponse(server.errorResponse(500, "internal_server_error", "couldn't read from cgi"));
-                    closeCgi(clientIndex);
-					i = clientIndex * 2 - 1;
-                }
-            }
-            else if (_pollfd[i].revents & POLLERR or _pollfd[i].revents & POLLHUP)
-            {
-				generateResponse(_clients[clientIndex], server);
-				closeCgi(clientIndex);
-				i = clientIndex * 2 - 1;
-            }
-            else if (_pollfd[i].revents & POLLOUT and not _clients[clientIndex].outBufferEmpty())
-            {
-                if (_clients[clientIndex].write(IO_BUFF_SIZE) == -1)
-                {
-                    _clients[clientIndex]._client->setResponse(server.errorResponse(500, "internal_server_error", "couldn't write to cgi"));
-                    closeCgi(clientIndex);
-					i = clientIndex * 2 - 1;
-                }
-            }
-        }
-    }
+	for (size_t i = 0; i < _clients.size(); ++i)
+	{
+		// Check inFd, try to read first then check for errors
+		int inRevents = myPoll.getRevents(_clients[i]._fdIn);
+		if (inRevents & POLLIN)
+		{
+			_clients[i]._somethingToRead = true;
+			if (_clients[i].read(IO_BUFF_SIZE) == -1)
+			{
+				_clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "couldn't read from cgi"));
+				closeCgi(myPoll, i--);
+			}
+		}
+		else if (inRevents & POLLERR or inRevents & POLLHUP)
+		{
+			generateResponse(_clients[i], server);
+			closeCgi(myPoll, i--);
+		}
+		// Check outFd, first check if there is an error or hangup, then check if there is data to write
+		int outRevents = myPoll.getRevents(_clients[i]._fdOut);
+		if (outRevents & POLLERR or outRevents & POLLHUP)
+		{
+			generateResponse(_clients[i], server);
+			closeCgi(myPoll, i--);
+		}
+		else if (outRevents & POLLOUT and not _clients[i].outBufferEmpty())
+		{
+			if (_clients[i].write(IO_BUFF_SIZE) == -1)
+			{
+				_clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "couldn't write to cgi"));
+				closeCgi(myPoll, i--);
+			}
+		}
+	}
 
 	// Disconnect all clients that have finished and have no more data to read
 	for (size_t i = 0; i < _clients.size(); ++i)
@@ -152,7 +144,7 @@ void CGI::loop(const Server &server)
 		if (_clients[i]._isDone and not _clients[i]._somethingToRead)
 		{
 			generateResponse(_clients[i], server);
-			closeCgi(i--);
+			closeCgi(myPoll, i--);
 		}
 	}
 }

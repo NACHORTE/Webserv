@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include "Listener.hpp"
+#include "MyPoll.hpp"
 
 class Webserv
 {
@@ -28,6 +29,8 @@ class Webserv
 
 		// Each listener listens to a different port and has its own list of servers
 		std::vector<Listener> _listeners;
+		// Object that handles all the file descriptors
+		MyPoll _poll;
 
 	// Private member functions
 

@@ -28,6 +28,7 @@ SRC := src/class/CGI/CGI.cpp\
 	src/class/Server/POST.cpp\
 	src/class/Server/Server.cpp\
 	src/class/Webserv.cpp\
+	src/class/MyPoll.cpp\
 	src/main.cpp\
 	src/readConfig/locationParse/readAlias.cpp\
 	src/readConfig/locationParse/readAllow.cpp\

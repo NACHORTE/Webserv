@@ -4,9 +4,10 @@
 
 #include <ctime>
 
-Client::Client(std::string IP, int port)
+Client::Client(int fd, std::string IP, int port)
 {
 	_lastEventTime = clock();
+	_fd = fd;
 	_IP = IP;
 	_port = port;
 }
@@ -35,6 +36,16 @@ void Client::setResponse(const std::string & response)
     _requests.rbegin()->second.addData(response);
 	// Update the last event time
 	_lastEventTime = clock();
+}
+
+void Client::setFd(const std::string & IP)
+{
+	_IP = IP;
+}
+
+int Client::getFd(void) const
+{
+	return (_fd);
 }
 
 std::string Client::getIP() const
@@ -134,43 +145,49 @@ bool Client::keepAlive() const
 {
 	if (_requests.empty())
 		return (false);
+	// If keep-alive or empty header, is keep-alive
 	std::vector<std::string> header = _requests.rbegin()->first.getHeader("Connection");
 	if (header.empty())
-		return (false);
-	return (header[0] == "keep-alive");
+		return (true);
+	return (header[0] != "close");
 }
 
 void Client::popRequest()
 {
-	_lastEventTime = clock();
-
 	if (!_requests.empty())
 		_requests.pop_back();
-
+	_sentBytes = 0;
 	// Update the last event time
 	_lastEventTime = clock();
-}
-
-void Client::error(bool error)
-{
-	_error = error;
 }
 
 bool Client::error() const
 {
 	if (_requests.empty())
 		return (false);
-	return (_requests.rbegin()->first.error() or _requests.rbegin()->second.error() or _error);
+	return (_requests.rbegin()->first.error() or _requests.rbegin()->second.error());
+}
+
+size_t Client::sentBytes() const
+{
+	return (_sentBytes);
+}
+
+void Client::addSentBytes(size_t bytes)
+{
+	_sentBytes += bytes;
 }
 
 Client &Client::operator=(const Client &rhs)
 {
 	if (this != &rhs)
 	{
+		_fd = rhs._fd;
 		_IP = rhs._IP;
 		_port = rhs._port;
 		_lastEventTime = rhs._lastEventTime;
 		_requests = rhs._requests;
+		_sentBytes = rhs._sentBytes;
 	}
 	return (*this);
 }

@@ -80,7 +80,7 @@ static char **getEnv(HttpRequest req)
 	return output;
 }
 
-void CGI::newCgi(Client &client, const std::string & filename, const Server& server)
+void CGI::newCgi(MyPoll & myPoll, Client &client, const std::string & filename, const Server& server)
 {
 	// Can't execute another webserv
 	if (baseName(filename) == "webserv")
@@ -145,12 +145,6 @@ void CGI::newCgi(Client &client, const std::string & filename, const Server& ser
 	fcntl(fdsOut[1], F_SETFL, O_NONBLOCK);
 
     // Add the pipes to the pollfd list
-    pollfd pollfdIn;
-    pollfdIn.fd = fdsIn[0];
-    pollfdIn.events = POLLIN | POLLHUP | POLLERR;
-    _pollfd.push_back(pollfdIn);
-    pollfd pollfdOut;
-    pollfdOut.fd = fdsOut[1];
-    pollfdOut.events = POLLOUT | POLLHUP | POLLERR;
-    _pollfd.push_back(pollfdOut);
+	myPoll.addFd(fdsIn[0], POLLIN | POLLHUP | POLLERR);
+	myPoll.addFd(fdsOut[1], POLLOUT | POLLHUP | POLLERR);
 }

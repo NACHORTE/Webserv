@@ -6,9 +6,7 @@ Webserv::Webserv(void)
 
 Webserv::~Webserv()
 {
-	// Close all file descriptors
-	for (std::vector<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); it++)
-		it->closeFds();
+	_poll.clear();
 }
 
 void Webserv::addServer(const Server &server)
@@ -21,7 +19,7 @@ void Webserv::addServer(const Server &server)
 			return;
 		}
 	}
-	Listener listener(server.getPort());
+	Listener listener(_poll, server.getPort());
 	listener.addServer(server);
 	_listeners.push_back(listener);
 }
@@ -41,10 +39,13 @@ void Webserv::init(const std::string &configFile)
 
 void Webserv::loop(void)
 {
+	// Poll
+	_poll.poll();
+
 	// Loop through listeners
 	std::vector<Listener>::iterator it;
 	for (it = _listeners.begin(); it != _listeners.end(); it++)
-		it->loop();
+		it->loop(_poll);
 }
 
 std::ostream &operator<<(std::ostream &os, const Webserv &obj)

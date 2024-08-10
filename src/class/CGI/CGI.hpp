@@ -3,9 +3,9 @@
 #include "Client.hpp"
 #include <vector>
 #include <set>
-#include <poll.h>
 #include <sstream>
 #include "defines.h"
+#include "MyPoll.hpp"
 
 class Server;
 
@@ -22,10 +22,10 @@ class CGI
 		
 	// Member functions
 		
-		void newCgi(Client &client, const std::string &filename, const Server &server);
-		void closeCgi(Client &client);
-        void closeCgi(size_t index);
-		void loop(const Server &server);
+		void newCgi(MyPoll &myPoll, Client &client, const std::string &filename, const Server &server);
+		void closeCgi(MyPoll &myPoll, Client &client);
+        void closeCgi(MyPoll &myPoll, size_t index);
+		void loop(MyPoll &myPoll, const Server &server);
 
 	// Operator overloads
 
@@ -55,8 +55,6 @@ class CGI
 		};
 	// Atributes
 
-		// Even indexes are read fds, odd indexes are write fds
-		std::vector<struct pollfd> _pollfd;
         // Clients waiting for a CGI program to finish
 		std::vector<CgiClient> _clients;
 

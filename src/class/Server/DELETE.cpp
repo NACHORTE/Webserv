@@ -3,8 +3,9 @@
 #include <fstream>
 #include <cstdio>
 
-void Server::DELETE(Client & client, const Location & loc)
+void Server::DELETE(MyPoll &myPoll, Client & client, const Location & loc)
 {
+	(void)myPoll;
 	if (loc.isDir(client.getRequest().getPath()))
 		return (void)client.setResponse(errorResponse(403, "Forbidden", "Cannot delete a directory"));	
 	std::string filename = loc.getFilename(client.getRequest().getPath());
