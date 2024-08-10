@@ -1,13 +1,12 @@
 #include "Webserv.hpp"
 #include "readConfig.hpp"
 #include "FdHandler.hpp"
-Webserv::Webserv(void)
+
+Webserv::Webserv()
 {}
 
 Webserv::~Webserv()
-{
-	FdHandler::clear();
-}
+{}
 
 void Webserv::addServer(const Server &server)
 {

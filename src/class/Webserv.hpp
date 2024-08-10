@@ -8,7 +8,7 @@ class Webserv
 	public:
 	// Constructors and destructor
 
-		Webserv(void);
+		Webserv();
 		~Webserv();
 
 	// Setters and getters

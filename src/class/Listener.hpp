@@ -18,7 +18,6 @@ class Listener
 	// Setters and getters
 
 		void addServer(const Server & server);
-
 		int getPort(void) const;
 		
 	// Member functions
