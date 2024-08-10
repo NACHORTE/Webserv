@@ -110,6 +110,7 @@ void Listener::loop()
 		// if there is a timeout, generate a response if no bytes have been sent or disconnect otherwise
 		if (client->timeout())
 		{
+			DEBUG("Listener " << _port << ", Client " << client->getIP() << ":" << client->getPort() << ", timed out");
 			if (not client->responseReady() and client->sentBytes() == 0)
 			{
 				client->setResponse(errorResponse(*client, 408, "Request Timeout", "Client timed out"));
