@@ -110,7 +110,6 @@ void Listener::loop(MyPoll &myPoll)
 		// if there is a timeout, generate a response if no bytes have been sent or disconnect otherwise
 		if (client->timeout())
 		{
-			std::cout << "TIMEOUT, res_ready:" << client->responseReady() << " sentbytes: " << client->sentBytes() << std::endl;
 			if (not client->responseReady() and client->sentBytes() == 0)
 			{
 				client->setResponse(errorResponse(*client, 408, "Request Timeout", "Client timed out"));

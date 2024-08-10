@@ -50,7 +50,7 @@ void  Server::GET(MyPoll &myPoll, Client & client, const Location & loc)
 	std::string path = client.getRequest().getPath();
 	// Get the path of the requested file
 	std::string filename = loc.getFilename(path);
-	if (filename.empty())
+	if (filename.empty() or access(filename.c_str(), F_OK) != 0)
 		return (void)client.setResponse(errorResponse(404, "Not Found", "File not found"));
 
 	if (loc.isCgi())

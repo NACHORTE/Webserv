@@ -10,6 +10,7 @@ Client::Client(int fd, std::string IP, int port)
 	_fd = fd;
 	_IP = IP;
 	_port = port;
+	_sentBytes = 0;
 }
 
 Client::Client(const Client & src)
@@ -157,7 +158,6 @@ void Client::popRequest()
 	if (!_requests.empty())
 		_requests.pop_back();
 	_sentBytes = 0;
-	// Update the last event time
 	_lastEventTime = clock();
 }
 
@@ -186,8 +186,8 @@ Client &Client::operator=(const Client &rhs)
 		_IP = rhs._IP;
 		_port = rhs._port;
 		_lastEventTime = rhs._lastEventTime;
-		_requests = rhs._requests;
 		_sentBytes = rhs._sentBytes;
+		_requests = rhs._requests;
 	}
 	return (*this);
 }
