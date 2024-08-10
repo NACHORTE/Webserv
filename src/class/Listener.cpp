@@ -118,9 +118,13 @@ void Listener::loop()
 				client->timeOut(true);
 			}
 			else
+			{
 				closeConnection(*(client--));
+				continue;
+			}
 		}
-		else if (revents & (POLLHUP | POLLERR))
+
+		if (revents & (POLLHUP | POLLERR))
 			closeConnection(*(client--));
 		else if (revents & POLLIN)
 			readData(*client);
