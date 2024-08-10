@@ -5,6 +5,7 @@
 #include "unistd.h"
 #include "stdlib.h"
 #include <fcntl.h>
+#include "FdHandler.hpp"
 
 static std::string envVarFormat(const std::string & str)
 {
@@ -80,7 +81,7 @@ static char **getEnv(HttpRequest req)
 	return output;
 }
 
-void CGI::newCgi(MyPoll & myPoll, Client &client, const std::string & filename, const Server& server)
+void CGI::newCgi(Client &client, const std::string & filename, const Server& server)
 {
 	// Can't execute another webserv
 	if (baseName(filename) == "webserv")
@@ -145,6 +146,6 @@ void CGI::newCgi(MyPoll & myPoll, Client &client, const std::string & filename, 
 	fcntl(fdsOut[1], F_SETFL, O_NONBLOCK);
 
     // Add the pipes to the pollfd list
-	myPoll.addFd(fdsIn[0], POLLIN | POLLHUP | POLLERR);
-	myPoll.addFd(fdsOut[1], POLLOUT | POLLHUP | POLLERR);
+	FdHandler::addFd(fdsIn[0], POLLIN | POLLHUP | POLLERR);
+	FdHandler::addFd(fdsOut[1], POLLOUT | POLLHUP | POLLERR);
 }

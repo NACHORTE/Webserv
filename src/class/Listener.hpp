@@ -2,7 +2,6 @@
 #include <iostream>
 #include "Server.hpp"
 #include "Client.hpp"
-#include "MyPoll.hpp"
 #include <vector>
 #include <map>
 #include <list>
@@ -12,7 +11,7 @@ class Listener
 	public:
 	// Constructors and destructor
 
-		Listener(MyPoll &myPoll, int port);
+		Listener(int port);
 		Listener(const Listener &src);
 		~Listener();
 
@@ -26,7 +25,7 @@ class Listener
 
 		// Main loop of the listener (accepts connections, reads data, sends data)
 		// Only runs once, to run it again, call it again
-		void loop(MyPoll &poll);
+		void loop();
 
 	// Operator overloads
 		
@@ -49,10 +48,10 @@ class Listener
 
 	// Private member functions
 
-		int acceptConnection(MyPoll & myPoll);
+		int acceptConnection();
 		void readData(Client &client);
 		int sendData(Client &client);
-		void closeConnection(MyPoll & myPoll, Client &client);
+		void closeConnection(Client &client);
 
 		void sendToServer(Client &client);
 		HttpResponse errorResponse(Client & client, int errorCode, const std::string & phrase = "", const std::string & msg= "");

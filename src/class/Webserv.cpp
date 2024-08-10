@@ -1,12 +1,12 @@
 #include "Webserv.hpp"
 #include "readConfig.hpp"
-
+#include "FdHandler.hpp"
 Webserv::Webserv(void)
 {}
 
 Webserv::~Webserv()
 {
-	_poll.clear();
+	FdHandler::clear();
 }
 
 void Webserv::addServer(const Server &server)
@@ -19,7 +19,7 @@ void Webserv::addServer(const Server &server)
 			return;
 		}
 	}
-	Listener listener(_poll, server.getPort());
+	Listener listener(server.getPort());
 	listener.addServer(server);
 	_listeners.push_back(listener);
 }
@@ -35,17 +35,20 @@ void Webserv::init(const std::string &configFile)
 	// Add servers to listeners or create new listeners
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++)
 		addServer(*it);
+
+	// Set poll timeout
+	FdHandler::setTimeout(POLL_TIMEOUT);
 }
 
 void Webserv::loop(void)
 {
 	// Poll
-	_poll.poll();
+	FdHandler::poll();
 
 	// Loop through listeners
 	std::vector<Listener>::iterator it;
 	for (it = _listeners.begin(); it != _listeners.end(); it++)
-		it->loop(_poll);
+		it->loop();
 }
 
 std::ostream &operator<<(std::ostream &os, const Webserv &obj)

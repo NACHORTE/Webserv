@@ -43,7 +43,7 @@ HttpResponse getAutoIndex(const std::string & path, const Location & loc, const 
 	return ret;
 }
 
-void  Server::GET(MyPoll &myPoll, Client & client, const Location & loc)
+void  Server::GET(Client & client, const Location & loc)
 {
 	HttpResponse ret;
 
@@ -54,7 +54,7 @@ void  Server::GET(MyPoll &myPoll, Client & client, const Location & loc)
 		return (void)client.setResponse(errorResponse(404, "Not Found", "File not found"));
 
 	if (loc.isCgi())
-		return (void)_activeCGI.newCgi(myPoll, client, filename, *this);
+		return (void)_activeCGI.newCgi(client, filename, *this);
 
 	// If the filename doesn't exist, check if it's a directory
 	if (access(filename.c_str(),F_OK) != 0 and loc.isDir(path))

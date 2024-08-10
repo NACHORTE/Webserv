@@ -5,6 +5,7 @@
 #include "unistd.h"
 #include "sys/wait.h"
 #include "utils.hpp"
+#include "FdHandler.hpp"
 
 CGI::CGI(void)
 {}
@@ -39,14 +40,14 @@ std::ostream &operator<<(std::ostream &os, const CGI &obj)
 // Defined in newCgi.cpp
 //void CGI::newCgi(Client &client, const std::string &filename, const Server &server);
 
-void CGI::closeCgi(MyPoll &myPoll, Client &client)
+void CGI::closeCgi(Client &client)
 {    
     for (size_t i = 0; i < _clients.size(); ++i)
     {
         if (_clients[i]._client == &client)
         {
-            myPoll.removeFd(_clients[i]._fdIn);
-            myPoll.removeFd(_clients[i]._fdOut);
+            FdHandler::removeFd(_clients[i]._fdIn);
+            FdHandler::removeFd(_clients[i]._fdOut);
             kill(_clients[i]._pid, SIGKILL);
             _clients.erase(_clients.begin() + i);
             return;
@@ -54,17 +55,17 @@ void CGI::closeCgi(MyPoll &myPoll, Client &client)
     }
 }
 
-void CGI::closeCgi(MyPoll &myPoll, size_t index)
+void CGI::closeCgi(size_t index)
 {
     if (index >= _clients.size())
         return;
-    myPoll.removeFd(_clients[index]._fdIn);
-    myPoll.removeFd(_clients[index]._fdOut);
+    FdHandler::removeFd(_clients[index]._fdIn);
+    FdHandler::removeFd(_clients[index]._fdOut);
     kill(_clients[index]._pid, SIGKILL);
     _clients.erase(_clients.begin() + index);
 }
 
-void CGI::loop(MyPoll &myPoll, const Server &server)
+void CGI::loop(const Server &server)
 {
 	// Check if the CGI programs have finished and reset _somethingToRead flag
     for (size_t i = 0; i < _clients.size(); ++i)
@@ -80,7 +81,7 @@ void CGI::loop(MyPoll &myPoll, const Server &server)
         if (result == -1)
         {
             _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "waitpid failed"));
-            closeCgi(myPoll, i--);
+            closeCgi(i--);
         }
 		// If the CGI program has finished
         else if (result > 0)
@@ -90,7 +91,7 @@ void CGI::loop(MyPoll &myPoll, const Server &server)
                 if (WEXITSTATUS(status) == EXIT_FAILURE)
                 {
                     _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "cgi exited with failure"));
-                    closeCgi(myPoll, i--);
+                    closeCgi(i--);
                 }
                 else
                     _clients[i]._isDone = true;
@@ -98,7 +99,7 @@ void CGI::loop(MyPoll &myPoll, const Server &server)
             else if (WIFSIGNALED(status))
             {
                 _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "cgi terminated by signal"));
-                closeCgi(myPoll, i--);
+                closeCgi(i--);
             }
         }
     }
@@ -106,34 +107,34 @@ void CGI::loop(MyPoll &myPoll, const Server &server)
 	for (size_t i = 0; i < _clients.size(); ++i)
 	{
 		// Check inFd, try to read first then check for errors
-		int inRevents = myPoll.getRevents(_clients[i]._fdIn);
+		int inRevents = FdHandler::getRevents(_clients[i]._fdIn);
 		if (inRevents & POLLIN)
 		{
 			_clients[i]._somethingToRead = true;
 			if (_clients[i].read(IO_BUFF_SIZE) == -1)
 			{
 				_clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "couldn't read from cgi"));
-				closeCgi(myPoll, i--);
+				closeCgi(i--);
 			}
 		}
 		else if (inRevents & POLLERR or inRevents & POLLHUP)
 		{
 			generateResponse(_clients[i], server);
-			closeCgi(myPoll, i--);
+			closeCgi(i--);
 		}
 		// Check outFd, first check if there is an error or hangup, then check if there is data to write
-		int outRevents = myPoll.getRevents(_clients[i]._fdOut);
+		int outRevents = FdHandler::getRevents(_clients[i]._fdOut);
 		if (outRevents & POLLERR or outRevents & POLLHUP)
 		{
 			generateResponse(_clients[i], server);
-			closeCgi(myPoll, i--);
+			closeCgi(i--);
 		}
 		else if (outRevents & POLLOUT and not _clients[i].outBufferEmpty())
 		{
 			if (_clients[i].write(IO_BUFF_SIZE) == -1)
 			{
 				_clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "couldn't write to cgi"));
-				closeCgi(myPoll, i--);
+				closeCgi(i--);
 			}
 		}
 	}
@@ -144,7 +145,7 @@ void CGI::loop(MyPoll &myPoll, const Server &server)
 		if (_clients[i]._isDone and not _clients[i]._somethingToRead)
 		{
 			generateResponse(_clients[i], server);
-			closeCgi(myPoll, i--);
+			closeCgi(i--);
 		}
 	}
 }
@@ -174,7 +175,11 @@ void CGI::generateResponse(CgiClient &cgiClient, const Server &server)
 	{
 		std::istringstream iss(statusHeader[0]);
 		int status;
-		iss >> status;
+		if (!(iss >> status) or status < 100 or status > 599)
+		{
+			response = server.errorResponse(500, "internal_server_error", "cgi didn't send a valid status code");
+			return;
+		}
 		std::string phrase;
 		std::getline(iss, phrase);
 		response.setStatus(status, trim(phrase));

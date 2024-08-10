@@ -7,9 +7,9 @@
 #include <unistd.h>
 #include <cstdio>
 #include <arpa/inet.h>
-#include <poll.h>
+#include "FdHandler.hpp"
 
-Listener::Listener(MyPoll & myPoll, int port) : _port(port)
+Listener::Listener(int port) : _port(port)
 {
 	// Set up the server address to listen any address and the specified port
 	struct sockaddr_in servaddr;
@@ -30,7 +30,7 @@ Listener::Listener(MyPoll & myPoll, int port) : _port(port)
 		throw std::runtime_error("[Listener::init_socket] Error fcntl");
 
 	// Add the server fd to the Poll list
-	myPoll.addFd(_sockfd, POLLIN);
+	FdHandler::addFd(_sockfd, POLLIN);
 }
 
 Listener::Listener(const Listener &src)
@@ -95,17 +95,17 @@ int Listener::getPort(void) const
 	return (_port);
 }
 
-void Listener::loop(MyPoll &myPoll)
+void Listener::loop()
 {
 	// Check new connections
-	if (myPoll.getRevents(_sockfd) & POLLIN)
-		acceptConnection(myPoll);
+	if (FdHandler::getRevents(_sockfd) & POLLIN)
+		acceptConnection();
 
 	// Loop through the clients and check if they are ready to read or write
 	for (std::list<Client>::iterator client = _clients.begin(); client != _clients.end(); ++client)
 	{
 		int fd = client->getFd();
-		int revents = myPoll.getRevents(fd);
+		int revents = FdHandler::getRevents(fd);
 
 		// if there is a timeout, generate a response if no bytes have been sent or disconnect otherwise
 		if (client->timeout())
@@ -117,23 +117,23 @@ void Listener::loop(MyPoll &myPoll)
 				client->getRequest().setHeader("Connection", "close");
 			}
 			else
-				closeConnection(myPoll, *(client--));
+				closeConnection(*(client--));
 		}
 		else if (revents & (POLLHUP | POLLERR))
-			closeConnection(myPoll, *(client--));
+			closeConnection(*(client--));
 		else if (revents & POLLIN)
 			readData(*client);
 		else if (revents & POLLOUT && client->responseReady())
 			if (sendData(*client) != 0)
-				closeConnection(myPoll, *(client--));
+				closeConnection(*(client--));
 	}
 
 	// Loop through the servers and call their loop function
 	for (std::list<Server>::iterator it = _serverList.begin(); it != _serverList.end(); ++it)
-		it->loop(myPoll);
+		it->loop();
 }
 
-int Listener::acceptConnection(MyPoll & myPoll)
+int Listener::acceptConnection()
 {
 	// Accept the connection
 	sockaddr_in clientAddr;
@@ -155,7 +155,7 @@ int Listener::acceptConnection(MyPoll & myPoll)
     std::string clientIPAddress(clientIP);
 
 	// Add the new client to the list of clients
-	myPoll.addFd(newClientFd, POLLIN | POLLOUT | POLLHUP | POLLERR);
+	FdHandler::addFd(newClientFd, POLLIN | POLLOUT | POLLHUP | POLLERR);
 	_clients.push_back(Client(newClientFd, clientIP, clientPort));
 
 	DEBUG("Listener " << _port << ", Client " << clientIPAddress << ":" << clientPort << ", connected");
@@ -226,17 +226,16 @@ int Listener::sendData(Client &client)
 	return 0;
 }
 
-void Listener::closeConnection(MyPoll & myPoll, Client &client)
+void Listener::closeConnection(Client &client)
 {
-	myPoll.removeFd(client.getFd());
 	for (std::list<Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
 		if (it->getFd() == client.getFd())
 		{
 			// Delete the pointer to the client from the servers (try to delete from all just in case)
 			for (std::list<Server>::iterator it2 = _serverList.begin(); it2 != _serverList.end(); ++it2)
-				it2->removeClient(myPoll, *it);
-			myPoll.removeFd(it->getFd());
+				it2->removeClient(client);
+			FdHandler::removeFd(it->getFd());
 			_clients.erase(it);
 			DEBUG("Listener " << _port << ", Client " << client.getIP() << ":" << client.getPort() << ", disconnected");
 			return;

@@ -1,21 +1,23 @@
-#include "MyPoll.hpp"
+#include "FdHandler.hpp"
 #include "utils.hpp"
 #include <unistd.h>
 
-MyPoll::MyPoll(int timeout):
-	_timeout(timeout)
-{
-}
+int FdHandler::_timeout = 0;
+std::vector<struct pollfd> FdHandler::_fds;
+std::map<int, int> FdHandler::_revents;
 
-MyPoll::MyPoll(const MyPoll & src)
+FdHandler::FdHandler()
+{}
+
+FdHandler::FdHandler(const FdHandler & src)
 {
 	*this = src;
 }
 
-MyPoll::~MyPoll()
+FdHandler::~FdHandler()
 {}
 
-MyPoll &MyPoll::operator=(const MyPoll &rhs)
+FdHandler &FdHandler::operator=(const FdHandler &rhs)
 {
 	if (this != &rhs)
 	{
@@ -26,17 +28,17 @@ MyPoll &MyPoll::operator=(const MyPoll &rhs)
 	return (*this);
 }
 
-void MyPoll::setTimeout(int timeout)
+void FdHandler::setTimeout(int timeout)
 {
 	_timeout = timeout;
 }
 
-int MyPoll::getTimeout() const
+int FdHandler::getTimeout()
 {
 	return (_timeout);
 }
 
-void MyPoll::addFd(int fd, int events)
+void FdHandler::addFd(int fd, int events)
 {
 	// If already in _fds, return
 	if (_revents.count(fd) != 0)
@@ -50,7 +52,7 @@ void MyPoll::addFd(int fd, int events)
 	// Don't update _revents here, it will be updated by poll()
 }
 
-void MyPoll::removeFd(int fd, bool close)
+void FdHandler::removeFd(int fd, bool close)
 {
 	for (size_t i = 0; i < _fds.size(); ++i)
 	{
@@ -65,14 +67,14 @@ void MyPoll::removeFd(int fd, bool close)
 	}
 }
 
-int MyPoll::getRevents(int fd) const
+int FdHandler::getRevents(int fd)
 {
 	if (_revents.count(fd) == 0)
 		return (0);
 	return (_revents.at(fd));
 }
 
-void MyPoll::poll()
+void FdHandler::poll()
 {
 	// Reset revents
 	_revents.clear();
@@ -90,7 +92,7 @@ void MyPoll::poll()
 			_revents[_fds[i].fd] = _fds[i].revents;
 }
 
-void MyPoll::clear(bool close)
+void FdHandler::clear(bool close)
 {
 	if (close)
 		for (size_t i = 0; i < _fds.size(); ++i)
@@ -99,9 +101,9 @@ void MyPoll::clear(bool close)
 	_revents.clear();
 }
 
-std::ostream &operator<<(std::ostream &os, const MyPoll &obj)
+std::ostream &operator<<(std::ostream &os, const FdHandler &obj)
 {
-	os << "MyPoll:\n\t_timeout: " << obj._timeout << "\n\t_fds:" << std::endl;
+	os << "FdHandler:\n\t_timeout: " << obj._timeout << "\n\t_fds:" << std::endl;
 	for (std::vector<struct pollfd>::const_iterator it = obj._fds.begin(); it != obj._fds.end(); ++it)
 		os << "\t\tfd: " << it->fd << ", events: " << it->events << ", revents: " << it->revents << std::endl;
 	return (os);

@@ -2,7 +2,6 @@
 #include "utils.hpp"
 #include <unistd.h>
 #include <sys/wait.h>
-#include <poll.h>
 #include <cstdlib>
 #include <fcntl.h>
 #include <fstream>
@@ -56,7 +55,7 @@ std::ostream &operator<<(std::ostream &os, const Server &obj)
 	os << std::endl;
 	os << "Locations: " << obj._locations << std::endl;
 	os << "Available methods: ";
-	for (std::map<std::string, void (Server::*)(MyPoll &, Client &, const Location &)>::const_iterator it = obj._methodsMap.begin(); it != obj._methodsMap.end(); ++it)
+	for (std::map<std::string, void (Server::*)(Client &, const Location &)>::const_iterator it = obj._methodsMap.begin(); it != obj._methodsMap.end(); ++it)
 		os << it->first << " ";
 	os << std::endl;
 	return (os);
@@ -164,9 +163,9 @@ void Server::addClient(Client &client)
 	_clients.insert(&client);
 }
 
-void Server::removeClient(MyPoll &myPoll, Client &client)
+void Server::removeClient(Client &client)
 {
-	_activeCGI.closeCgi(myPoll, client);
+	_activeCGI.closeCgi(client);
 	if (_clients.count(&client) == 1)
 		_clients.erase(&client);
 }
@@ -215,7 +214,7 @@ HttpResponse Server::errorResponse(int error, const std::string & phrase, const 
 	return HttpResponse::errorResponse(error, phrase, msg);
 }
 
-void Server::loop(MyPoll &myPoll)
+void Server::loop()
 {
 	// Iterate the clients to generate and check responses
 	// Clients get removed from the list as soon as they have a response or the response started generating
@@ -249,11 +248,11 @@ void Server::loop(MyPoll &myPoll)
 			else if (loc->hasReturnValue())
 				client.setResponse(loc->getReturnResponse());
 			else
-				(this->*_methodsMap[req.getMethod()])(myPoll, client, *loc);
+				(this->*_methodsMap[req.getMethod()])(client, *loc);
 			_clients.erase(it--);
 		}
 	}
 
 	// Iterate the clients that are waiting for a CGI program to finish
-	_activeCGI.loop(myPoll, *this);
+	_activeCGI.loop(*this);
 }

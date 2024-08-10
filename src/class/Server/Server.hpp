@@ -5,7 +5,7 @@
 #include <set>
 #include "LocationContainer.hpp"
 #include "CGI.hpp"
-#include "MyPoll.hpp"
+
 class CGI;
 
 class Server
@@ -39,7 +39,7 @@ class Server
 		void addErrorPage(int error_code, const std::string & errorPage);
 
 		void addClient(Client &client);
-		void removeClient(MyPoll &myPoll, Client &client);
+		void removeClient(Client &client);
 
 		const LocationContainer & getLocationContainer() const;
 		bool addLocation(Location location);
@@ -47,7 +47,7 @@ class Server
 	// Member functions
 
 		HttpResponse errorResponse(int error_code, const std::string & phrase = "", const std::string & msg= "") const;
-		void loop(MyPoll &myPoll);
+		void loop();
 
 	// Operator overloads
 
@@ -74,16 +74,16 @@ class Server
 		// List of locations that the server will serve
 		LocationContainer _locations;
 		// Map of the methods the server can handle (GET, POST, DELETE)
-		std::map<std::string, void (Server::*)(MyPoll &, Client &, const Location &)> _methodsMap;
+		std::map<std::string, void (Server::*)(Client &, const Location &)> _methodsMap;
 		// _activeCGI holds the list of clients that are waiting for a CGI program to finish
 		CGI _activeCGI;
 
 	// Private member functions
 
         // HTTP METHODS (defined in their own files (GET.cpp, POST.cpp, DELETE.cpp))
-		void GET(MyPoll &myPoll, Client & client, const Location & loc);
-		void POST(MyPoll &myPoll, Client & client, const Location & loc);
-		void DELETE(MyPoll &myPoll, Client & client, const Location & loc);
+		void GET(Client & client, const Location & loc);
+		void POST(Client & client, const Location & loc);
+		void DELETE(Client & client, const Location & loc);
 
 	// Friends <3
 		friend std::ostream &operator<<(std::ostream &os, const Server &obj);
