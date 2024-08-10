@@ -110,12 +110,12 @@ void Listener::loop()
 		// if there is a timeout, generate a response if no bytes have been sent or disconnect otherwise
 		if (client->timeout())
 		{
-			DEBUG("Listener " << _port << ", Client " << client->getIP() << ":" << client->getPort() << ", timed out");
 			if (not client->responseReady() and client->sentBytes() == 0)
 			{
 				client->setResponse(errorResponse(*client, 408, "Request Timeout", "Client timed out"));
 				client->getRequest().unsetHeader("Connection");
 				client->getRequest().setHeader("Connection", "close");
+				client->timeOut(true);
 			}
 			else
 				closeConnection(*(client--));
@@ -212,7 +212,7 @@ int Listener::sendData(Client &client)
 	<< ") Sent " << bytesSent << " bytes");
 
 	// If keep-alive is set pop the request and wait for another one, else close the connection
-	if (client.keepAlive())
+	if (client.keepAlive() and not client.error() and not client.timeout())
 	{
 		DEBUG("Listener " << _port << ", Client " << client.getIP() << ":" << client.getPort() << ", not disconnecting Keep-alive set");
 		client.popRequest();

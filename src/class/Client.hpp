@@ -18,11 +18,12 @@ class Client
 		void setFd(const std::string & IP);
 		int getFd(void) const;
 
+		std::string getIP() const;
+		int getPort() const;
+
 		void setResponse(const HttpResponse & response);
         void setResponse(const std::string & response);
 
-		std::string getIP() const;
-		int getPort() const;
 		std::string getHost(void) const;
 		HttpResponse & getResponse();
 		const HttpResponse & getResponseConst() const;
@@ -41,6 +42,7 @@ class Client
 		bool requestReady(void) const;
 		bool responseReady(void) const;
 		bool timeout(void) const;
+		void timeOut(bool timedOut);
 		bool keepAlive(void) const;
 		void popRequest(void);
 
@@ -57,6 +59,7 @@ class Client
 
 		clock_t _lastEventTime;
 		size_t _sentBytes;
+		bool _timedOut;
 		// Queue of requests and responses (Most recent request is at the front of the list)
 		std::list<std::pair<HttpRequest, HttpResponse> > _requests;
 

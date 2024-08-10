@@ -11,6 +11,7 @@ Client::Client(int fd, std::string IP, int port)
 	_IP = IP;
 	_port = port;
 	_sentBytes = 0;
+	_timedOut = false;
 }
 
 Client::Client(const Client & src)
@@ -139,7 +140,12 @@ bool Client::timeout() const
 	// Calculate the time since the last event
 	double seconds = (double)(clock() - _lastEventTime) / CLOCKS_PER_SEC;
 	// Return true if the time since the last event is greater than the timeout
-	return (seconds > TIMEOUT);
+	return (seconds > TIMEOUT or _timedOut);
+}
+
+void Client::timeOut(bool timedOut)
+{
+	_timedOut = timedOut;
 }
 
 bool Client::keepAlive() const
@@ -188,6 +194,7 @@ Client &Client::operator=(const Client &rhs)
 		_lastEventTime = rhs._lastEventTime;
 		_sentBytes = rhs._sentBytes;
 		_requests = rhs._requests;
+		_timedOut = rhs._timedOut;
 	}
 	return (*this);
 }
