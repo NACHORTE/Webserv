@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <fcntl.h>
 #include <fstream>
+#include "FdHandler.hpp"
+#include <fcntl.h>
 
 Server::Server(void)
 {
@@ -35,6 +37,7 @@ Server &Server::operator=(const Server &rhs)
 		_locations = rhs._locations;
 		_methodsMap = rhs._methodsMap;
 		_activeCGI = rhs._activeCGI;
+		_staticResponses = rhs._staticResponses;
 	}
 	return (*this);
 }
@@ -166,6 +169,11 @@ void Server::addClient(Client &client)
 void Server::removeClient(Client &client)
 {
 	_activeCGI.closeCgi(client);
+	if (_staticResponses.count(&client) == 1)
+	{
+		FdHandler::removeFd(_staticResponses[&client].first);
+		_staticResponses.erase(&client);
+	}
 	if (_clients.count(&client) == 1)
 		_clients.erase(&client);
 }
@@ -189,11 +197,14 @@ const LocationContainer & Server::getLocationContainer(void) const
 	return (_locations);
 }
 
-HttpResponse Server::errorResponse(int error, const std::string & phrase, const std::string & msg) const
+void Server::errorResponse(Client &client, int error, const std::string & phrase, const std::string & msg)
 {
+	// If the client is already in the list of clients waiting for a file, return
+	if (_staticResponses.count(&client) == 1)
+		return ;
 	// If there is no error page for the error, return the default error page
 	if (_errorPages.count(error) == 0)
-		return HttpResponse::errorResponse(error, phrase, msg);
+		return client.setResponse(HttpResponse::errorResponse(error, phrase, msg));
 
 	// Return the first page that matches a location
 	std::set<std::string> errorPages = _errorPages.at(error);
@@ -201,17 +212,25 @@ HttpResponse Server::errorResponse(int error, const std::string & phrase, const 
 	{
 		try
 		{
-			HttpResponse response;
-			std::string path = *it;
-			response.setStatus(error);
-			response.setBodyFromFile(path);
-			response.responseReady(true);
-			return response;
+			int fd = open(it->c_str(), O_RDONLY);
+			if (fd == -1)
+				throw std::exception();
+			if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+			{
+				close(fd);
+				break;
+			}
+			client.getResponse().clear();
+			client.getResponse().setStatus(error, phrase);
+			client.getResponse().setHeader("Content-Type", extToMime(*it));
+			_staticResponses[&client] = std::make_pair(fd, "");
+			FdHandler::addFd(fd, POLLIN);
+			return;
 		}
 		catch(const std::exception& e)
 		{}
 	}
-	return HttpResponse::errorResponse(error, phrase, msg);
+	return client.setResponse(HttpResponse::errorResponse(error, phrase, msg));
 }
 
 void Server::loop()
@@ -227,7 +246,7 @@ void Server::loop()
 		// If the body of the request is too large, return a 413 error
 		else if (client.getRequest().getBody().size() > _maxBodySize)
 		{
-			client.setResponse(errorResponse(413, "Request Entity Too Large", "The body of the request is too large"));
+			errorResponse(client, 413, "Request Entity Too Large", "The body of the request is too large");
 			_clients.erase(it--);
 		}
 		// If the client has the request ready, start generating the response
@@ -237,13 +256,13 @@ void Server::loop()
 			const Location * loc = _locations[req.getPath()];
 			// Check if it's an allowed method
 			if (_methodsMap.count(req.getMethod()) == 0)
-				client.setResponse(errorResponse(501, "Not implemented", "Method " + req.getMethod() + " is not allowed for this server"));
+				errorResponse(client, 501, "Not implemented", "Method " + req.getMethod() + " is not allowed for this server");
 			// Check if the path matches a location. If not, return a 404 error
 			else if (!loc)
-				client.setResponse(errorResponse(404));
+				errorResponse(client, 404, "Not Found", "The requested URL was not found on this server");
 			// If the method is not allowed for the location, return a 405 error
 			else if (loc->isAllowedMethod(req.getMethod()) == false)
-				client.setResponse(errorResponse(405, "Method Not Allowed", "Method " + req.getMethod() + " is not allowed for this location"));
+				errorResponse(client, 405, "Method Not Allowed", "Method " + req.getMethod() + " is not allowed for this location");
 			// If the location has a redirection, return it
 			else if (loc->hasReturnValue())
 				client.setResponse(loc->getReturnResponse());
@@ -255,4 +274,33 @@ void Server::loop()
 
 	// Iterate the clients that are waiting for a CGI program to finish
 	_activeCGI.loop(*this);
+
+	// Iterate the static responses
+	for (std::map<Client *, std::pair<int, std::string> >::iterator it = _staticResponses.begin(); it != _staticResponses.end();)
+	{
+		Client &client = *it->first;
+		int fd = it->second.first;
+		std::string &fileContent = it->second.second;
+		int revents = FdHandler::getRevents(fd);
+		if (revents & POLLIN)
+		{
+			char buff[4096];
+
+			int bytesRead = read(fd, buff, 4096);
+			if (bytesRead == -1)
+			{
+				removeClient(client);
+				continue;
+			}
+			if (bytesRead == 0)
+			{
+				client.getResponse().setBody(fileContent);
+				client.getResponse().responseReady(true);
+				removeClient(client);
+				continue;
+			}
+			fileContent.append(buff, bytesRead);
+		}
+		++it;
+	}
 }

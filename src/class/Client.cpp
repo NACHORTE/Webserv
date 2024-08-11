@@ -11,7 +11,7 @@ Client::Client(int fd, std::string IP, int port)
 	_IP = IP;
 	_port = port;
 	_sentBytes = 0;
-	_timedOut = false;
+	_timeout = false;
 }
 
 Client::Client(const Client & src)
@@ -135,17 +135,19 @@ bool Client::responseReady() const
 	return (_requests.rbegin()->second.responseReady());
 }
 
+void Client::timeout(bool timeout)
+{
+	_timeout = timeout;
+	if (_timeout == false)
+		_lastEventTime = clock();
+}
+
 bool Client::timeout() const
 {
 	// Calculate the time since the last event
 	double seconds = (double)(clock() - _lastEventTime) / CLOCKS_PER_SEC;
 	// Return true if the time since the last event is greater than the timeout
-	return (seconds > TIMEOUT or _timedOut);
-}
-
-void Client::timeOut(bool timedOut)
-{
-	_timedOut = timedOut;
+	return (seconds > TIMEOUT or _timeout);
 }
 
 bool Client::keepAlive() const
@@ -194,29 +196,29 @@ Client &Client::operator=(const Client &rhs)
 		_lastEventTime = rhs._lastEventTime;
 		_sentBytes = rhs._sentBytes;
 		_requests = rhs._requests;
-		_timedOut = rhs._timedOut;
+		_timeout = rhs._timeout;
 	}
 	return (*this);
 }
 
 std::ostream &operator<<(std::ostream &os, const Client &obj)
 {
-	std::cout << "_lastEventTime: " << obj._lastEventTime << std::endl;
-	std::cout << "_requests: " << obj._requests.size() << std::endl;
+	os << "_lastEventTime: " << obj._lastEventTime << std::endl;
+	os << "_requests: " << obj._requests.size() << std::endl;
 
 	std::list<std::pair<HttpRequest, HttpResponse> >::const_iterator it;
 	size_t i = 1;
 	for (it = obj._requests.begin(); it != obj._requests.end(); it++)
 	{
-		std::cout << "Request " << i << (it->first.requestReady()?" ready":" not ready") << "\n[";
-		std::cout << it->first;
-		std::cout << "]" << std::endl;
-		std::cout << "Response " << i << (it->second.responseReady()?" ready":" not ready") << "\n[";
-		std::cout << it->second;
-		std::cout << "]";
+		os << "Request " << i << (it->first.requestReady()?" ready":" not ready") << "\n[";
+		os << it->first;
+		os << "]" << std::endl;
+		os << "Response " << i << (it->second.responseReady()?" ready":" not ready") << "\n[";
+		os << it->second;
+		os << "]";
 		++i;
 	}
 	if (obj._requests.size() == 0)
-		std::cout << "No requests";
+		os << "No requests";
 	return (os);
 }

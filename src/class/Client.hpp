@@ -41,8 +41,8 @@ class Client
 		void addData(const std::string & data);
 		bool requestReady(void) const;
 		bool responseReady(void) const;
+		void timeout(bool timeout);
 		bool timeout(void) const;
-		void timeOut(bool timedOut);
 		bool keepAlive(void) const;
 		void popRequest(void);
 
@@ -59,7 +59,7 @@ class Client
 
 		clock_t _lastEventTime;
 		size_t _sentBytes;
-		bool _timedOut;
+		bool _timeout;
 		// Queue of requests and responses (Most recent request is at the front of the list)
 		std::list<std::pair<HttpRequest, HttpResponse> > _requests;
 

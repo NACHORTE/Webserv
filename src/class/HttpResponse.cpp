@@ -168,33 +168,15 @@ const std::vector<std::pair<std::string, std::string> > & HttpResponse::getHeade
  * @param body The body of the response.
  * @param chunked (default=false) True if the body is in chunked format.
  */
-void HttpResponse::setBody(const std::string& content_type, const std::string& body, bool chunked)
+void HttpResponse::setBody(const std::string& body, bool chunked)
 {
 	_body = body;
-	unsetHeader("Content-Type");
 	unsetHeader("Content-Length");
 	unsetHeader("Transfer-Encoding");
-	if (not _body.empty())
-		setHeader("Content-Type", content_type);
 	if (chunked)
 		setHeader("Transfer-Encoding", "chunked");
 	else
 		setHeader("Content-Length", intToString(_body.size()));
-}
-
-/**
- * @brief Set the body of the response from a file.
- * 
- * Sets the body of the response with the content of the file with the given
- * filename.
- * 
- * The headers are updated accordingly.
- * 
- * @param filename The name of the file to read the body from.
- */
-void HttpResponse::setBodyFromFile(const std::string& filename)
-{
-	setBody(extToMime(filename), readFile(filename, isBinaryFile(filename)));
 }
 
 /**
@@ -410,11 +392,12 @@ HttpResponse HttpResponse::errorResponse(int code, const std::string & phrase, s
 
 	// Set the status code and phrase
 	ret.setStatus(code, phrase);
+	ret.setHeader("Content-Type", "text/html");
 	if (msg.length() == 0)
-		ret.setBody("text/html", "<html><body><h1>" + ret.getStatusCode() + " "
+		ret.setBody("<html><body><h1>" + ret.getStatusCode() + " "
 			+ ret.getStatusPhrase() + "</h1></body></html>");
 	else
-		ret.setBody("text/html", "<html><body><h1>" + ret.getStatusCode() + " "
+		ret.setBody("<html><body><h1>" + ret.getStatusCode() + " "
 			+ ret.getStatusPhrase() + "</h1><p>" + msg + "</p></body></html>");
 	ret._responseReady = true;
 	return ret;	

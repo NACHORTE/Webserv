@@ -21,10 +21,10 @@ class CGI
 		
 	// Member functions
 		
-		void newCgi(Client &client, const std::string &filename, const Server &server);
+		void newCgi(Client &client, const std::string &filename, Server &server);
 		void closeCgi(Client &client);
         void closeCgi(size_t index);
-		void loop(const Server &server);
+		void loop(Server &server);
 
 	// Operator overloads
 
@@ -59,7 +59,7 @@ class CGI
 
 	// Private member functions
 		
-		void generateResponse(CgiClient &client, const Server &server);
+		void generateResponse(CgiClient &client, Server &server);
 	// Friends <3
 		friend std::ostream &operator<<(std::ostream &os, const CGI &obj);
 };

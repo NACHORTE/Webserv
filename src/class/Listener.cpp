@@ -112,10 +112,13 @@ void Listener::loop()
 		{
 			if (not client->responseReady() and client->sentBytes() == 0)
 			{
-				client->setResponse(errorResponse(*client, 408, "Request Timeout", "Client timed out"));
-				client->getRequest().unsetHeader("Connection");
-				client->getRequest().setHeader("Connection", "close");
-				client->timeOut(true);
+				if (client->getRequestCount() > 0)
+				{
+					client->getRequest().unsetHeader("Connection");
+					client->getRequest().setHeader("Connection", "close");
+				}
+				client->timeout(false);
+				errorResponse(*client, 408, "Request Timeout", "Client timed out");
 			}
 			else
 			{
@@ -152,7 +155,11 @@ int Listener::acceptConnection()
 
 	// Set the new client to non-blocking
 	if (fcntl(newClientFd, F_SETFL, O_NONBLOCK) < 0)
+	{
 		DEBUG("Listener " << _port << ", Error fcntl");
+		close(newClientFd);
+		return 1;
+	}
 
     char clientIP[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(clientAddr.sin_addr), clientIP, INET_ADDRSTRLEN);
@@ -176,7 +183,7 @@ void Listener::readData(Client &client)
 	if (bytesRead < 0)
 	{
 		DEBUG("Listener " << _port << ", Client " << client.getIP() << ":" << client.getPort() << ", Error reading data");
-		client.setResponse(errorResponse(client, 500, "Internal_serv_error", "Couldn't read data from client"));
+		errorResponse(client, 500, "Internal_serv_error", "Couldn't read data from client");
 		return;
 	}
 	if (bytesRead == 0)
@@ -188,7 +195,7 @@ void Listener::readData(Client &client)
 	// If there is an error, generate an error response that will be sent in the next sendData
 	if (client.error())
 	{
-		client.setResponse(errorResponse(client, 400, "Bad Request", "Error parsing request"));
+		errorResponse(client, 400, "Bad Request", "Error parsing request");
 		return;
 	}
 
@@ -269,19 +276,19 @@ void Listener::sendToServer(Client &client)
 	}
 }
 
-HttpResponse Listener::errorResponse(Client & client, int errorCode, const std::string & phrase, const std::string & msg)
+void Listener::errorResponse(Client & client, int errorCode, const std::string & phrase, const std::string & msg)
 {
 	// Get the host of the request if possible
 	if (client.getRequestCount() == 0)
-		return _serverList.front().errorResponse(errorCode, phrase, msg);
+		return _serverList.front().errorResponse(client, errorCode, phrase, msg);
 	std::vector<std::string> host = client.getRequest().getHeader("Host");
 	std::string hostname = host.size() > 0 ? host[0].substr(0, host[0].find(':')) : "";
 
 	// If the server exists, add the client to the server
 	if (_serverMap.count(hostname) == 1)
-		return _serverMap.at(hostname)->errorResponse(errorCode, phrase, msg);
+		return _serverMap.at(hostname)->errorResponse(client, errorCode, phrase, msg);
 	// Else send it to the default server
-	return _serverList.front().errorResponse(errorCode, phrase, msg);
+	return _serverList.front().errorResponse(client, errorCode, phrase, msg);
 }
 
 std::ostream &operator<<(std::ostream &os, const Listener &obj)

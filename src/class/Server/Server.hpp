@@ -46,7 +46,7 @@ class Server
 
 	// Member functions
 
-		HttpResponse errorResponse(int error_code, const std::string & phrase = "", const std::string & msg= "") const;
+		void errorResponse(Client &client, int error_code, const std::string & phrase = "", const std::string & msg= "");
 		void loop();
 
 	// Operator overloads
@@ -55,6 +55,8 @@ class Server
 
 	protected:
 	private:
+
+
 	// Member attributes
 
 		// Port number that the server will listen to
@@ -77,6 +79,8 @@ class Server
 		std::map<std::string, void (Server::*)(Client &, const Location &)> _methodsMap;
 		// _activeCGI holds the list of clients that are waiting for a CGI program to finish
 		CGI _activeCGI;
+		// Holds the list of clients that are genereating a response from a file (fd, fileContent)
+		std::map<Client *, std::pair<int, std::string> > _staticResponses;
 
 	// Private member functions
 

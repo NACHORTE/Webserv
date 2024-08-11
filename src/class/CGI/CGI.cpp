@@ -65,7 +65,7 @@ void CGI::closeCgi(size_t index)
     _clients.erase(_clients.begin() + index);
 }
 
-void CGI::loop(const Server &server)
+void CGI::loop(Server &server)
 {
 	// Check if the CGI programs have finished and reset _somethingToRead flag
     for (size_t i = 0; i < _clients.size(); ++i)
@@ -80,7 +80,7 @@ void CGI::loop(const Server &server)
 		// If there is an error with waitpid, close the CGI program
         if (result == -1)
         {
-            _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "waitpid failed"));
+            server.errorResponse(*(_clients[i]._client), 500, "internal_server_error", "waitpid failed");
             closeCgi(i--);
         }
 		// If the CGI program has finished
@@ -90,7 +90,7 @@ void CGI::loop(const Server &server)
             {
                 if (WEXITSTATUS(status) == EXIT_FAILURE)
                 {
-                    _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "cgi exited with failure"));
+                    server.errorResponse(*(_clients[i]._client), 500, "internal_server_error", "cgi exited with failure");
                     closeCgi(i--);
                 }
                 else
@@ -98,7 +98,7 @@ void CGI::loop(const Server &server)
             }
             else if (WIFSIGNALED(status))
             {
-                _clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "cgi terminated by signal"));
+                server.errorResponse(*(_clients[i]._client), 500, "internal_server_error", "cgi terminated by signal");
                 closeCgi(i--);
             }
         }
@@ -113,7 +113,7 @@ void CGI::loop(const Server &server)
 			_clients[i]._somethingToRead = true;
 			if (_clients[i].read(IO_BUFF_SIZE) == -1)
 			{
-				_clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "couldn't read from cgi"));
+				server.errorResponse(*(_clients[i]._client), 500, "internal_server_error", "couldn't read from cgi");
 				closeCgi(i--);
 			}
 		}
@@ -133,7 +133,7 @@ void CGI::loop(const Server &server)
 		{
 			if (_clients[i].write(IO_BUFF_SIZE) == -1)
 			{
-				_clients[i]._client->setResponse(server.errorResponse(500, "internal_server_error", "couldn't write to cgi"));
+				server.errorResponse(*(_clients[i]._client), 500, "internal_server_error", "couldn't write to cgi");
 				closeCgi(i--);
 			}
 		}
@@ -152,15 +152,16 @@ void CGI::loop(const Server &server)
 
 
 
-void CGI::generateResponse(CgiClient &cgiClient, const Server &server)
+void CGI::generateResponse(CgiClient &cgiClient, Server &server)
 {
 	HttpResponse & response = cgiClient._client->getResponse();
+	response.clear();
 
 	// get the position of the end of the header
 	size_t endOfHeader = cgiClient._inputBuffer.find("\r\n\r\n");
 	if (endOfHeader == std::string::npos)
 	{
-		response = server.errorResponse(500, "internal_server_error", "cgi didn't send a complete response");
+		server.errorResponse(*(cgiClient._client), 500, "internal_server_error", "cgi didn't send a complete response");
 		return;
 	}
 	endOfHeader += 4;
@@ -177,7 +178,7 @@ void CGI::generateResponse(CgiClient &cgiClient, const Server &server)
 		int status;
 		if (!(iss >> status) or status < 100 or status > 599)
 		{
-			response = server.errorResponse(500, "internal_server_error", "cgi didn't send a valid status code");
+			server.errorResponse(*(cgiClient._client), 500, "internal_server_error", "cgi didn't send a valid status code");
 			return;
 		}
 		std::string phrase;
@@ -197,6 +198,6 @@ void CGI::generateResponse(CgiClient &cgiClient, const Server &server)
 	if (not response.responseReady())
 	{
 		response.clear();
-		response = server.errorResponse(500, "internal_server_error", "cgi didn't send a complete response");
+		server.errorResponse(*(cgiClient._client), 500, "internal_server_error", "cgi didn't send a complete response");
 	}
 }

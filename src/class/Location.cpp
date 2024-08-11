@@ -324,7 +324,10 @@ HttpResponse Location::getReturnResponse(void) const
 	if (_returnValue.first == 301 || _returnValue.first == 302)
 		response.setHeader("Location",_returnValue.second);
 	else
-		response.setBody("text/plain",_returnValue.second);
+	{
+		response.setHeader("Content-Type","text/plain");
+		response.setBody(_returnValue.second);
+	}
 	response.responseReady(true);
 	return response;
 }

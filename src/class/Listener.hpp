@@ -53,7 +53,7 @@ class Listener
 		void closeConnection(Client &client);
 
 		void sendToServer(Client &client);
-		HttpResponse errorResponse(Client & client, int errorCode, const std::string & phrase = "", const std::string & msg= "");
+		void errorResponse(Client & client, int errorCode, const std::string & phrase = "", const std::string & msg= "");
 
 	// Friends <3
 		friend std::ostream &operator<<(std::ostream &os, const Listener &obj);

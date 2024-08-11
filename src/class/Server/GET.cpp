@@ -5,14 +5,16 @@
 #include "unistd.h"
 #include <sys/stat.h>
 #include <set>
+#include <fcntl.h>
+#include "FdHandler.hpp"
 
-HttpResponse getAutoIndex(const std::string & path, const Location & loc, const Server & serv)
+static void getAutoIndex(Client &client, const std::string & path, const Location & loc, Server & serv)
 {
 	std::string body = "<html><head><title>Index of " + path + "</title></head><body><h1>Index of " + path + "</h1><hr><pre>";
 
 	std::string folder = loc.getFilenameNoIndex(path);
 	if (folder.empty())
-		return serv.errorResponse(404, "Not Found", "File not found");
+		return serv.errorResponse(client, 404, "Not Found", "File not found");
 
 	DIR *dir;
 	struct dirent *ent;
@@ -38,20 +40,19 @@ HttpResponse getAutoIndex(const std::string & path, const Location & loc, const 
 
 	HttpResponse ret;
 	ret.setStatus(200);
-	ret.setBody("text/html",body);
+	ret.setHeader("Content-Type", "text/html");
+	ret.setBody(body);
 	ret.responseReady(true);
-	return ret;
+	client.getResponse() = ret;
 }
 
 void  Server::GET(Client & client, const Location & loc)
 {
-	HttpResponse ret;
-
 	std::string path = client.getRequest().getPath();
 	// Get the path of the requested file
 	std::string filename = loc.getFilename(path);
 	if (filename.empty() or access(filename.c_str(), F_OK) != 0)
-		return (void)client.setResponse(errorResponse(404, "Not Found", "File not found"));
+		return errorResponse(client, 404, "Not Found", "File not found");
 
 	if (loc.isCgi())
 		return (void)_activeCGI.newCgi(client, filename, *this);
@@ -60,30 +61,39 @@ void  Server::GET(Client & client, const Location & loc)
 	if (access(filename.c_str(),F_OK) != 0 and loc.isDir(path))
 	{
 		if (loc.autoIndex())
-			return (void)client.setResponse(getAutoIndex(path, loc, *this));
-		client.setResponse(errorResponse(403, "Forbidden", "Path is for a folder and location has no autoindex"));
-		return;
-		
+			return getAutoIndex(client, path, loc, *this);
+		return errorResponse(client, 403, "Forbidden", "Path is for a folder and location has no autoindex");
 	}
 
 	// Get file information using stat
 	struct stat fileInfo;
 	if (stat(filename.c_str(), &fileInfo) != 0)
-		return (void)client.setResponse(errorResponse(500, "Internal Server Error", "Could not get file information"));
+		return errorResponse(client, 500, "Internal Server Error", "Could not get file information");
 
 	// Check if the file is a regular file
 	if (!S_ISREG(fileInfo.st_mode))
-		return (void)client.setResponse(errorResponse(403, "Forbidden", "Path is not a regular file"));
+		return errorResponse(client, 403, "Forbidden", "Path is not a regular file");
 
 	try
 	{
-		ret.setStatus(200);
-		ret.setBodyFromFile(filename);
-		ret.responseReady(true);
-		client.setResponse(ret);
+		// Open the file
+		int fd = open(filename.c_str(), O_RDONLY);
+		if (fd == -1)
+			throw std::exception();
+		if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+		{
+			close(fd);
+			return errorResponse(client, 500, "Internal Server Error", "Could not set file descriptor to non-blocking");
+		}
+		client.getResponse().clear();
+		client.getResponse().setStatus(200, "OK");
+		client.getResponse().setHeader("Content-Type", extToMime(filename));
+
+		_staticResponses[&client] = std::make_pair(fd, "");
+		FdHandler::addFd(fd, POLLIN);
 	}
 	catch (std::exception & e)
 	{	
-		client.setResponse(errorResponse(404, "Not Found", e.what()));
+		errorResponse(client, 404, "Not Found", e.what());
 	}
 }

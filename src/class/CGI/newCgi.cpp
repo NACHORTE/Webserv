@@ -81,11 +81,11 @@ static char **getEnv(HttpRequest req)
 	return output;
 }
 
-void CGI::newCgi(Client &client, const std::string & filename, const Server& server)
+void CGI::newCgi(Client &client, const std::string & filename, Server& server)
 {
 	// Can't execute another webserv
 	if (baseName(filename) == "webserv")
-		return (void)client.setResponse(server.errorResponse(403, "forbidden", "cannot execute another webserv"));
+		return server.errorResponse(client, 403, "forbidden", "cannot execute another webserv");
 	// Check if the client is already waiting for a CGI program to finish
 	for (size_t i = 0; i < _clients.size(); ++i)
 		if (_clients[i]._client == &client)
@@ -93,14 +93,14 @@ void CGI::newCgi(Client &client, const std::string & filename, const Server& ser
 
 	// Check if the file exists and can be executed
 	if (access(filename.c_str(), F_OK) != 0)
-		return (void)client.setResponse(server.errorResponse(404, "not_found", "file not found"));
+		return server.errorResponse(client, 404, "not_found", "file not found");
 	if (access(filename.c_str(), X_OK) != 0)
-		return (void)client.setResponse(server.errorResponse(403, "forbidden", "file not executable"));
+		return server.errorResponse(client, 403, "forbidden", "file not executable");
 
 	// Create a pipe to communicate with the CGI program
 	int fdsIn[2], fdsOut[2];
 	if (pipe(fdsIn) != 0 || pipe(fdsOut) != 0)
-		return (void)client.setResponse(server.errorResponse(500, "internal_server_error", "pipe failed"));
+		return server.errorResponse(client, 500, "internal_server_error", "pipe failed");
 
 	// Fork the process
 	int pid = fork();
@@ -110,7 +110,7 @@ void CGI::newCgi(Client &client, const std::string & filename, const Server& ser
 		close(fdsIn[1]);
 		close(fdsOut[0]);
 		close(fdsOut[1]);
-		return (void)client.setResponse(server.errorResponse(500, "internal_server_error", "fork failed"));
+		return server.errorResponse(client, 500, "internal_server_error", "fork failed");
 	}
 	// Child process
 
@@ -142,9 +142,12 @@ void CGI::newCgi(Client &client, const std::string & filename, const Server& ser
 	_clients.push_back(CgiClient(client, pid, fdsOut[1], fdsIn[0]));
 	close(fdsIn[1]);
 	close(fdsOut[0]);
-	fcntl(fdsIn[0], F_SETFL, O_NONBLOCK);
-	fcntl(fdsOut[1], F_SETFL, O_NONBLOCK);
-
+	if (fcntl(fdsIn[0], F_SETFL, O_NONBLOCK) < 0 or
+		fcntl(fdsOut[1], F_SETFL, O_NONBLOCK < 0))
+	{
+		return server.errorResponse(client, 500, "internal_server_error", "fcntl failed");
+		closeCgi(client);
+	}
     // Add the pipes to the pollfd list
 	FdHandler::addFd(fdsIn[0], POLLIN | POLLHUP | POLLERR);
 	FdHandler::addFd(fdsOut[1], POLLOUT | POLLHUP | POLLERR);
