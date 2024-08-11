@@ -74,7 +74,7 @@ std::string Client::getHost(void) const
 HttpResponse & Client::getResponse()
 {
 	if (_requests.empty())
-		throw std::runtime_error("No response available");
+		_requests.push_front(std::pair<HttpRequest, HttpResponse>());
 	return (_requests.rbegin()->second);
 }
 
@@ -88,7 +88,7 @@ const HttpResponse & Client::getResponseConst() const
 HttpRequest &Client::getRequest(void)
 {
 	if (_requests.empty())
-		throw std::runtime_error("No request available");
+		_requests.push_front(std::pair<HttpRequest, HttpResponse>());
 	return (_requests.rbegin()->first);
 }
 
@@ -158,7 +158,7 @@ bool Client::keepAlive() const
 	std::vector<std::string> header = _requests.rbegin()->first.getHeader("Connection");
 	if (header.empty())
 		return (true);
-	return (header[0] != "close");
+	return (header[0] == "keep-alive");
 }
 
 void Client::popRequest()

@@ -259,7 +259,10 @@ void Server::loop()
 				errorResponse(client, 501, "Not implemented", "Method " + req.getMethod() + " is not allowed for this server");
 			// Check if the path matches a location. If not, return a 404 error
 			else if (!loc)
+			{
+				std::cout << "404 _ 1" << std::endl;
 				errorResponse(client, 404, "Not Found", "The requested URL was not found on this server");
+			}
 			// If the method is not allowed for the location, return a 405 error
 			else if (loc->isAllowedMethod(req.getMethod()) == false)
 				errorResponse(client, 405, "Method Not Allowed", "Method " + req.getMethod() + " is not allowed for this location");

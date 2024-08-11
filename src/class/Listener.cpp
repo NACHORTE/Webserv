@@ -112,12 +112,10 @@ void Listener::loop()
 		{
 			if (not client->responseReady() and client->sentBytes() == 0)
 			{
-				if (client->getRequestCount() > 0)
-				{
-					client->getRequest().unsetHeader("Connection");
-					client->getRequest().setHeader("Connection", "close");
-				}
 				client->timeout(false);
+				client->getRequest().unsetHeader("Connection");
+				client->getRequest().setHeader("Connection", "close");
+				client->getRequest().requestReady(true);
 				errorResponse(*client, 408, "Request Timeout", "Client timed out");
 			}
 			else

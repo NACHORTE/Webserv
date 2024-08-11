@@ -51,9 +51,9 @@ void  Server::GET(Client & client, const Location & loc)
 	std::string path = client.getRequest().getPath();
 	// Get the path of the requested file
 	std::string filename = loc.getFilename(path);
-	if (filename.empty() or access(filename.c_str(), F_OK) != 0)
-		return errorResponse(client, 404, "Not Found", "File not found");
 
+	if (filename.empty() or (not loc.isDir(path) and access(filename.c_str(), F_OK)) != 0)
+		return errorResponse(client, 404, "Not Found", "File not found");
 	if (loc.isCgi())
 		return (void)_activeCGI.newCgi(client, filename, *this);
 
